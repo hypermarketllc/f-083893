@@ -48,7 +48,9 @@ export default function Sidebar() {
         <SidebarSection 
           title="Dashboards" 
           defaultExpanded={dashboardsExpanded}
-        />
+        >
+          {/* Add dashboard content here when available */}
+        </SidebarSection>
 
         {/* Docs */}
         <SidebarSection 
