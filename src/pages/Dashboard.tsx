@@ -2,17 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
-import { Menu } from 'lucide-react';
-
-// Components
-import Sidebar from '@/components/Sidebar';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import { TaskProvider } from '@/contexts/task/TaskContext';
+import DashboardLayout from '@/components/dashboard/layout/DashboardLayout';
 import DashboardContent from '@/components/dashboard/DashboardContent';
-import { TaskProvider } from '@/contexts/TaskContext';
 
 export default function Dashboard() {
-  const { user, signOut, loading } = useAuth();
+  const { loading } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,34 +39,14 @@ export default function Dashboard() {
 
   return (
     <TaskProvider>
-      <div className="min-h-screen bg-background flex">
-        {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block`}>
-          <Sidebar />
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <div className="md:hidden p-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleSidebar}
-              className={sidebarOpen ? 'hidden' : 'block'}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-          <DashboardHeader 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            signOut={signOut}
-            toggleSidebar={toggleSidebar}
-          />
-
-          <DashboardContent searchQuery={searchQuery} />
-        </div>
-      </div>
+      <DashboardLayout
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={toggleSidebar}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+      >
+        <DashboardContent searchQuery={searchQuery} />
+      </DashboardLayout>
     </TaskProvider>
   );
 }
