@@ -24,7 +24,8 @@ import {
   History,
   ExternalLink,
   Download,
-  X
+  X,
+  WebhookIcon
 } from 'lucide-react';
 
 interface WebhooksSidebarProps {
@@ -55,8 +56,11 @@ const WebhooksTabs: React.FC = () => {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="border-b py-3 px-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Webhooks</h2>
+      <div className="border-b py-3 px-4 flex justify-between items-center bg-card">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          <WebhookIcon className="h-5 w-5 text-primary" />
+          Webhooks
+        </h2>
         <div className="flex items-center space-x-2">
           {activeSubTab === 'outgoing' ? (
             <Button size="sm" onClick={handleCreateWebhook}>
@@ -171,11 +175,12 @@ const WebhooksSidebar: React.FC<WebhooksSidebarProps> = ({ onClose, visible }) =
   return (
     <WebhookProvider>
       <div className="h-full flex flex-col">
-        <div className="md:hidden absolute top-2 right-2">
+        <div className="md:hidden absolute top-2 right-2 z-10">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={onClose}
+            className="bg-background/80 backdrop-blur-sm"
           >
             <X className="h-4 w-4" />
           </Button>

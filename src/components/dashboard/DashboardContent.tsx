@@ -10,6 +10,7 @@ import CreateTaskModal from '@/components/dashboard/CreateTaskModal';
 import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import TasksSection from '@/components/dashboard/TasksSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
+import WebhooksSection from '@/components/dashboard/WebhooksSection';
 import SettingsSection from '@/components/dashboard/SettingsSection';
 import ReportsSection from '@/components/dashboard/ReportsSection';
 
@@ -63,6 +64,10 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
 
         <TabsContent value="analytics">
           <AnalyticsSection />
+        </TabsContent>
+
+        <TabsContent value="webhooks">
+          <WebhooksSection />
         </TabsContent>
 
         <TabsContent value="reports">

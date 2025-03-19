@@ -36,11 +36,17 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
     handleDeleteIncomingWebhook,
   } = useWebhookContext();
 
-  const copyEndpointUrl = (path: string) => {
+  const copyEndpointUrl = (path: string, event: React.MouseEvent) => {
+    event.stopPropagation();
     const baseUrl = window.location.origin;
     const url = `${baseUrl}/api/webhooks/incoming/${path}`;
     navigator.clipboard.writeText(url);
     toast.success('Webhook URL copied to clipboard');
+  };
+
+  const getFullEndpointUrl = (path: string) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/api/webhooks/incoming/${path}`;
   };
 
   return (
@@ -55,9 +61,19 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
             <div className="flex justify-between">
               <div>
                 <CardTitle className={`${compact ? 'text-base' : ''}`}>{webhook.name}</CardTitle>
-                <CardDescription className={`${compact ? 'text-xs' : ''} truncate max-w-xs`}>
-                  {`/api/webhooks/incoming/${webhook.endpointPath}`}
-                </CardDescription>
+                <div className="flex items-center gap-1 mt-1">
+                  <div className={`${compact ? 'text-xs' : 'text-sm'} text-muted-foreground font-mono truncate max-w-[240px] md:max-w-xs`}>
+                    {getFullEndpointUrl(webhook.endpointPath)}
+                  </div>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-6 w-6" 
+                    onClick={(e) => copyEndpointUrl(webhook.endpointPath, e)}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
               </div>
               <Badge className={webhook.enabled ? "bg-green-500 hover:bg-green-600" : "bg-muted"}>
                 {webhook.enabled ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
@@ -78,17 +94,26 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
               
               {selectedIncomingWebhook?.id === webhook.id && (
                 <div className="flex justify-between items-center mt-4">
-                  <Button size="sm" variant="outline" onClick={() => copyEndpointUrl(webhook.endpointPath)}>
+                  <Button size="sm" variant="outline" onClick={(e) => {
+                    e.stopPropagation();
+                    copyEndpointUrl(webhook.endpointPath, e);
+                  }}>
                     <Copy className="h-4 w-4 mr-1" />
                     Copy URL
                   </Button>
 
                   <div className="space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEditIncomingWebhook(webhook)}>
+                    <Button size="sm" variant="outline" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditIncomingWebhook(webhook);
+                    }}>
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteIncomingWebhook(webhook.id)}>
+                    <Button size="sm" variant="destructive" onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteIncomingWebhook(webhook.id);
+                    }}>
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete
                     </Button>

@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
-import { Menu, Webhook } from 'lucide-react';
+import { Menu, Webhook, WebhookIcon } from 'lucide-react';
 import WebhooksSidebar from '@/components/webhooks/WebhooksSidebar';
 
 interface DashboardLayoutProps {
@@ -31,7 +32,7 @@ export default function DashboardLayout({
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Sidebar */}
-      <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block`}>
+      <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block transition-all duration-200`}>
         <Sidebar />
       </div>
 
@@ -55,24 +56,31 @@ export default function DashboardLayout({
         />
 
         <div className="flex flex-1 relative">
-          <div className="flex-1 overflow-auto">
+          <div className={`flex-1 overflow-auto transition-all duration-300 ${webhookSidebarOpen ? 'md:mr-80' : ''}`}>
             {children}
           </div>
           
-          {/* Webhooks Button (Mobile) */}
+          {/* Webhooks Button (Fixed) */}
           <div className="fixed bottom-4 right-4 md:hidden z-20">
             <Button 
               onClick={toggleWebhookSidebar}
               className="rounded-full h-12 w-12 shadow-lg"
+              variant={webhookSidebarOpen ? "outline" : "default"}
             >
-              <Webhook className="h-6 w-6" />
+              <WebhookIcon className="h-6 w-6" />
             </Button>
           </div>
           
           {/* Webhooks Sidebar */}
-          <div className={`${webhookSidebarOpen ? 'translate-x-0' : 'translate-x-full'} 
-                          transition-transform duration-300 fixed md:relative right-0 top-0 z-10
-                          h-screen w-full md:w-80 md:translate-x-0 bg-card border-l border-border`}>
+          <div 
+            className={`
+              fixed md:absolute right-0 top-0 z-10
+              h-screen w-full md:w-80 bg-card border-l border-border
+              transition-transform duration-300 ease-in-out shadow-lg md:shadow-none
+              ${webhookSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0 md:opacity-0 md:pointer-events-none'}
+              md:transition-opacity
+            `}
+          >
             <WebhooksSidebar 
               onClose={() => setWebhookSidebarOpen(false)} 
               visible={webhookSidebarOpen} 
