@@ -11,6 +11,7 @@ import DashboardOverview from '@/components/dashboard/DashboardOverview';
 import TasksSection from '@/components/dashboard/TasksSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import SettingsSection from '@/components/dashboard/SettingsSection';
+import ReportsSection from '@/components/dashboard/ReportsSection';
 
 interface DashboardContentProps {
   searchQuery?: string;
@@ -43,7 +44,7 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
     <div className="flex-1 overflow-auto">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="p-6">
         <div className="flex justify-between items-center mb-4">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsList className="grid grid-cols-5 w-full max-w-xl">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               <span className="hidden sm:inline">Overview</span>
@@ -55,6 +56,10 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">Reports</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -82,6 +87,10 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
 
         <TabsContent value="analytics">
           <AnalyticsSection />
+        </TabsContent>
+
+        <TabsContent value="reports">
+          <ReportsSection />
         </TabsContent>
 
         <TabsContent value="settings">

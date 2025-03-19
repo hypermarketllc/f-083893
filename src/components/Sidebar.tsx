@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, Bell, BarChart3, LayoutGrid, FileText, 
-  ChevronDown, ChevronRight, PlusCircle, GanttChart
+  ChevronDown, ChevronRight, PlusCircle, GanttChart,
+  DollarSign, PhoneCall, Users, Building2, LineChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,18 +23,21 @@ const SPACES: SpaceProps[] = [
   { id: 'product', name: 'Product', color: 'pink', icon: 'P' },
 ];
 
+const REPORTS = [
+  { id: 'pandl', name: 'P&L', icon: DollarSign },
+  { id: 'calls', name: 'Calls', icon: PhoneCall },
+  { id: 'leads', name: 'Leads', icon: Users },
+  { id: 'agents', name: 'Agents', icon: Users },
+  { id: 'pubs', name: 'Pubs', icon: Building2 },
+];
+
 export default function Sidebar() {
   const { pathname } = useLocation();
   const { user } = useAuth();
   const [spacesExpanded, setSpacesExpanded] = useState(true);
   const [docsExpanded, setDocsExpanded] = useState(false);
   const [dashboardsExpanded, setDashboardsExpanded] = useState(false);
-
-  // Get user initials for avatar
-  const getInitials = () => {
-    if (!user?.email) return 'U';
-    return user.email.charAt(0).toUpperCase();
-  };
+  const [reportsExpanded, setReportsExpanded] = useState(false);
 
   return (
     <div className="h-screen border-r border-border bg-card w-64 flex flex-col">
@@ -117,6 +121,36 @@ export default function Sidebar() {
           )}
         </div>
 
+        {/* Reports Section */}
+        <div className="mt-2">
+          <button 
+            onClick={() => setReportsExpanded(!reportsExpanded)}
+            className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium hover:bg-accent/50 rounded-md transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <LineChart className="h-4 w-4" />
+              Reports
+            </span>
+            {reportsExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+          
+          {reportsExpanded && (
+            <ul className="mt-1 space-y-1 ml-3">
+              {REPORTS.map((report) => (
+                <li key={report.id}>
+                  <Link 
+                    to={`/reports/${report.id}`} 
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
+                  >
+                    <report.icon className="h-4 w-4" />
+                    {report.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {/* Dashboards */}
         <div className="mt-2">
           <button 
@@ -177,15 +211,17 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* User Profile */}
+      {/* User Profile - Removed email display */}
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 text-white">
-            {getInitials()}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500 text-white">
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </div>
           </div>
-          <div className="text-sm font-medium truncate">
-            {user?.email || 'User'}
-          </div>
+          <Button variant="ghost" size="sm">
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </div>

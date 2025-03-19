@@ -63,7 +63,6 @@ export default function Dashboard() {
             </Button>
           </div>
           <DashboardHeader 
-            userEmail={user?.email}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             signOut={signOut}

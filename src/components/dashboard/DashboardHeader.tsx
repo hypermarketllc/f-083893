@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -9,12 +9,37 @@ import {
   DropdownMenuItem, 
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuGroup
 } from '@/components/ui/dropdown-menu';
-import { Search, Bell, Menu, LogOut, User, Settings } from 'lucide-react';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
+import { 
+  Search, 
+  Bell, 
+  Menu, 
+  LogOut, 
+  User, 
+  Settings, 
+  X, 
+  Check 
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/hooks/useAuth';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: Date;
+  read: boolean;
+}
 
 interface DashboardHeaderProps {
-  userEmail?: string;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   signOut: () => void;
@@ -22,14 +47,71 @@ interface DashboardHeaderProps {
 }
 
 const DashboardHeader = ({ 
-  userEmail, 
   searchQuery, 
   setSearchQuery, 
   signOut,
   toggleSidebar
 }: DashboardHeaderProps) => {
-  const displayName = userEmail ? userEmail.split('@')[0] : 'User';
-  const initials = displayName.charAt(0).toUpperCase();
+  const { user } = useAuth();
+  const displayName = user ? user.email?.split('@')[0] : 'User';
+  const initials = displayName ? displayName.charAt(0).toUpperCase() : 'U';
+  
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([
+    {
+      id: '1',
+      title: 'New task assigned',
+      message: 'You have been assigned a new task "Update landing page"',
+      timestamp: new Date(Date.now() - 15 * 60000),
+      read: false
+    },
+    {
+      id: '2',
+      title: 'Deadline approaching',
+      message: 'Task "Design new logo" is due tomorrow',
+      timestamp: new Date(Date.now() - 120 * 60000),
+      read: false
+    },
+    {
+      id: '3',
+      title: 'Comment on your task',
+      message: 'John commented on "Fix navbar responsiveness"',
+      timestamp: new Date(Date.now() - 240 * 60000),
+      read: true
+    }
+  ]);
+  
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
+  const formatTimestamp = (date: Date) => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 60) {
+      return `${diffMins} min${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffMins < 1440) {
+      const hours = Math.floor(diffMins / 60);
+      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    } else {
+      const days = Math.floor(diffMins / 1440);
+      return `${days} day${days !== 1 ? 's' : ''} ago`;
+    }
+  };
+  
+  const markAsRead = (id: string) => {
+    setNotifications(notifications.map(notification => 
+      notification.id === id ? { ...notification, read: true } : notification
+    ));
+  };
+  
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(notification => ({ ...notification, read: true })));
+  };
+  
+  const deleteNotification = (id: string) => {
+    setNotifications(notifications.filter(notification => notification.id !== id));
+  };
   
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -40,25 +122,119 @@ const DashboardHeader = ({
           </Button>
         </div>
         
-        <div className="flex-1 flex items-center">
-          <form className="relative w-full max-w-[600px]">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search tasks..."
-              className="pl-8 w-full md:w-[300px] lg:w-[400px]"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </form>
-        </div>
+        <div className="flex-1 flex items-center"></div>
         
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600" />
-          </Button>
+          {/* Search Button */}
+          <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Search className="h-5 w-5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search tasks..."
+                  className="pl-8 w-full border-none focus-visible:ring-0"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
           
+          {/* Notifications */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-600" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="flex items-center justify-between p-3 border-b">
+                <h4 className="font-semibold">Notifications</h4>
+                {unreadCount > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={markAllAsRead}
+                    className="text-xs"
+                  >
+                    Mark all as read
+                  </Button>
+                )}
+              </div>
+              <ScrollArea className="h-80">
+                {notifications.length > 0 ? (
+                  <div className="flex flex-col">
+                    {notifications
+                      .sort((a, b) => {
+                        // Sort by read status (unread first)
+                        if (a.read !== b.read) return a.read ? 1 : -1;
+                        // Then by timestamp (newest first)
+                        return b.timestamp.getTime() - a.timestamp.getTime();
+                      })
+                      .map((notification) => (
+                        <div 
+                          key={notification.id} 
+                          className={`p-3 border-b hover:bg-muted/50 transition-colors ${notification.read ? 'opacity-70' : 'bg-muted/30'}`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h5 className="font-medium text-sm">{notification.title}</h5>
+                                {!notification.read && (
+                                  <Badge variant="default" className="bg-primary h-1.5 w-1.5 p-0 rounded-full" />
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">{notification.message}</p>
+                              <span className="text-xs text-muted-foreground mt-1 block">
+                                {formatTimestamp(notification.timestamp)}
+                              </span>
+                            </div>
+                            <div className="flex gap-1">
+                              {!notification.read && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-6 w-6" 
+                                  onClick={() => markAsRead(notification.id)}
+                                >
+                                  <Check className="h-3 w-3" />
+                                  <span className="sr-only">Mark as read</span>
+                                </Button>
+                              )}
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6" 
+                                onClick={() => deleteNotification(notification.id)}
+                              >
+                                <X className="h-3 w-3" />
+                                <span className="sr-only">Delete</span>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-24 text-muted-foreground">
+                    <p>No notifications</p>
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+          
+          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
