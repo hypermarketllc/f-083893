@@ -8,6 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Moon, Sun, Palette } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { toast } from 'sonner';
 
 export default function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
@@ -21,10 +22,24 @@ export default function AppearanceSettings() {
   }, []);
 
   // Only show the correct theme toggle after component has mounted
-  const isDarkMode = mounted ? theme === 'dark' : false;
+  const isDarkMode = mounted ? theme === 'dark' : true; // Default to true for dark mode
   
   const toggleDarkMode = (checked: boolean) => {
-    setTheme(checked ? 'dark' : 'light');
+    const newTheme = checked ? 'dark' : 'light';
+    setTheme(newTheme);
+    toast.success(`${checked ? 'Dark' : 'Light'} mode enabled`);
+  };
+
+  const handleFontScaleChange = (value: number[]) => {
+    setFontScale(value);
+    document.documentElement.style.fontSize = `${value[0] * 100}%`;
+    toast.success(`Font size updated`);
+  };
+
+  const handleAccentColorChange = (color: string) => {
+    setAccentColor(color);
+    // Apply accent color to CSS variables (this is a placeholder; real implementation would update CSS variables)
+    toast.success(`Accent color updated`);
   };
 
   return (
@@ -65,7 +80,7 @@ export default function AppearanceSettings() {
               max={1.4}
               step={0.1}
               value={fontScale}
-              onValueChange={setFontScale}
+              onValueChange={handleFontScaleChange}
             />
             <p className="text-lg">A</p>
           </div>
@@ -83,7 +98,7 @@ export default function AppearanceSettings() {
               id="accent-color"
               type="color"
               value={accentColor}
-              onChange={(e) => setAccentColor(e.target.value)}
+              onChange={(e) => handleAccentColorChange(e.target.value)}
               className="w-12 h-8 p-1"
             />
             <p className="text-sm text-muted-foreground">

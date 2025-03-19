@@ -5,18 +5,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TaskProvider } from '@/contexts/task/TaskContext';
 import DashboardLayout from '@/components/dashboard/layout/DashboardLayout';
 import DashboardContent from '@/components/dashboard/DashboardContent';
+import { useTheme } from 'next-themes';
+import { WebhookProvider } from '@/contexts/webhook/WebhookContext';
 
 export default function Dashboard() {
   const { loading, user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const { setTheme } = useTheme();
   
   useEffect(() => {
     // Set isLoaded to true without delay to avoid white screen
     setIsLoaded(true);
+    
+    // Ensure dark mode is set at the application level
+    document.documentElement.classList.add('dark');
+    setTheme('dark');
+    
     console.log("Dashboard loading, auth state:", { loading, user, isLoaded });
-  }, [loading, user]);
+  }, [loading, user, setTheme]);
 
   // Toggle sidebar
   const toggleSidebar = () => {
@@ -36,14 +44,16 @@ export default function Dashboard() {
 
   return (
     <TaskProvider>
-      <DashboardLayout
-        sidebarOpen={sidebarOpen}
-        toggleSidebar={toggleSidebar}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-      >
-        <DashboardContent searchQuery={searchQuery} />
-      </DashboardLayout>
+      <WebhookProvider>
+        <DashboardLayout
+          sidebarOpen={sidebarOpen}
+          toggleSidebar={toggleSidebar}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        >
+          <DashboardContent searchQuery={searchQuery} />
+        </DashboardLayout>
+      </WebhookProvider>
     </TaskProvider>
   );
 }

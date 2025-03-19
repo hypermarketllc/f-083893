@@ -28,9 +28,13 @@ export default function DashboardLayout({
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Set dark theme as default and ensure theme is only accessed after mounting
+  // Force dark theme on first load
   useEffect(() => {
+    // First set mounted to true so we can safely show the UI
     setMounted(true);
+    
+    // Force dark theme as default
+    document.documentElement.classList.add('dark');
     setTheme('dark');
   }, [setTheme]);
 
@@ -62,37 +66,19 @@ export default function DashboardLayout({
           setSearchQuery={setSearchQuery}
           signOut={signOut}
           toggleSidebar={toggleSidebar}
-          theme={mounted ? theme : undefined}
+          theme={mounted ? theme : 'dark'} // Default to dark when not mounted
           setTheme={setTheme}
         />
 
         <div className="flex flex-1 relative">
-          <div className={`flex-1 overflow-auto transition-all duration-300 ${webhookSidebarOpen ? 'md:mr-80' : ''}`}>
+          <div className="flex-1 overflow-auto transition-all duration-300 pr-80">
             {children}
           </div>
           
-          {/* Webhooks Button (Fixed) */}
-          <div className="fixed bottom-4 right-4 md:hidden z-20">
-            <Button 
-              onClick={toggleWebhookSidebar}
-              className="rounded-full h-12 w-12 shadow-lg"
-              variant={webhookSidebarOpen ? "outline" : "default"}
-            >
-              <WebhookIcon className="h-6 w-6" />
-            </Button>
-          </div>
-          
-          {/* Webhooks Sidebar - Make it always visible on desktop */}
-          <div 
-            className={`
-              fixed md:static right-0 top-0 z-10
-              h-screen md:h-full w-full md:w-80 bg-card border-l border-border
-              transition-transform duration-300 ease-in-out shadow-lg md:shadow-none
-              ${webhookSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
-            `}
-          >
+          {/* Webhooks Sidebar - Always visible as a fixed panel on the right */}
+          <div className="fixed top-14 right-0 w-80 h-[calc(100vh-3.5rem)] border-l border-border bg-card overflow-auto shadow-md">
             <WebhooksSidebar 
-              onClose={() => setWebhookSidebarOpen(false)} 
+              onClose={() => {}} // No close function needed as it's always visible
               visible={true} 
             />
           </div>

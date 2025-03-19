@@ -18,6 +18,7 @@ import {
   Copy, 
   Edit, 
   Eye,
+  ExternalLink,
   Trash2, 
   X 
 } from 'lucide-react';
@@ -39,8 +40,7 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
 
   const copyEndpointUrl = (path: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const baseUrl = window.location.origin;
-    const url = `${baseUrl}/api/webhooks/incoming/${path}`;
+    const url = getFullEndpointUrl(path);
     navigator.clipboard.writeText(url);
     toast.success('Webhook URL copied to clipboard');
   };
@@ -48,6 +48,10 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
   const getFullEndpointUrl = (path: string) => {
     const baseUrl = window.location.origin;
     return `${baseUrl}/api/webhooks/incoming/${path}`;
+  };
+
+  const viewWebhookDetails = (webhook: IncomingWebhook) => {
+    setSelectedIncomingWebhook(webhook);
   };
 
   return (
@@ -63,24 +67,29 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
           <Card 
             key={webhook.id}
             className={`${selectedIncomingWebhook?.id === webhook.id ? 'border-primary' : ''} transition-all hover:border-primary cursor-pointer`}
-            onClick={() => setSelectedIncomingWebhook(webhook)}
+            onClick={() => viewWebhookDetails(webhook)}
           >
             <CardHeader className={`${compact ? 'py-3' : ''}`}>
               <div className="flex justify-between">
-                <div>
+                <div className="w-full">
                   <CardTitle className={`${compact ? 'text-base' : ''}`}>{webhook.name}</CardTitle>
-                  <div className="flex items-center gap-1 mt-1 w-full group">
-                    <div className={`${compact ? 'text-xs' : 'text-sm'} text-muted-foreground font-mono truncate w-full`}>
-                      {getFullEndpointUrl(webhook.endpointPath)}
+                  <div className="flex items-center gap-1 mt-2 w-full group">
+                    <div className="relative w-full p-2 bg-background rounded border flex items-center justify-between overflow-hidden">
+                      <code className={`${compact ? 'text-xs' : 'text-sm'} text-muted-foreground font-mono block truncate pr-8`}>
+                        {getFullEndpointUrl(webhook.endpointPath)}
+                      </code>
+                      <div className="absolute right-1">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-6 w-6" 
+                          onClick={(e) => copyEndpointUrl(webhook.endpointPath, e)}
+                          title="Copy webhook URL"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-6 w-6 opacity-70 hover:opacity-100" 
-                      onClick={(e) => copyEndpointUrl(webhook.endpointPath, e)}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
                   </div>
                 </div>
                 <Badge className={webhook.enabled ? "bg-green-500 hover:bg-green-600" : "bg-muted"}>
@@ -88,8 +97,9 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
                 </Badge>
               </div>
             </CardHeader>
+            
             {(!compact || selectedIncomingWebhook?.id === webhook.id) && (
-              <CardContent compact={compact}>
+              <CardContent className={compact ? 'py-3' : ''}>
                 {webhook.description && (
                   <p className="text-sm text-muted-foreground mb-2">{webhook.description}</p>
                 )}
