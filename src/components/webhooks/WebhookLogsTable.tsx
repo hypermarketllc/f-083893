@@ -63,13 +63,13 @@ export const LogRow: React.FC<{
           ) : (
             <XCircle className="h-3 w-3 mr-1" />
           )}
-          {log.status}
+          {log.responseStatus}
         </Badge>
       </TableCell>
       <TableCell className="font-medium">{log.webhookName}</TableCell>
       <TableCell className="hidden md:table-cell">
         <span className="text-xs text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">
-          {log.url}
+          {log.requestUrl || log.url}
         </span>
       </TableCell>
       <TableCell className="hidden lg:table-cell">
@@ -115,7 +115,7 @@ export const LogDetailsModal: React.FC<{
             <div>
               <p className="text-sm font-medium">Status</p>
               <Badge variant={log.success ? 'outline' : 'secondary'} className={log.success ? 'text-green-500' : 'text-red-500'}>
-                {log.status}
+                {log.responseStatus}
               </Badge>
             </div>
             <div>
@@ -124,7 +124,7 @@ export const LogDetailsModal: React.FC<{
             </div>
             <div className="col-span-2">
               <p className="text-sm font-medium">URL</p>
-              <p className="text-sm text-muted-foreground break-all">{log.url}</p>
+              <p className="text-sm text-muted-foreground break-all">{log.requestUrl || log.url}</p>
             </div>
             <div className="col-span-2">
               <p className="text-sm font-medium">Time</p>
@@ -136,7 +136,7 @@ export const LogDetailsModal: React.FC<{
             <p className="text-sm font-medium mb-1">Request</p>
             <div className="bg-muted p-2 rounded-md">
               <ScrollArea className="h-[120px]">
-                <pre className="text-xs">{formatJson(log.request)}</pre>
+                <pre className="text-xs">{formatJson(log.requestBody)}</pre>
               </ScrollArea>
             </div>
           </div>
@@ -145,7 +145,7 @@ export const LogDetailsModal: React.FC<{
             <p className="text-sm font-medium mb-1">Response</p>
             <div className="bg-muted p-2 rounded-md">
               <ScrollArea className="h-[120px]">
-                <pre className="text-xs">{formatJson(log.response)}</pre>
+                <pre className="text-xs">{formatJson(log.responseBody)}</pre>
               </ScrollArea>
             </div>
           </div>
@@ -167,7 +167,7 @@ export const LogDetailsModal: React.FC<{
           </Button>
           <Button 
             variant="default" 
-            onClick={() => window.open(log.url, '_blank')}
+            onClick={() => window.open(log.requestUrl || log.url, '_blank')}
           >
             <ArrowUpRight className="h-4 w-4 mr-1" />
             Open URL

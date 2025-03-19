@@ -21,11 +21,17 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
       duration: 0,
       success: false,
       error: 'No log data available',
+      // Add missing properties
+      url: 'https://example.com',
+      method: 'GET',
+      requestBody: '{}',
+      responseBody: '{}'
     };
   }
 
   // Ensure all required fields exist
   return {
+    ...log,
     id: log.id || 'placeholder-id',
     webhookId: log.webhookId || 'placeholder-webhook-id',
     webhookName: log.webhookName || 'Unknown Webhook',
@@ -33,13 +39,16 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
     requestUrl: log.requestUrl || log.url || 'https://example.com',
     requestMethod: log.requestMethod || log.method || 'GET',
     requestHeaders: log.requestHeaders || {},
-    requestBody: log.requestBody || undefined,
+    requestBody: log.requestBody || '{}',
     responseStatus: log.responseStatus || 0,
     responseHeaders: log.responseHeaders || {},
-    responseBody: log.responseBody || undefined,
+    responseBody: log.responseBody || '{}',
     duration: log.duration || 0,
     success: log.success !== undefined ? log.success : false,
     error: log.error || undefined,
+    // Add missing properties
+    url: log.url || log.requestUrl || 'https://example.com',
+    method: log.method || log.requestMethod || 'GET'
   };
 };
 
@@ -60,18 +69,24 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
       isParsed: false,
       success: false,
       error: 'No log data available',
+      // Additional properties needed for UI
+      responseStatus: 404,
+      endpointPath: '/webhook',
+      requestBody: '{}',
+      responseBody: '{}'
     };
   }
 
   // Ensure all required fields exist
   return {
+    ...log,
     id: log.id || 'placeholder-id',
     webhookId: log.webhookId || 'placeholder-webhook-id',
     webhookName: log.webhookName || 'Unknown Webhook',
     timestamp: log.timestamp || new Date().toISOString(),
     requestHeaders: log.requestHeaders || {},
     requestMethod: log.requestMethod || log.method || 'GET',
-    requestBody: log.requestBody || undefined,
+    requestBody: log.requestBody || '{}',
     requestQuery: log.requestQuery || log.queryParams || undefined,
     parsedData: log.parsedData || undefined,
     isParsed: log.isParsed !== undefined ? log.isParsed : false,
@@ -79,5 +94,9 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
     sourceIp: log.sourceIp || log.ipAddress || 'Unknown',
     contentType: log.contentType || 'application/json',
     error: log.error || undefined,
+    // Additional properties needed for UI
+    responseStatus: log.responseStatus || 200,
+    endpointPath: log.endpointPath || '/webhook',
+    responseBody: log.responseBody || '{}'
   };
 };

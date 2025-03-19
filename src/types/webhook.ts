@@ -64,6 +64,9 @@ export interface WebhookLogEntry {
   // Additional properties used in components
   url?: string;
   method?: HttpMethod;
+  status?: number; // Alias for responseStatus
+  request?: string; // Alias for requestBody 
+  response?: string; // Alias for responseBody
 }
 
 export interface IncomingWebhook {
@@ -98,4 +101,10 @@ export interface IncomingWebhookLogEntry {
   method?: HttpMethod;
   ipAddress?: string;
   queryParams?: Record<string, string>;
+  status?: number; // Alias for responseStatus
+  endpointPath?: string; // Alias for path
+  path?: string; // For backward compatibility
+  headers?: Record<string, string>; // Alias for requestHeaders
+  payload?: string; // Alias for requestBody
+  response?: string; // Alias for responseBody
 }

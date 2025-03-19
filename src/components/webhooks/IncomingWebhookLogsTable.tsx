@@ -49,13 +49,13 @@ const IncomingLogRow: React.FC<{
           ) : (
             <XCircle className="h-3 w-3 mr-1" />
           )}
-          {log.status}
+          {log.responseStatus || 200}
         </Badge>
       </TableCell>
       <TableCell className="font-medium">{log.webhookName}</TableCell>
       <TableCell className="hidden md:table-cell">
         <span className="text-xs text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">
-          {log.path}
+          {log.endpointPath || '/webhook'}
         </span>
       </TableCell>
       <TableCell className="hidden lg:table-cell">
@@ -101,7 +101,7 @@ const IncomingLogDetailsModal: React.FC<{
             <div>
               <p className="text-sm font-medium">Status</p>
               <Badge variant={log.success ? 'outline' : 'secondary'} className={log.success ? 'text-green-500' : 'text-red-500'}>
-                {log.status}
+                {log.responseStatus || 200}
               </Badge>
             </div>
             <div>
@@ -110,7 +110,7 @@ const IncomingLogDetailsModal: React.FC<{
             </div>
             <div className="col-span-2">
               <p className="text-sm font-medium">Path</p>
-              <p className="text-sm text-muted-foreground break-all">{log.path}</p>
+              <p className="text-sm text-muted-foreground break-all">{log.endpointPath || '/webhook'}</p>
             </div>
             <div className="col-span-2">
               <p className="text-sm font-medium">Time</p>
@@ -126,7 +126,7 @@ const IncomingLogDetailsModal: React.FC<{
             <p className="text-sm font-medium mb-1">Headers</p>
             <div className="bg-muted p-2 rounded-md">
               <ScrollArea className="h-[120px]">
-                <pre className="text-xs">{formatJson(log.headers)}</pre>
+                <pre className="text-xs">{formatJson(log.requestHeaders)}</pre>
               </ScrollArea>
             </div>
           </div>
@@ -135,17 +135,17 @@ const IncomingLogDetailsModal: React.FC<{
             <p className="text-sm font-medium mb-1">Payload</p>
             <div className="bg-muted p-2 rounded-md">
               <ScrollArea className="h-[120px]">
-                <pre className="text-xs">{formatJson(log.payload)}</pre>
+                <pre className="text-xs">{formatJson(log.requestBody)}</pre>
               </ScrollArea>
             </div>
           </div>
 
-          {log.response && (
+          {log.responseBody && (
             <div>
               <p className="text-sm font-medium mb-1">Response</p>
               <div className="bg-muted p-2 rounded-md">
                 <ScrollArea className="h-[80px]">
-                  <pre className="text-xs">{formatJson(log.response)}</pre>
+                  <pre className="text-xs">{formatJson(log.responseBody)}</pre>
                 </ScrollArea>
               </div>
             </div>

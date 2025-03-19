@@ -48,7 +48,14 @@ export default function DashboardContent({
       case 'overview':
         return <DashboardOverview setActiveTab={setActiveTab} handleTaskClick={handleTaskClick} />;
       case 'tasks':
-        return <TasksSection activeView="list" setActiveView={() => {}} filteredTasks={[]} handleTaskClick={handleTaskClick} handleCreateTask={() => {}} />;
+        return <TasksSection 
+          activeView="list" 
+          setActiveView={() => {}} 
+          filteredTasks={[]} 
+          handleTaskClick={handleTaskClick} 
+          handleCreateTask={() => {}}
+          searchQuery="" 
+        />;
       case 'webhooks':
         return <WebhooksSection />;
       case 'reports':
@@ -58,7 +65,7 @@ export default function DashboardContent({
       case 'profile':
         return <ProfileSection />;
       default:
-        return <PlaceholderView type="calendar" />;
+        return <PlaceholderView type="default" />;
     }
   };
 

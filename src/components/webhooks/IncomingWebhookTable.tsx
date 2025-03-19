@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { IncomingWebhook } from '@/types/webhook';
@@ -8,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pencil, Trash2, Copy, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { EmptyLogs } from './logs/EmptyLogs';
+import { EmptyLogs } from './WebhookLogsTable';
 
 interface IncomingWebhookTableProps {
   compact?: boolean;
