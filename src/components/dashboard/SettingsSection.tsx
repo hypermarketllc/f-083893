@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -10,10 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Moon, Sun, Bell, Globe, Shield, Palette } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export default function SettingsSection() {
   const { toast } = useToast();
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [language, setLanguage] = useState("english");
   const [notifications, setNotifications] = useState(true);
   const [fontScale, setFontScale] = useState([1]);
@@ -21,6 +23,18 @@ export default function SettingsSection() {
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
   const [accentColor, setAccentColor] = useState("#7C3AED");
   const [downloadFolder, setDownloadFolder] = useState("Downloads");
+  
+  // Ensure theme is only accessed after mounting to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Only show the correct theme toggle after component has mounted
+  const isDarkMode = mounted ? theme === 'dark' : false;
+  
+  const toggleDarkMode = (checked: boolean) => {
+    setTheme(checked ? 'dark' : 'light');
+  };
   
   const saveSettings = () => {
     toast({
@@ -42,7 +56,7 @@ export default function SettingsSection() {
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
-                {darkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                 <Label htmlFor="dark-mode">Dark Mode</Label>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -51,8 +65,8 @@ export default function SettingsSection() {
             </div>
             <Switch
               id="dark-mode"
-              checked={darkMode}
-              onCheckedChange={setDarkMode}
+              checked={isDarkMode}
+              onCheckedChange={toggleDarkMode}
             />
           </div>
           

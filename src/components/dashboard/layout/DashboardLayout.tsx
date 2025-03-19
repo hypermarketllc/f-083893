@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Menu, Webhook, WebhookIcon } from 'lucide-react';
 import WebhooksSidebar from '@/components/webhooks/WebhooksSidebar';
+import { useTheme } from 'next-themes';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -24,6 +25,13 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const { signOut } = useAuth();
   const [webhookSidebarOpen, setWebhookSidebarOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure theme is only accessed after mounting to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleWebhookSidebar = () => {
     setWebhookSidebarOpen(!webhookSidebarOpen);
@@ -53,6 +61,8 @@ export default function DashboardLayout({
           setSearchQuery={setSearchQuery}
           signOut={signOut}
           toggleSidebar={toggleSidebar}
+          theme={mounted ? theme : undefined}
+          setTheme={setTheme}
         />
 
         <div className="flex flex-1 relative">
