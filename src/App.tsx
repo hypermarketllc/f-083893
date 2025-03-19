@@ -15,12 +15,24 @@ import ResetPassword from "./pages/ResetPassword";
 import Unauthorized from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
+import { useEffect } from "react";
 
 const queryClient = new QueryClient();
+
+// Force dark mode across the entire app
+const DarkModeEnforcer = () => {
+  useEffect(() => {
+    // Force dark mode on all pages
+    document.documentElement.classList.add('dark');
+  }, []);
+  
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+      <DarkModeEnforcer />
       <TooltipProvider>
         <Toaster />
         <Sonner />
