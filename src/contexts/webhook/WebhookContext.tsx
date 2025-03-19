@@ -6,12 +6,13 @@ import {
   mockWebhookLogs, 
   mockIncomingWebhooks, 
   mockIncomingWebhookLogs 
-} from './mockData';
+} from './data';
 import { 
   useWebhookOperations, 
   useIncomingWebhookOperations 
 } from './useWebhookOperations';
 import { useWebhookSearch } from './hooks/useWebhookSearch';
+import { useWebhookUIState } from './hooks/useWebhookUIState';
 
 const WebhookContext = createContext<WebhookContextType | undefined>(undefined);
 
@@ -28,25 +29,37 @@ interface WebhookProviderProps {
 }
 
 export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) => {
-  // State for outgoing webhooks
+  // State for outgoing webhooks and logs
   const [webhooks, setWebhooks] = useState(mockWebhooks);
   const [webhookLogs, setWebhookLogs] = useState(mockWebhookLogs);
   
-  // State for incoming webhooks
+  // State for incoming webhooks and logs
   const [incomingWebhooks, setIncomingWebhooks] = useState(mockIncomingWebhooks);
   const [incomingWebhookLogs, setIncomingWebhookLogs] = useState(mockIncomingWebhookLogs);
   
-  // UI state
-  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
-  const [isIncomingWebhookModalOpen, setIsIncomingWebhookModalOpen] = useState(false);
-  const [selectedWebhook, setSelectedWebhook] = useState(null);
-  const [selectedIncomingWebhook, setSelectedIncomingWebhook] = useState(null);
-  const [editingWebhook, setEditingWebhook] = useState(null);
-  const [editingIncomingWebhook, setEditingIncomingWebhook] = useState(null);
-  const [isTestMode, setIsTestMode] = useState(false);
-  const [testResponse, setTestResponse] = useState(null);
-  const [isTestLoading, setIsTestLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  // UI state from custom hook
+  const {
+    isWebhookModalOpen,
+    setIsWebhookModalOpen,
+    isIncomingWebhookModalOpen,
+    setIsIncomingWebhookModalOpen,
+    selectedWebhook,
+    setSelectedWebhook,
+    selectedIncomingWebhook,
+    setSelectedIncomingWebhook,
+    editingWebhook,
+    setEditingWebhook,
+    editingIncomingWebhook,
+    setEditingIncomingWebhook,
+    isTestMode,
+    setIsTestMode,
+    testResponse,
+    setTestResponse,
+    isTestLoading,
+    setIsTestLoading,
+    searchQuery,
+    setSearchQuery
+  } = useWebhookUIState();
 
   // Search functionality
   const { filteredWebhookLogs, filteredIncomingWebhookLogs } = useWebhookSearch(
