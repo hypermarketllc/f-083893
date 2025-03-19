@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { GeneralSettings } from './settings/GeneralSettings';
 import AppearanceSettings from './settings/AppearanceSettings';
 import PreferencesSettings from './settings/PreferencesSettings';
 import SecuritySettings from './settings/SecuritySettings';
-import GeneralSettings from './settings/GeneralSettings';
 import { UserIcon, PaletteIcon, BellIcon, ShieldIcon, Settings } from 'lucide-react';
 
 const SettingsSection: React.FC = () => {
