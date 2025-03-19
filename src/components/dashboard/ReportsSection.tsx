@@ -1,8 +1,12 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart, LineChart, PieChart, DonutChart } from '@/components/ui/chart';
+import { 
+  ChartContainer, 
+  ChartTooltipContent, 
+  ChartTooltip,
+  clickupConfig
+} from '@/components/ui/chart';
 import { 
   DollarSign, 
   PhoneCall, 
@@ -11,6 +15,7 @@ import {
   ArrowUpRight, 
   ArrowDownRight 
 } from 'lucide-react';
+import { BarChart, LineChart, PieChart } from 'recharts';
 
 const ReportsSection = () => {
   const [activeReport, setActiveReport] = useState('pandl');
@@ -391,7 +396,19 @@ const ReportsSection = () => {
                 <CardTitle>Revenue vs Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <BarChart data={chartConfig.pandl.barData} />
+                <ChartContainer config={clickupConfig} className="aspect-video">
+                  <BarChart
+                    data={chartConfig.pandl.barData.labels.map((label, index) => ({
+                      name: label,
+                      Revenue: chartConfig.pandl.barData.datasets[0].data[index],
+                      Expenses: chartConfig.pandl.barData.datasets[1].data[index],
+                    }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    {/* Additional chart components would be added here */}
+                  </BarChart>
+                </ChartContainer>
               </CardContent>
             </Card>
             <Card>
@@ -399,7 +416,18 @@ const ReportsSection = () => {
                 <CardTitle>Profit Trend</CardTitle>
               </CardHeader>
               <CardContent>
-                <LineChart data={chartConfig.pandl.lineData} />
+                <ChartContainer config={clickupConfig} className="aspect-video">
+                  <LineChart
+                    data={chartConfig.pandl.lineData.labels.map((label, index) => ({
+                      name: label,
+                      Profit: chartConfig.pandl.lineData.datasets[0].data[index],
+                    }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    {/* Additional chart components would be added here */}
+                  </LineChart>
+                </ChartContainer>
               </CardContent>
             </Card>
           </div>

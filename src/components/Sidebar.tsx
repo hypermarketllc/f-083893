@@ -1,13 +1,13 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, Bell, BarChart3, LayoutGrid, FileText, 
   ChevronDown, ChevronRight, PlusCircle, GanttChart,
-  DollarSign, PhoneCall, Users, Building2, LineChart
+  DollarSign, PhoneCall, Users, Building2, LineChart, Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 
 interface SpaceProps {
   id: string;
@@ -227,3 +227,4 @@ export default function Sidebar() {
     </div>
   );
 }
+
