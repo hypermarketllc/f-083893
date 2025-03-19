@@ -23,6 +23,7 @@ export default function DashboardContent({
 }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState(initialActiveTab);
   const location = useLocation();
+  const [selectedTask, setSelectedTask] = useState<any>(null);
 
   useEffect(() => {
     // Check URL query parameters for tab
@@ -34,14 +35,20 @@ export default function DashboardContent({
     } else if (initialActiveTab) {
       setActiveTab(initialActiveTab);
     }
-  }, [location.search, initialActiveTab]);
+    
+    console.log("DashboardContent rendered with tab:", activeTab);
+  }, [location.search, initialActiveTab, activeTab]);
+
+  const handleTaskClick = (task: any) => {
+    setSelectedTask(task);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <DashboardOverview />;
+        return <DashboardOverview setActiveTab={setActiveTab} handleTaskClick={handleTaskClick} />;
       case 'tasks':
-        return <TasksSection searchQuery={searchQuery} />;
+        return <TasksSection activeView="list" setActiveView={() => {}} filteredTasks={[]} handleTaskClick={handleTaskClick} handleCreateTask={() => {}} />;
       case 'webhooks':
         return <WebhooksSection />;
       case 'reports':
@@ -51,7 +58,7 @@ export default function DashboardContent({
       case 'profile':
         return <ProfileSection />;
       default:
-        return <PlaceholderView title={activeTab} />;
+        return <PlaceholderView type="calendar" />;
     }
   };
 
