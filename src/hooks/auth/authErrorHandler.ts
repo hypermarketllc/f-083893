@@ -1,6 +1,9 @@
 
 import { AuthError } from '@supabase/supabase-js';
-import { ToastType } from '@/hooks/use-toast';
+import { toast as toastFn } from '@/hooks/use-toast';
+
+// Define the ToastType based on the actual toast function signature
+type ToastType = typeof toastFn;
 
 export const handleAuthError = (
   error: AuthError | null, 
