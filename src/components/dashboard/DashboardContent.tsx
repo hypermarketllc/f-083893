@@ -12,6 +12,7 @@ import TasksSection from '@/components/dashboard/TasksSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import SettingsSection from '@/components/dashboard/SettingsSection';
 import ReportsSection from '@/components/dashboard/ReportsSection';
+import WebhooksSection from '@/components/dashboard/WebhooksSection';
 
 interface DashboardContentProps {
   searchQuery?: string;
@@ -66,6 +67,10 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
 
         <TabsContent value="reports">
           <ReportsSection />
+        </TabsContent>
+
+        <TabsContent value="webhooks">
+          <WebhooksSection />
         </TabsContent>
 
         <TabsContent value="settings">

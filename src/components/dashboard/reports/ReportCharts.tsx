@@ -1,74 +1,46 @@
 
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { 
-  ChartContainer, 
-  ChartTooltipContent, 
-  ChartTooltip,
-  clickupConfig
-} from '@/components/ui/chart';
-import { BarChart, LineChart, PieChart, DonutChart } from '@/components/ui/recharts';
-
-interface ChartData {
-  barData?: any;
-  lineData?: any;
-  pieData?: any;
-  donutData?: any;
-}
+import { Card } from '@/components/ui/card';
+import { BarChart, DonutChart, LineChart, PieChart } from '@/components/ui/charts';
+import { type ChartConfig, type ChartProps } from '@/components/ui/charts/types';
 
 interface ReportChartsProps {
-  chartData: ChartData;
-  chartType: 'bar-line' | 'bar-pie' | 'bar-donut';
+  chartData: ChartConfig;
+  chartType: string;
   barTitle: string;
   secondChartTitle: string;
 }
 
 const ReportCharts: React.FC<ReportChartsProps> = ({ 
   chartData, 
-  chartType, 
-  barTitle, 
-  secondChartTitle 
+  chartType,
+  barTitle,
+  secondChartTitle
 }) => {
+  // Determine which chart to render based on chartType
+  const renderSecondaryChart = () => {
+    switch (chartType) {
+      case 'donut':
+        return <DonutChart config={chartData} />;
+      case 'pie':
+        return <PieChart config={chartData} />;
+      case 'line':
+        return <LineChart config={chartData} />;
+      default:
+        return <DonutChart config={chartData} />;
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>{barTitle}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={clickupConfig} className="aspect-video">
-            <BarChart 
-              data={chartData.barData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            >
-              <ChartTooltip content={<ChartTooltipContent />} />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card className="p-4">
+        <h3 className="text-lg font-medium mb-4">{barTitle}</h3>
+        <BarChart config={chartData} />
       </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>{secondChartTitle}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer config={clickupConfig} className="aspect-video">
-            {chartType === 'bar-line' && (
-              <LineChart
-                data={chartData.lineData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </LineChart>
-            )}
-            {chartType === 'bar-pie' && (
-              <PieChart data={chartData.pieData} />
-            )}
-            {chartType === 'bar-donut' && (
-              <DonutChart data={chartData.donutData} />
-            )}
-          </ChartContainer>
-        </CardContent>
+
+      <Card className="p-4">
+        <h3 className="text-lg font-medium mb-4">{secondChartTitle}</h3>
+        {renderSecondaryChart()}
       </Card>
     </div>
   );

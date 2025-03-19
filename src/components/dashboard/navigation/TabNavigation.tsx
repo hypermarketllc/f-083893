@@ -1,43 +1,61 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Home, BarChart3, Settings, ListChecks } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  LayoutDashboard, 
+  CheckSquare, 
+  BarChart2, 
+  FileText, 
+  Settings,
+  Webhook
+} from 'lucide-react';
 
 interface TabNavigationProps {
   activeTab: string;
-  setActiveTab: (value: string) => void;
+  setActiveTab: (tab: string) => void;
   children: React.ReactNode;
 }
 
-export default function TabNavigation({ activeTab, setActiveTab, children }: TabNavigationProps) {
+const TabNavigation: React.FC<TabNavigationProps> = ({ 
+  activeTab, 
+  setActiveTab, 
+  children 
+}) => {
   return (
-    <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <TabsList className="grid grid-cols-5 w-full max-w-xl">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Home className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <div className="border-b sticky top-0 z-10 bg-background">
+        <TabsList className="w-full justify-start rounded-none border-b px-2 bg-transparent h-12">
+          <TabsTrigger value="overview" className="data-[state=active]:bg-background">
+            <LayoutDashboard className="h-4 w-4 mr-2" />
+            Overview
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="flex items-center gap-2">
-            <ListChecks className="h-4 w-4" />
-            <span className="hidden sm:inline">Tasks</span>
+          <TabsTrigger value="tasks" className="data-[state=active]:bg-background">
+            <CheckSquare className="h-4 w-4 mr-2" />
+            Tasks
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Analytics</span>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-background">
+            <BarChart2 className="h-4 w-4 mr-2" />
+            Analytics
           </TabsTrigger>
-          <TabsTrigger value="reports" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="hidden sm:inline">Reports</span>
+          <TabsTrigger value="reports" className="data-[state=active]:bg-background">
+            <FileText className="h-4 w-4 mr-2" />
+            Reports
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Settings</span>
+          <TabsTrigger value="webhooks" className="data-[state=active]:bg-background">
+            <Webhook className="h-4 w-4 mr-2" />
+            Webhooks
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="data-[state=active]:bg-background">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
           </TabsTrigger>
         </TabsList>
       </div>
-      
-      {children}
+      <div className="p-4">
+        {children}
+      </div>
     </Tabs>
   );
-}
+};
+
+export default TabNavigation;
