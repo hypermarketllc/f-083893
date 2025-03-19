@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
-import { Menu, Webhook, WebhookIcon } from 'lucide-react';
+import { Menu, WebhookIcon } from 'lucide-react';
 import WebhooksSidebar from '@/components/webhooks/WebhooksSidebar';
 import { useTheme } from 'next-themes';
 
@@ -81,19 +81,18 @@ export default function DashboardLayout({
             </Button>
           </div>
           
-          {/* Webhooks Sidebar */}
+          {/* Webhooks Sidebar - Make it always visible on desktop */}
           <div 
             className={`
-              fixed md:absolute right-0 top-0 z-10
-              h-screen w-full md:w-80 bg-card border-l border-border
+              fixed md:static right-0 top-0 z-10
+              h-screen md:h-full w-full md:w-80 bg-card border-l border-border
               transition-transform duration-300 ease-in-out shadow-lg md:shadow-none
-              ${webhookSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0 md:opacity-0 md:pointer-events-none'}
-              md:transition-opacity
+              ${webhookSidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
             `}
           >
             <WebhooksSidebar 
               onClose={() => setWebhookSidebarOpen(false)} 
-              visible={webhookSidebarOpen} 
+              visible={true} 
             />
           </div>
         </div>

@@ -19,12 +19,23 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import { 
   Check,
   ChevronDown, 
   Code,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  CopyCheck
 } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface WebhookLogsTableProps {
   compact?: boolean;
@@ -33,6 +44,8 @@ interface WebhookLogsTableProps {
 export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = false }) => {
   const { webhookLogs, searchQuery } = useWebhookContext();
   const [expandedLogIds, setExpandedLogIds] = useState<string[]>([]);
+  const [viewingLog, setViewingLog] = useState<WebhookLogEntry | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   const toggleLogExpand = (logId: string) => {
     if (expandedLogIds.includes(logId)) {
@@ -40,6 +53,17 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
     } else {
       setExpandedLogIds([...expandedLogIds, logId]);
     }
+  };
+
+  const openLogDetails = (log: WebhookLogEntry, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setViewingLog(log);
+    setDetailsDialogOpen(true);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
   };
 
   if (!webhookLogs) {
@@ -83,8 +107,16 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
                 <div className="text-sm font-medium truncate">{log.webhookName}</div>
                 {getStatusBadge(log.responseStatus)}
               </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')} • {log.requestMethod} • {log.duration}ms
+              <div className="text-xs text-muted-foreground mt-1 flex justify-between">
+                <span>{format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')} • {log.requestMethod} • {log.duration}ms</span>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-5 w-5 ml-2 -mr-1" 
+                  onClick={(e) => openLogDetails(log, e)}
+                >
+                  <Eye className="h-3 w-3" />
+                </Button>
               </div>
             </div>
           ))
@@ -111,6 +143,7 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
               <TableHead>Status</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>Success</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,10 +164,21 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
                       <Badge variant="destructive"><AlertCircle className="h-3 w-3" /></Badge>
                     }
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={(e) => openLogDetails(log, e)}
+                      className="h-8"
+                    >
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                      Details
+                    </Button>
+                  </TableCell>
                 </TableRow>
                 {expandedLogIds.includes(log.id) && (
                   <TableRow className="bg-muted/30">
-                    <TableCell colSpan={6} className="p-0">
+                    <TableCell colSpan={7} className="p-0">
                       <Accordion type="single" collapsible className="w-full">
                         <AccordionItem value="request" className="border-0">
                           <AccordionTrigger className="px-4 py-2">
@@ -213,6 +257,164 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
           </TableBody>
         </Table>
       )}
+
+      {/* Full Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              Webhook Log Details
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewingLog && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Webhook</h3>
+                  <p className="text-sm">{viewingLog.webhookName}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Timestamp</h3>
+                  <p className="text-sm">{format(new Date(viewingLog.timestamp), 'MMM d, yyyy HH:mm:ss')}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Method</h3>
+                  <p className="text-sm">{viewingLog.requestMethod}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Status</h3>
+                  {getStatusBadge(viewingLog.responseStatus)}
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Duration</h3>
+                  <p className="text-sm">{viewingLog.duration}ms</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Success</h3>
+                  {viewingLog.success ? 
+                    <Badge className="bg-green-500 hover:bg-green-600"><Check className="h-3 w-3 mr-1" /> Yes</Badge> : 
+                    <Badge variant="destructive"><AlertCircle className="h-3 w-3 mr-1" /> No</Badge>
+                  }
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-2">Request URL</h3>
+                <div className="relative">
+                  <div className="text-sm bg-muted p-3 rounded-md overflow-auto">
+                    {viewingLog.requestUrl}
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-7 w-7" 
+                    onClick={() => copyToClipboard(viewingLog.requestUrl)}
+                  >
+                    <CopyCheck className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-2">Request Headers</h3>
+                <div className="relative">
+                  <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-48">
+                    {JSON.stringify(viewingLog.requestHeaders, null, 2)}
+                  </pre>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-7 w-7" 
+                    onClick={() => copyToClipboard(JSON.stringify(viewingLog.requestHeaders, null, 2))}
+                  >
+                    <CopyCheck className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {viewingLog.requestBody && (
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-2">Request Body</h3>
+                  <div className="relative">
+                    <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-64">
+                      {typeof viewingLog.requestBody === 'string' ? 
+                        viewingLog.requestBody : 
+                        JSON.stringify(viewingLog.requestBody, null, 2)}
+                    </pre>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-2 right-2 h-7 w-7" 
+                      onClick={() => copyToClipboard(typeof viewingLog.requestBody === 'string' ? 
+                        viewingLog.requestBody : 
+                        JSON.stringify(viewingLog.requestBody, null, 2))}
+                    >
+                      <CopyCheck className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              <div className="border-t pt-4">
+                <h3 className="text-sm font-medium mb-2">Response Headers</h3>
+                <div className="relative">
+                  <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-48">
+                    {JSON.stringify(viewingLog.responseHeaders, null, 2)}
+                  </pre>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-7 w-7" 
+                    onClick={() => copyToClipboard(JSON.stringify(viewingLog.responseHeaders, null, 2))}
+                  >
+                    <CopyCheck className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {viewingLog.responseBody && (
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-2">Response Body</h3>
+                  <div className="relative">
+                    <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-64">
+                      {viewingLog.responseBody}
+                    </pre>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-2 right-2 h-7 w-7" 
+                      onClick={() => copyToClipboard(viewingLog.responseBody)}
+                    >
+                      <CopyCheck className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
+              {viewingLog.error && (
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-medium mb-2">Error</h3>
+                  <div className="relative">
+                    <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-64 text-destructive">
+                      {viewingLog.error}
+                    </pre>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute top-2 right-2 h-7 w-7" 
+                      onClick={() => copyToClipboard(viewingLog.error || '')}
+                    >
+                      <CopyCheck className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
