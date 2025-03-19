@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, BarChart3, Home, Settings, CreditCard, 
-  ListChecks, Calendar, Layout, Gantt, Box, Plus,
+  ListChecks, Calendar, Layout, GanttChart, Box, Plus,
   Clock, FileText, MessageSquare, Filter, Search
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -343,7 +342,7 @@ export default function Dashboard() {
                           className="rounded-none"
                           onClick={() => setActiveView("gantt")}
                         >
-                          <Gantt className="h-4 w-4 mr-1" />
+                          <GanttChart className="h-4 w-4 mr-1" />
                           Gantt
                         </Button>
                       </div>
@@ -457,7 +456,8 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    'bg-red-100 text-red-800'
+                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    ''
                                   }`}>
                                     {task.priority}
                                   </span>
@@ -519,7 +519,8 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    'bg-red-100 text-red-800'
+                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    ''
                                   }`}>
                                     {task.priority}
                                   </span>
@@ -561,7 +562,8 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    'bg-red-100 text-red-800'
+                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    ''
                                   }`}>
                                     {task.priority}
                                   </span>
@@ -603,7 +605,8 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    'bg-red-100 text-red-800'
+                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    ''
                                   }`}>
                                     {task.priority}
                                   </span>
@@ -645,7 +648,8 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    'bg-red-100 text-red-800'
+                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    ''
                                   }`}>
                                     {task.priority}
                                   </span>
@@ -681,7 +685,7 @@ export default function Dashboard() {
                   {activeView === "gantt" && (
                     <div className="flex items-center justify-center h-96 border rounded-md">
                       <div className="text-center">
-                        <Gantt className="mx-auto h-10 w-10 text-muted-foreground" />
+                        <GanttChart className="mx-auto h-10 w-10 text-muted-foreground" />
                         <h3 className="mt-2 font-medium">Gantt View</h3>
                         <p className="text-sm text-muted-foreground">
                           Gantt view is coming soon

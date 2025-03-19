@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, Bell, BarChart3, LayoutGrid, FileText, 
-  ChevronDown, ChevronRight, PlusCircle
+  ChevronDown, ChevronRight, PlusCircle, GanttChart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
