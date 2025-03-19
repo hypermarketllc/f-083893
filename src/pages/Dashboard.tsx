@@ -26,7 +26,7 @@ export default function Dashboard() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  if (loading) {
+  if (loading || !isLoaded) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="space-y-4 w-full max-w-md">

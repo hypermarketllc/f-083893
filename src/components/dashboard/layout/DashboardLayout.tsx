@@ -56,7 +56,7 @@ export default function DashboardLayout({
         />
 
         <div className="flex flex-1 relative">
-          <div className="flex-1">
+          <div className="flex-1 overflow-auto">
             {children}
           </div>
           
