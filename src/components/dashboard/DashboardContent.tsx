@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Home, BarChart3, Settings, ListChecks } from 'lucide-react';
 import { useTaskContext } from '@/contexts/TaskContext';
@@ -35,7 +35,7 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
   } = useTaskContext();
   
   // Update the search query in the task context when it changes
-  React.useEffect(() => {
+  useEffect(() => {
     setSearchQuery(searchQuery);
   }, [searchQuery, setSearchQuery]);
   

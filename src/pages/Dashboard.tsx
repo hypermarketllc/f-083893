@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 
 // Components
 import Sidebar from '@/components/Sidebar';
@@ -43,16 +45,29 @@ export default function Dashboard() {
   return (
     <TaskProvider>
       <div className="min-h-screen bg-background flex">
+        {/* Sidebar */}
         <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block`}>
           <Sidebar />
         </div>
 
+        {/* Main Content */}
         <div className="flex-1 flex flex-col">
+          <div className="md:hidden p-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleSidebar}
+              className={sidebarOpen ? 'hidden' : 'block'}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
           <DashboardHeader 
             userEmail={user?.email}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             signOut={signOut}
+            toggleSidebar={toggleSidebar}
           />
 
           <DashboardContent searchQuery={searchQuery} />

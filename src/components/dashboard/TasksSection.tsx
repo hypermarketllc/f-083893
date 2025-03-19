@@ -8,7 +8,7 @@ import { Plus, Filter, ListChecks, Layout, Calendar, GanttChart } from 'lucide-r
 import TaskListView from './TaskListView';
 import TaskBoardView from './TaskBoardView';
 import TaskCalendarView from './TaskCalendarView';
-import PlaceholderView from './PlaceholderView';
+import TaskGanttView from './TaskGanttView';
 import TaskFilterSidebar from './TaskFilterSidebar';
 import { Task } from '@/types/task';
 import { useTaskContext } from '@/contexts/TaskContext';
@@ -121,7 +121,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         )}
         
         {activeView === "gantt" && (
-          <PlaceholderView type="gantt" />
+          <TaskGanttView
+            tasks={filteredTasks}
+            onTaskClick={handleTaskClick}
+          />
         )}
       </CardContent>
     </Card>
