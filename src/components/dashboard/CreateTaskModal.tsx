@@ -12,7 +12,8 @@ import {
   Flag, 
   Tags, 
   User,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import { Task } from '@/types/task';
 
@@ -20,7 +21,7 @@ interface CreateTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (task: Task) => void;
-  defaultStatus?: string;
+  defaultStatus?: Task['status'];
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
@@ -32,7 +33,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [newTask, setNewTask] = useState<Partial<Task>>({
     title: '',
     description: '',
-    status: defaultStatus,
+    status: defaultStatus as Task['status'],
     priority: 'medium',
     dueDate: '',
     assignee: '',
@@ -61,7 +62,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setNewTask({
       title: '',
       description: '',
-      status: defaultStatus,
+      status: defaultStatus as Task['status'],
       priority: 'medium',
       dueDate: '',
       assignee: '',
