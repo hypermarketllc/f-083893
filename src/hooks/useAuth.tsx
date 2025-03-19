@@ -38,6 +38,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: session.user.id,
             email: session.user.email,
           });
+          console.log("User session found and loaded");
+        } else {
+          console.log("No active session found");
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -51,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event);
         if (session?.user) {
           setUser({
             id: session.user.id,

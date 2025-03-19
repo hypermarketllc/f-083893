@@ -135,8 +135,10 @@ export default function Dashboard() {
       setTasks(updatedTasks);
       toast.success("Task updated successfully");
     } else {
-      // Create new task
-      setTasks([...tasks, task]);
+      // Create new task with unique ID
+      const newId = crypto.randomUUID();
+      const newTask = { ...task, id: newId };
+      setTasks([...tasks, newTask]);
       toast.success("Task created successfully");
     }
     
@@ -148,6 +150,11 @@ export default function Dashboard() {
     setTasks(tasks.filter(task => task.id !== taskId));
     setIsDetailModalOpen(false);
     toast.success("Task deleted successfully");
+  };
+
+  // Toggle sidebar
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   if (loading) {
