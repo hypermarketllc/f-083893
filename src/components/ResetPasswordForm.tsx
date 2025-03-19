@@ -11,8 +11,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 const formSchema = z
   .object({
-    password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
-    confirmPassword: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+    password: z
+      .string()
+      .min(6, { message: 'Password must be at least 6 characters' })
+      .refine((password) => /[a-z]/.test(password), { message: 'Password must contain a lowercase letter' })
+      .refine((password) => /[A-Z]/.test(password), { message: 'Password must contain an uppercase letter' })
+      .refine((password) => /[0-9]/.test(password), { message: 'Password must contain a number' }),
+    confirmPassword: z.string().min(1, { message: 'Please confirm your password' }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -45,12 +50,12 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-md mx-auto shadow-lg border-0">
+      <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
         <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
-        <CardDescription>Create a new password for your account</CardDescription>
+        <CardDescription className="text-gray-100">Create a new password for your account</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -79,7 +84,11 @@ export default function ResetPasswordForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 transition-all duration-200" 
+              disabled={isLoading}
+            >
               {isLoading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </form>

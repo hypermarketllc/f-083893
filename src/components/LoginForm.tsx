@@ -41,12 +41,12 @@ export default function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-md mx-auto shadow-lg border-0">
+      <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-t-lg">
         <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+        <CardDescription className="text-gray-100">Enter your credentials to access your account</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -75,21 +75,25 @@ export default function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 transition-all duration-200" 
+              disabled={isLoading}
+            >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex flex-col space-y-2">
+      <CardFooter className="flex flex-col space-y-2 border-t py-4">
         <div className="text-sm text-center">
-          <Link to="/forgot-password" className="text-primary hover:underline">
+          <Link to="/forgot-password" className="text-indigo-600 font-medium hover:underline hover:text-indigo-800 transition-colors">
             Forgot password?
           </Link>
         </div>
         <div className="text-sm text-center">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-primary hover:underline">
+          <Link to="/signup" className="text-indigo-600 font-medium hover:underline hover:text-indigo-800 transition-colors">
             Sign Up
           </Link>
         </div>
