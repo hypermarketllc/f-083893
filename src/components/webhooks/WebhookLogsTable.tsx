@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import WebhookDetailView from './WebhookDetailView';
+import { EmptyLogs } from './EmptyLogs';
 
 interface WebhookLogsTableProps {
   compact?: boolean;
@@ -39,6 +40,11 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
     );
   }
 
+  // If no logs are found, show the empty state
+  if (webhookLogs.length === 0) {
+    return <EmptyLogs message="No webhook logs found" />;
+  }
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -53,14 +59,7 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
           </TableRow>
         </TableHeader>
         <TableBody>
-          {webhookLogs.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
-                No logs found
-              </TableCell>
-            </TableRow>
-          ) : (
-            webhookLogs.map((log) => (
+          {webhookLogs.map((log) => (
               <TableRow key={log.id} className="cursor-pointer hover:bg-muted/50">
                 <TableCell onClick={() => setSelectedLog(log)}>
                   {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')}
@@ -70,17 +69,17 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
                 </TableCell>
                 <TableCell onClick={() => setSelectedLog(log)}>
                   <span className="font-mono text-xs">
-                    {log.method}
+                    {log.requestMethod}
                   </span>
                 </TableCell>
                 <TableCell onClick={() => setSelectedLog(log)}>
                   <div className="flex items-center">
-                    {log.status >= 200 && log.status < 300 ? (
+                    {log.responseStatus >= 200 && log.responseStatus < 300 ? (
                       <Check className="h-4 w-4 text-green-500 mr-1" />
                     ) : (
                       <X className="h-4 w-4 text-red-500 mr-1" />
                     )}
-                    <span className="font-mono text-xs">{log.status}</span>
+                    <span className="font-mono text-xs">{log.responseStatus}</span>
                   </div>
                 </TableCell>
                 <TableCell onClick={() => setSelectedLog(log)}>
@@ -101,8 +100,7 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = fa
                   </Button>
                 </TableCell>
               </TableRow>
-            ))
-          )}
+            ))}
         </TableBody>
       </Table>
     </div>
