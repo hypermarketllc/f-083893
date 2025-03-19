@@ -13,20 +13,16 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   
   useEffect(() => {
-    if (!loading) {
-      const timer = setTimeout(() => {
-        setIsLoaded(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [loading]);
+    // Set isLoaded to true without delay to avoid white screen
+    setIsLoaded(true);
+  }, []);
 
   // Toggle sidebar
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  if (loading || !isLoaded) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="space-y-4 w-full max-w-md">
