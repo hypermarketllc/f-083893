@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +13,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { User } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ResetPasswordForm from '@/components/ResetPasswordForm';
 
 const profileFormSchema = z.object({
   firstName: z.string().optional(),
@@ -23,9 +25,14 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function ProfileSection() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [marketingEmails, setMarketingEmails] = useState(false);
+  const [securityAlerts, setSecurityAlerts] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState('');
   
   // Get user initials for avatar
   const getInitials = () => {
@@ -66,8 +73,58 @@ export default function ProfileSection() {
     }
   }
 
+  const handleSavePreferences = () => {
+    toast({
+      title: "Preferences saved",
+      description: "Your notification preferences have been updated.",
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Account Information Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Information</CardTitle>
+          <CardDescription>
+            Your account details and information.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Email</p>
+                <p>{user?.email}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">User ID</p>
+                <p className="truncate">{user?.id}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4 mt-4">
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <p className="font-medium">Account Created</p>
+                  <p className="text-sm text-muted-foreground">Your account was created</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Just now</p>
+              </div>
+              
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <p className="font-medium">Last Login</p>
+                  <p className="text-sm text-muted-foreground">Last time you logged in</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Just now</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile Information Card */}
       <Card>
         <CardHeader>
           <CardTitle>Profile</CardTitle>
@@ -139,31 +196,139 @@ export default function ProfileSection() {
         </CardContent>
       </Card>
 
+      {/* Security Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Activity</CardTitle>
+          <CardTitle>Password</CardTitle>
           <CardDescription>
-            Recent activity on your account.
+            Update your password to keep your account secure.
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <ResetPasswordForm />
+        </CardContent>
+      </Card>
+      
+      {/* Notification Preferences Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Notification Settings</CardTitle>
+          <CardDescription>
+            Manage how you receive notifications and updates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div className="space-y-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <p className="font-medium">Account Created</p>
-                <p className="text-sm text-muted-foreground">Your account was created</p>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="email-notifications">Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive notifications about account activity via email.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">Just now</p>
+              <Switch
+                id="email-notifications"
+                checked={emailNotifications}
+                onCheckedChange={setEmailNotifications}
+              />
             </div>
             
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <p className="font-medium">Last Login</p>
-                <p className="text-sm text-muted-foreground">Last time you logged in</p>
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="marketing-emails">Marketing Emails</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive emails about new features and special offers.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">Just now</p>
+              <Switch
+                id="marketing-emails"
+                checked={marketingEmails}
+                onCheckedChange={setMarketingEmails}
+              />
+            </div>
+            
+            <Separator />
+            
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="security-alerts">Security Alerts</Label>
+                <p className="text-sm text-muted-foreground">
+                  Receive alerts about suspicious activity on your account.
+                </p>
+              </div>
+              <Switch
+                id="security-alerts"
+                checked={securityAlerts}
+                onCheckedChange={setSecurityAlerts}
+              />
             </div>
           </div>
+          
+          <Button onClick={handleSavePreferences}>
+            Save Preferences
+          </Button>
+        </CardContent>
+      </Card>
+      
+      {/* Danger Zone Card */}
+      <Card className="border-destructive/50">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardDescription>
+            Irreversible and destructive actions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="destructive">
+                Delete Account
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Are you absolutely sure?</DialogTitle>
+                <DialogDescription>
+                  This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <p className="text-sm text-muted-foreground">
+                  To confirm, please type your email address: {user?.email}
+                </p>
+                <Input 
+                  value={confirmEmail} 
+                  onChange={(e) => setConfirmEmail(e.target.value)}
+                  placeholder="Enter your email"
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  disabled={confirmEmail !== user?.email}
+                  onClick={() => {
+                    toast({
+                      title: "Account deleted",
+                      description: "Your account has been successfully deleted.",
+                    });
+                    setDeleteDialogOpen(false);
+                    // In a real app, we would delete the user's account here
+                    // For this demo, we'll just sign out
+                    setTimeout(() => {
+                      signOut();
+                    }, 1500);
+                  }}
+                >
+                  Delete Account
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>
