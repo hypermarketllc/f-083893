@@ -7,7 +7,7 @@ import {
 } from '@/types/webhook';
 
 // Initial outgoing webhooks
-export const INITIAL_WEBHOOKS: Webhook[] = [
+export const mockWebhooks: Webhook[] = [
   {
     id: '1',
     name: 'Get Weather Data',
@@ -47,7 +47,7 @@ export const INITIAL_WEBHOOKS: Webhook[] = [
 ];
 
 // Initial outgoing webhook logs
-export const INITIAL_WEBHOOK_LOGS: WebhookLogEntry[] = [
+export const mockWebhookLogs: WebhookLogEntry[] = [
   {
     id: '1',
     webhookId: '1',
@@ -110,7 +110,7 @@ export const INITIAL_WEBHOOK_LOGS: WebhookLogEntry[] = [
 ];
 
 // Initial incoming webhooks
-export const INITIAL_INCOMING_WEBHOOKS: IncomingWebhook[] = [
+export const mockIncomingWebhooks: IncomingWebhook[] = [
   {
     id: '1',
     name: 'Retell Data Receiver',
@@ -132,7 +132,7 @@ export const INITIAL_INCOMING_WEBHOOKS: IncomingWebhook[] = [
 ];
 
 // Initial incoming webhook logs
-export const INITIAL_INCOMING_WEBHOOK_LOGS: IncomingWebhookLogEntry[] = [
+export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
   {
     id: '1',
     webhookId: '1',
