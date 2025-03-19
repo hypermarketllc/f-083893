@@ -28,10 +28,11 @@ export default function DashboardLayout({
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Ensure theme is only accessed after mounting to prevent hydration mismatch
+  // Set dark theme as default and ensure theme is only accessed after mounting
   useEffect(() => {
     setMounted(true);
-  }, []);
+    setTheme('dark');
+  }, [setTheme]);
 
   const toggleWebhookSidebar = () => {
     setWebhookSidebarOpen(!webhookSidebarOpen);
