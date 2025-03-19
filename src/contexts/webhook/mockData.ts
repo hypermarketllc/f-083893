@@ -137,7 +137,10 @@ export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
     },
     requestMethod: 'POST',
     requestBody: '{\n  "event": "call.completed",\n  "call_id": "123456",\n  "timestamp": "2023-01-15T10:19:45Z",\n  "duration": 325,\n  "metadata": {\n    "customer_id": "cust_123",\n    "agent_id": "agent_456"\n  }\n}',
-    isParsed: false
+    isParsed: false,
+    success: true,
+    sourceIp: '192.168.1.1',
+    contentType: 'application/json'
   },
   {
     id: '2',
@@ -152,6 +155,9 @@ export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
     requestMethod: 'POST',
     requestBody: '{\n  "id": "evt_123456",\n  "object": "event",\n  "api_version": "2020-08-27",\n  "created": 1673880900,\n  "data": {\n    "object": {\n      "id": "ch_123456",\n      "object": "charge",\n      "amount": 2000,\n      "currency": "usd",\n      "status": "succeeded"\n    }\n  },\n  "type": "charge.succeeded"\n}',
     parsedData: '{\n  "id": "evt_123456",\n  "object": "event",\n  "api_version": "2020-08-27",\n  "created": 1673880900,\n  "data": {\n    "object": {\n      "id": "ch_123456",\n      "object": "charge",\n      "amount": 2000,\n      "currency": "usd",\n      "status": "succeeded"\n    }\n  },\n  "type": "charge.succeeded"\n}',
-    isParsed: true
+    isParsed: true,
+    success: true,
+    sourceIp: '203.0.113.1',
+    contentType: 'application/json'
   }
 ];

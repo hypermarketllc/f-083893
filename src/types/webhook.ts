@@ -84,4 +84,9 @@ export interface IncomingWebhookLogEntry {
   requestQuery?: Record<string, string>;
   parsedData?: string;
   isParsed: boolean;
+  // Adding missing properties used in components
+  success: boolean;
+  sourceIp?: string;
+  contentType?: string;
+  error?: string;
 }
