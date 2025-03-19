@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/auth';
 import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
-import { Menu, WebhookIcon } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import WebhooksSidebar from '@/components/webhooks/WebhooksSidebar';
 import { useTheme } from 'next-themes';
 
@@ -24,7 +24,6 @@ export default function DashboardLayout({
   setSearchQuery
 }: DashboardLayoutProps) {
   const { signOut } = useAuth();
-  const [webhookSidebarOpen, setWebhookSidebarOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -37,10 +36,6 @@ export default function DashboardLayout({
     document.documentElement.classList.add('dark');
     setTheme('dark');
   }, [setTheme]);
-
-  const toggleWebhookSidebar = () => {
-    setWebhookSidebarOpen(!webhookSidebarOpen);
-  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -78,8 +73,8 @@ export default function DashboardLayout({
           {/* Webhooks Sidebar - Always visible as a fixed panel on the right */}
           <div className="fixed top-14 right-0 w-80 h-[calc(100vh-3.5rem)] border-l border-border bg-card overflow-auto shadow-md">
             <WebhooksSidebar 
-              onClose={() => {}} // No close function needed as it's always visible
-              visible={true} 
+              visible={true}
+              onClose={() => {}}
             />
           </div>
         </div>

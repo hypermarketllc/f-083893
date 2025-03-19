@@ -19,7 +19,7 @@ export default function Dashboard() {
     // Set isLoaded to true without delay to avoid white screen
     setIsLoaded(true);
     
-    // Ensure dark mode is set at the application level
+    // Force dark mode on the application level
     document.documentElement.classList.add('dark');
     setTheme('dark');
     

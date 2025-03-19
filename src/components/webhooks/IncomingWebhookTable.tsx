@@ -92,7 +92,7 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
                     </div>
                   </div>
                 </div>
-                <Badge className={webhook.enabled ? "bg-green-500 hover:bg-green-600" : "bg-muted"}>
+                <Badge className={webhook.enabled ? "bg-green-500 hover:bg-green-600" : "bg-destructive"}>
                   {webhook.enabled ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
                 </Badge>
               </div>
@@ -145,4 +145,4 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
       )}
     </div>
   );
-};
+}

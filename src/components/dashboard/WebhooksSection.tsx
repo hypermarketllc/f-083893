@@ -48,18 +48,18 @@ const WebhooksTabs: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 p-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Webhooks</h2>
 
         <div className="flex items-center space-x-2">
           {activeSubTab === 'outgoing' ? (
-            <Button onClick={handleCreateWebhook}>
+            <Button onClick={handleCreateWebhook} className="shadow-sm">
               <Plus className="h-4 w-4 mr-2" />
               Create Webhook
             </Button>
           ) : (
-            <Button onClick={handleCreateIncomingWebhook}>
+            <Button onClick={handleCreateIncomingWebhook} className="shadow-sm">
               <Plus className="h-4 w-4 mr-2" />
               Create Incoming Webhook
             </Button>
@@ -67,19 +67,19 @@ const WebhooksTabs: React.FC = () => {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="webhooks">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full max-w-md mx-auto mb-6">
+          <TabsTrigger value="webhooks" className="flex-1">
             <Webhook className="h-4 w-4 mr-2" />
             Webhooks
           </TabsTrigger>
-          <TabsTrigger value="logs">
+          <TabsTrigger value="logs" className="flex-1">
             <History className="h-4 w-4 mr-2" />
             Logs
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="webhooks">
+        <TabsContent value="webhooks" className="mt-0">
           <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
             <div className="flex justify-between items-center mb-4">
               <TabsList>
@@ -94,7 +94,7 @@ const WebhooksTabs: React.FC = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="outgoing" className="space-y-4">
+            <TabsContent value="outgoing" className="space-y-6 mt-0">
               <WebhookTable />
               
               {selectedWebhook && isTestMode && (
@@ -102,13 +102,13 @@ const WebhooksTabs: React.FC = () => {
               )}
             </TabsContent>
 
-            <TabsContent value="incoming" className="space-y-4">
+            <TabsContent value="incoming" className="space-y-6 mt-0">
               <IncomingWebhookTable />
             </TabsContent>
           </Tabs>
         </TabsContent>
 
-        <TabsContent value="logs">
+        <TabsContent value="logs" className="mt-0">
           <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
             <div className="flex justify-between items-center mb-4">
               <TabsList>
@@ -145,11 +145,11 @@ const WebhooksTabs: React.FC = () => {
               </div>
             </div>
 
-            <TabsContent value="outgoing" className="space-y-4">
+            <TabsContent value="outgoing" className="space-y-6 mt-0">
               <WebhookLogsTable />
             </TabsContent>
 
-            <TabsContent value="incoming" className="space-y-4">
+            <TabsContent value="incoming" className="space-y-6 mt-0">
               <IncomingWebhookLogsTable />
             </TabsContent>
           </Tabs>
@@ -166,7 +166,9 @@ const WebhooksTabs: React.FC = () => {
 const WebhooksSection: React.FC = () => {
   return (
     <WebhookProvider>
-      <WebhooksTabs />
+      <div className="animate-in fade-in duration-300">
+        <WebhooksTabs />
+      </div>
     </WebhookProvider>
   );
 };
