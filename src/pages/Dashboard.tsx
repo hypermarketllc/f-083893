@@ -1,39 +1,37 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter, CardBadge } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   User, BarChart3, Home, Settings, CreditCard, 
   ListChecks, Calendar, Layout, GanttChart, Box, Plus,
-  Clock, FileText, MessageSquare, Filter, Search
+  Clock, FileText, MessageSquare, Filter, Search, X
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import ProfileSection from '@/components/dashboard/ProfileSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import SettingsSection from '@/components/dashboard/SettingsSection';
+import TaskDetailModal from '@/components/dashboard/TaskDetailModal';
+import CreateTaskModal from '@/components/dashboard/CreateTaskModal';
 import Sidebar from '@/components/Sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Task } from '@/types/task';
+import { toast } from 'sonner';
 
-interface Task {
-  id: string;
-  title: string;
-  status: 'todo' | 'in_progress' | 'review' | 'done';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  dueDate: string;
-  assignee: string;
-  timeEstimate: string;
-  tags: string[];
-}
-
+// Initial task data
 const TASKS: Task[] = [
   {
     id: '1',
     title: 'Update contractor agreement',
+    description: 'Review and update the terms of our standard contractor agreement template based on legal feedback.',
     status: 'todo',
     priority: 'medium',
     dueDate: '2023-12-10',
@@ -90,6 +88,30 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState<Task[]>(TASKS);
   const [isLoaded, setIsLoaded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createModalDefaultStatus, setCreateModalDefaultStatus] = useState('todo');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
+  
+  // Effect to filter tasks when search query or tasks change
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredTasks(tasks);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = tasks.filter(task => 
+        task.title.toLowerCase().includes(query) || 
+        (task.description && task.description.toLowerCase().includes(query)) ||
+        task.status.includes(query) ||
+        task.priority.includes(query) ||
+        task.assignee.toLowerCase().includes(query) ||
+        task.tags.some(tag => tag.toLowerCase().includes(query))
+      );
+      setFilteredTasks(filtered);
+    }
+  }, [searchQuery, tasks]);
   
   useEffect(() => {
     if (!loading) {
@@ -106,7 +128,44 @@ export default function Dashboard() {
   };
 
   const getTasksByStatus = (status: Task['status']) => {
-    return tasks.filter(task => task.status === status);
+    return filteredTasks.filter(task => task.status === status);
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleCreateTask = (status?: Task['status']) => {
+    if (status) {
+      setCreateModalDefaultStatus(status);
+    }
+    setIsCreateModalOpen(true);
+  };
+
+  const saveTask = (task: Task) => {
+    const taskIndex = tasks.findIndex(t => t.id === task.id);
+    
+    if (taskIndex >= 0) {
+      // Update existing task
+      const updatedTasks = [...tasks];
+      updatedTasks[taskIndex] = task;
+      setTasks(updatedTasks);
+      toast.success("Task updated successfully");
+    } else {
+      // Create new task
+      setTasks([...tasks, task]);
+      toast.success("Task created successfully");
+    }
+    
+    setIsDetailModalOpen(false);
+    setIsCreateModalOpen(false);
+  };
+
+  const deleteTask = (taskId: string) => {
+    setTasks(tasks.filter(task => task.id !== taskId));
+    setIsDetailModalOpen(false);
+    toast.success("Task deleted successfully");
   };
 
   if (loading) {
@@ -149,6 +208,8 @@ export default function Dashboard() {
                     type="search"
                     placeholder="Search tasks..."
                     className="w-[200px] lg:w-[300px] pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <Button variant="outline" size="sm" onClick={signOut}>
@@ -404,7 +465,7 @@ export default function Dashboard() {
                           </div>
                         </SheetContent>
                       </Sheet>
-                      <Button size="sm">
+                      <Button size="sm" onClick={() => handleCreateTask()}>
                         <Plus className="h-4 w-4 mr-1" />
                         New Task
                       </Button>
@@ -428,8 +489,11 @@ export default function Dashboard() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {tasks.map((task) => (
-                              <TableRow key={task.id}>
+                            {filteredTasks.map((task) => (
+                              <TableRow key={task.id} 
+                                className="cursor-pointer hover:bg-muted/50"
+                                onClick={() => handleTaskClick(task)}
+                              >
                                 <TableCell className="font-medium">{task.title}</TableCell>
                                 <TableCell>
                                   <span className={`px-2 py-1 rounded-full text-xs ${
@@ -499,7 +563,8 @@ export default function Dashboard() {
                           {getTasksByStatus('todo').map((task) => (
                             <div 
                               key={task.id}
-                              className="bg-white p-3 rounded-md border shadow-sm"
+                              className="bg-white p-3 rounded-md border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => handleTaskClick(task)}
                             >
                               <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                               <div className="flex items-center justify-between text-xs">
@@ -521,7 +586,11 @@ export default function Dashboard() {
                               </div>
                             </div>
                           ))}
-                          <Button variant="ghost" className="w-full text-xs">
+                          <Button 
+                            variant="ghost" 
+                            className="w-full text-xs"
+                            onClick={() => handleCreateTask('todo')}
+                          >
                             <Plus className="h-3 w-3 mr-1" />
                             Add Task
                           </Button>
@@ -541,7 +610,8 @@ export default function Dashboard() {
                           {getTasksByStatus('in_progress').map((task) => (
                             <div 
                               key={task.id}
-                              className="bg-white p-3 rounded-md border shadow-sm"
+                              className="bg-white p-3 rounded-md border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => handleTaskClick(task)}
                             >
                               <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                               <div className="flex items-center justify-between text-xs">
@@ -563,7 +633,11 @@ export default function Dashboard() {
                               </div>
                             </div>
                           ))}
-                          <Button variant="ghost" className="w-full text-xs">
+                          <Button 
+                            variant="ghost" 
+                            className="w-full text-xs"
+                            onClick={() => handleCreateTask('in_progress')}
+                          >
                             <Plus className="h-3 w-3 mr-1" />
                             Add Task
                           </Button>
@@ -583,7 +657,8 @@ export default function Dashboard() {
                           {getTasksByStatus('review').map((task) => (
                             <div 
                               key={task.id}
-                              className="bg-white p-3 rounded-md border shadow-sm"
+                              className="bg-white p-3 rounded-md border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => handleTaskClick(task)}
                             >
                               <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                               <div className="flex items-center justify-between text-xs">
@@ -605,7 +680,11 @@ export default function Dashboard() {
                               </div>
                             </div>
                           ))}
-                          <Button variant="ghost" className="w-full text-xs">
+                          <Button 
+                            variant="ghost" 
+                            className="w-full text-xs"
+                            onClick={() => handleCreateTask('review')}
+                          >
                             <Plus className="h-3 w-3 mr-1" />
                             Add Task
                           </Button>
@@ -625,7 +704,8 @@ export default function Dashboard() {
                           {getTasksByStatus('done').map((task) => (
                             <div 
                               key={task.id}
-                              className="bg-white p-3 rounded-md border shadow-sm"
+                              className="bg-white p-3 rounded-md border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                              onClick={() => handleTaskClick(task)}
                             >
                               <h4 className="font-medium text-sm mb-2">{task.title}</h4>
                               <div className="flex items-center justify-between text-xs">
@@ -647,7 +727,11 @@ export default function Dashboard() {
                               </div>
                             </div>
                           ))}
-                          <Button variant="ghost" className="w-full text-xs">
+                          <Button 
+                            variant="ghost" 
+                            className="w-full text-xs"
+                            onClick={() => handleCreateTask('done')}
+                          >
                             <Plus className="h-3 w-3 mr-1" />
                             Add Task
                           </Button>
@@ -693,6 +777,23 @@ export default function Dashboard() {
           </Tabs>
         </div>
       </div>
+      
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        task={selectedTask}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        onSave={saveTask}
+        onDelete={deleteTask}
+      />
+      
+      {/* Create Task Modal */}
+      <CreateTaskModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSave={saveTask}
+        defaultStatus={createModalDefaultStatus}
+      />
     </div>
   );
 }
