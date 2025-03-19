@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TaskProvider } from '@/contexts/task/TaskContext';
 import DashboardLayout from '@/components/dashboard/layout/DashboardLayout';

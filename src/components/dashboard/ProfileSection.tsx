@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,6 @@ export default function ProfileSection() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [confirmEmail, setConfirmEmail] = useState('');
   
-  // Get user initials for avatar
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
@@ -53,8 +51,6 @@ export default function ProfileSection() {
     
     setIsLoading(true);
     try {
-      // In a real app, we would update the user's profile in the database
-      // For this demo, we'll just show a success toast
       console.log("Updating profile with:", values);
       
       toast({
@@ -317,8 +313,6 @@ export default function ProfileSection() {
                       description: "Your account has been successfully deleted.",
                     });
                     setDeleteDialogOpen(false);
-                    // In a real app, we would delete the user's account here
-                    // For this demo, we'll just sign out
                     setTimeout(() => {
                       signOut();
                     }, 1500);

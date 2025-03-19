@@ -1,29 +1,12 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Session, User, AuthError } from '@supabase/supabase-js';
-
-type UserProfile = {
-  id: string;
-  email?: string;
-  name?: string;
-  avatarUrl?: string;
-};
-
-type AuthContextType = {
-  user: UserProfile | null;
-  session: Session | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, metadata?: { first_name?: string; last_name?: string }) => Promise<void>;
-  signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './AuthContext';
+import { UserProfile, AuthContextType } from './types';
+import { handleAuthError } from './authErrorHandler';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -48,34 +31,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       console.log("No authenticated user");
     }
-  };
-
-  // Handle auth errors with consistent messaging
-  const handleAuthError = (error: AuthError | null, action: string): void => {
-    if (!error) return;
-    
-    console.error(`Auth error during ${action}:`, error);
-    
-    const errorMessages: Record<string, string> = {
-      // Sign in errors
-      'Invalid login credentials': 'Invalid email or password. Please try again.',
-      'Email not confirmed': 'Please check your email and follow the confirmation link before signing in.',
-      
-      // Sign up errors
-      'User already registered': 'An account with this email already exists. Try signing in instead.',
-      'Password should be at least 6 characters': 'Please use a password with at least 6 characters.',
-      
-      // General errors
-      'Request failed': 'Connection error. Please check your internet and try again.',
-    };
-    
-    const message = errorMessages[error.message] || `Authentication failed: ${error.message}`;
-    
-    toast({
-      variant: "destructive",
-      title: `${action} Failed`,
-      description: message,
-    });
   };
 
   useEffect(() => {
@@ -112,7 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
-        handleAuthError(error, "Sign in");
+        handleAuthError(error, "Sign in", toast);
         return;
       }
       
@@ -143,7 +98,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) {
-        handleAuthError(error, "Sign up");
+        handleAuthError(error, "Sign up", toast);
         return;
       }
       
@@ -174,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        handleAuthError(error, "Sign out");
+        handleAuthError(error, "Sign out", toast);
         return;
       }
       
@@ -200,7 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) {
-        handleAuthError(error, "Password reset");
+        handleAuthError(error, "Password reset", toast);
         return;
       }
       
@@ -225,7 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       
       if (error) {
-        handleAuthError(error, "Password update");
+        handleAuthError(error, "Password update", toast);
         return;
       }
       
@@ -244,7 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     loading,
@@ -260,12 +215,4 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };
