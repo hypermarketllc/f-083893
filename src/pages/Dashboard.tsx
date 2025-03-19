@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,16 +9,39 @@ import { User, BarChart3, Home, Settings, CreditCard } from 'lucide-react';
 import ProfileSection from '@/components/dashboard/ProfileSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import SettingsSection from '@/components/dashboard/SettingsSection';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  useEffect(() => {
+    // Set loaded state after a short delay to ensure components mount properly
+    if (!loading) {
+      const timer = setTimeout(() => {
+        setIsLoaded(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
 
   // Get user initials for avatar
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="space-y-4 w-full max-w-md">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
