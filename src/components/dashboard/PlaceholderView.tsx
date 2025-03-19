@@ -113,7 +113,7 @@ const PlaceholderView: React.FC<PlaceholderViewProps> = ({ type }) => {
           <div className="w-full max-w-xs space-y-2">
             <Progress value={progress} className="h-2 w-full" />
             <p className="text-xs text-center text-muted-foreground">
-              {progress < 100 ? 'Processing request...' : 'Request received! We'll notify you when it's ready.'}
+              {progress < 100 ? 'Processing request...' : 'Request received! We\'ll notify you when it\'s ready.'}
             </p>
           </div>
         ) : (
