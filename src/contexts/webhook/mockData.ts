@@ -140,7 +140,8 @@ export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
     isParsed: false,
     success: true,
     sourceIp: '192.168.1.1',
-    contentType: 'application/json'
+    contentType: 'application/json',
+    error: undefined
   },
   {
     id: '2',
@@ -158,6 +159,7 @@ export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
     isParsed: true,
     success: true,
     sourceIp: '203.0.113.1',
-    contentType: 'application/json'
+    contentType: 'application/json',
+    error: undefined
   }
 ];

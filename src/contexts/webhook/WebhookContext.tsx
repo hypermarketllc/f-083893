@@ -11,6 +11,7 @@ import {
   useWebhookOperations, 
   useIncomingWebhookOperations 
 } from './useWebhookOperations';
+import { useWebhookSearch } from './hooks/useWebhookSearch';
 
 const WebhookContext = createContext<WebhookContextType | undefined>(undefined);
 
@@ -27,44 +28,34 @@ interface WebhookProviderProps {
 }
 
 export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) => {
-  // Outgoing Webhooks State
+  // State for outgoing webhooks
   const [webhooks, setWebhooks] = useState(mockWebhooks);
+  const [webhookLogs, setWebhookLogs] = useState(mockWebhookLogs);
+  
+  // State for incoming webhooks
+  const [incomingWebhooks, setIncomingWebhooks] = useState(mockIncomingWebhooks);
+  const [incomingWebhookLogs, setIncomingWebhookLogs] = useState(mockIncomingWebhookLogs);
+  
+  // UI state
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [isIncomingWebhookModalOpen, setIsIncomingWebhookModalOpen] = useState(false);
   const [selectedWebhook, setSelectedWebhook] = useState(null);
+  const [selectedIncomingWebhook, setSelectedIncomingWebhook] = useState(null);
   const [editingWebhook, setEditingWebhook] = useState(null);
+  const [editingIncomingWebhook, setEditingIncomingWebhook] = useState(null);
   const [isTestMode, setIsTestMode] = useState(false);
   const [testResponse, setTestResponse] = useState(null);
   const [isTestLoading, setIsTestLoading] = useState(false);
-  const [webhookLogs, setWebhookLogs] = useState(mockWebhookLogs);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Incoming Webhooks State
-  const [incomingWebhooks, setIncomingWebhooks] = useState(mockIncomingWebhooks);
-  const [isIncomingWebhookModalOpen, setIsIncomingWebhookModalOpen] = useState(false);
-  const [selectedIncomingWebhook, setSelectedIncomingWebhook] = useState(null);
-  const [editingIncomingWebhook, setEditingIncomingWebhook] = useState(null);
-  const [incomingWebhookLogs, setIncomingWebhookLogs] = useState(mockIncomingWebhookLogs);
+  // Search functionality
+  const { filteredWebhookLogs, filteredIncomingWebhookLogs } = useWebhookSearch(
+    webhookLogs,
+    incomingWebhookLogs,
+    searchQuery
+  );
 
-  // Filter webhook logs based on search query
-  const filteredWebhookLogs = searchQuery
-    ? webhookLogs.filter(log => 
-        log.webhookName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.requestUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (log.error && log.error.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        String(log.responseStatus).includes(searchQuery)
-      )
-    : webhookLogs;
-
-  // Filter incoming webhook logs based on search query
-  const filteredIncomingWebhookLogs = searchQuery
-    ? incomingWebhookLogs.filter(log => 
-        log.webhookName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (log.requestBody && log.requestBody.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (log.parsedData && log.parsedData.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : incomingWebhookLogs;
-
-  // Get webhook operations
+  // Webhook operations
   const {
     createWebhook,
     updateWebhook,
@@ -86,7 +77,7 @@ export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) =>
     setIsTestLoading
   );
 
-  // Get incoming webhook operations
+  // Incoming webhook operations
   const {
     createIncomingWebhook,
     updateIncomingWebhook,
@@ -101,8 +92,10 @@ export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) =>
     setEditingIncomingWebhook
   );
 
-  const value = {
+  const value: WebhookContextType = {
+    // Outgoing webhooks
     webhooks,
+    webhookLogs: filteredWebhookLogs,
     isWebhookModalOpen,
     setIsWebhookModalOpen,
     selectedWebhook,
@@ -115,9 +108,22 @@ export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) =>
     setTestResponse,
     isTestLoading,
     setIsTestLoading,
-    webhookLogs: filteredWebhookLogs,
+    
+    // Incoming webhooks
+    incomingWebhooks,
+    incomingWebhookLogs: filteredIncomingWebhookLogs,
+    isIncomingWebhookModalOpen,
+    setIsIncomingWebhookModalOpen,
+    selectedIncomingWebhook,
+    setSelectedIncomingWebhook,
+    editingIncomingWebhook,
+    setEditingIncomingWebhook,
+    
+    // Search
     searchQuery,
     setSearchQuery,
+    
+    // Operations
     createWebhook,
     updateWebhook,
     handleEditWebhook,
@@ -125,14 +131,6 @@ export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) =>
     executeWebhook,
     clearTestResponse,
     sendTestRequest,
-    incomingWebhooks,
-    isIncomingWebhookModalOpen,
-    setIsIncomingWebhookModalOpen,
-    selectedIncomingWebhook,
-    setSelectedIncomingWebhook,
-    editingIncomingWebhook,
-    setEditingIncomingWebhook,
-    incomingWebhookLogs: filteredIncomingWebhookLogs,
     createIncomingWebhook,
     updateIncomingWebhook,
     handleEditIncomingWebhook,
