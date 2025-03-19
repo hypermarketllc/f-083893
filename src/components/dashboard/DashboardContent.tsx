@@ -38,7 +38,8 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
   // Update the search query in the task context when it changes
   useEffect(() => {
     setSearchQuery(searchQuery);
-  }, [searchQuery, setSearchQuery]);
+    console.log("DashboardContent rendered with tab:", activeTab);
+  }, [searchQuery, setSearchQuery, activeTab]);
   
   return (
     <div className="flex-1 overflow-auto">

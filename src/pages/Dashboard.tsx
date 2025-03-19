@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,7 +7,7 @@ import DashboardLayout from '@/components/dashboard/layout/DashboardLayout';
 import DashboardContent from '@/components/dashboard/DashboardContent';
 
 export default function Dashboard() {
-  const { loading } = useAuth();
+  const { loading, user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +15,8 @@ export default function Dashboard() {
   useEffect(() => {
     // Set isLoaded to true without delay to avoid white screen
     setIsLoaded(true);
-  }, []);
+    console.log("Dashboard loading, auth state:", { loading, user, isLoaded });
+  }, [loading, user]);
 
   // Toggle sidebar
   const toggleSidebar = () => {

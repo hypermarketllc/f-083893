@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { BarChart3, ListChecks, Settings } from 'lucide-react';
 import TaskOverview from './TaskOverview';
-import { useTaskContext } from '@/contexts/TaskContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useTaskContext } from '@/contexts/task/TaskContext';
+import { useAuth } from '@/hooks/auth';
 
 interface DashboardOverviewProps {
   setActiveTab: (tab: string) => void;
