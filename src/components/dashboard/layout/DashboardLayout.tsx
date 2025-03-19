@@ -61,8 +61,6 @@ export default function DashboardLayout({
           setSearchQuery={setSearchQuery}
           signOut={signOut}
           toggleSidebar={toggleSidebar}
-          theme={mounted ? theme : undefined}
-          setTheme={setTheme}
         />
 
         <div className="flex flex-1 relative">
