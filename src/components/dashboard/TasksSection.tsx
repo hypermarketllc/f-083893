@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, ListChecks, Layout, Calendar, GanttChart } from 'lucide-react';
 import TaskListView from './TaskListView';
 import TaskBoardView from './TaskBoardView';
+import TaskCalendarView from './TaskCalendarView';
 import PlaceholderView from './PlaceholderView';
 import TaskFilterSidebar from './TaskFilterSidebar';
 import { Task } from '@/types/task';
@@ -113,7 +114,10 @@ const TasksSection: React.FC<TasksSectionProps> = ({
         )}
         
         {activeView === "calendar" && (
-          <PlaceholderView type="calendar" />
+          <TaskCalendarView
+            tasks={filteredTasks}
+            onTaskClick={handleTaskClick}
+          />
         )}
         
         {activeView === "gantt" && (

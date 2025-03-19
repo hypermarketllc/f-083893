@@ -55,7 +55,7 @@ export default function Dashboard() {
             signOut={signOut}
           />
 
-          <DashboardContent />
+          <DashboardContent searchQuery={searchQuery} />
         </div>
       </div>
     </TaskProvider>

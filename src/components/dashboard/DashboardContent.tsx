@@ -12,7 +12,11 @@ import TasksSection from '@/components/dashboard/TasksSection';
 import AnalyticsSection from '@/components/dashboard/AnalyticsSection';
 import SettingsSection from '@/components/dashboard/SettingsSection';
 
-export default function DashboardContent() {
+interface DashboardContentProps {
+  searchQuery?: string;
+}
+
+export default function DashboardContent({ searchQuery = '' }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState("overview");
   const [activeView, setActiveView] = useState("list");
   const { 
@@ -26,8 +30,14 @@ export default function DashboardContent() {
     handleTaskClick,
     handleCreateTask,
     saveTask,
-    deleteTask
+    deleteTask,
+    setSearchQuery
   } = useTaskContext();
+  
+  // Update the search query in the task context when it changes
+  React.useEffect(() => {
+    setSearchQuery(searchQuery);
+  }, [searchQuery, setSearchQuery]);
   
   return (
     <div className="flex-1 overflow-auto">
