@@ -4,21 +4,21 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { BarChart3, ListChecks, Settings } from 'lucide-react';
 import TaskOverview from './TaskOverview';
-import { Task } from '@/types/task';
+import { useTaskContext } from '@/contexts/TaskContext';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DashboardOverviewProps {
-  user: { email?: string } | null;
   setActiveTab: (tab: string) => void;
-  tasks: Task[];
-  handleTaskClick: (task: Task) => void;
+  handleTaskClick: (task: any) => void;
 }
 
 const DashboardOverview: React.FC<DashboardOverviewProps> = ({ 
-  user,
   setActiveTab,
-  tasks,
   handleTaskClick
 }) => {
+  const { user } = useAuth();
+  const { tasks } = useTaskContext();
+  
   return (
     <Card>
       <CardHeader>
