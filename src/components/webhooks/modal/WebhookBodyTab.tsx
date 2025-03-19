@@ -13,18 +13,27 @@ interface WebhookBodyTabProps {
 }
 
 export const WebhookBodyTab: React.FC<WebhookBodyTabProps> = ({
-  webhookBody,
+  webhookBody = '',  // Default empty string if undefined
   setWebhookBody,
-  webhookContentType,
+  webhookContentType = 'json',  // Default to JSON if undefined
   setWebhookContentType
 }) => {
+  // Safe setters with validation
+  const handleSetBody = (body: string) => {
+    setWebhookBody(body || '');
+  };
+
+  const handleSetContentType = (contentType: string) => {
+    setWebhookContentType((contentType as 'json' | 'form' | 'text') || 'json');
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="webhook-content-type">Content Type</Label>
         <Select
           value={webhookContentType}
-          onValueChange={(value) => setWebhookContentType(value as 'json' | 'form' | 'text')}
+          onValueChange={handleSetContentType}
         >
           <SelectTrigger id="webhook-content-type">
             <SelectValue placeholder="Select content type" />
@@ -45,7 +54,7 @@ export const WebhookBodyTab: React.FC<WebhookBodyTabProps> = ({
         <Textarea
           id="webhook-body"
           value={webhookBody}
-          onChange={(e) => setWebhookBody(e.target.value)}
+          onChange={(e) => handleSetBody(e.target.value)}
           placeholder={
             webhookContentType === 'json'
               ? '{\n  "key": "value"\n}'

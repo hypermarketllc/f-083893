@@ -7,6 +7,7 @@ import { EmptyLogs } from './logs/EmptyLogs';
 import { LogsTableHeader } from './logs/LogsTableHeader';
 import { LogRow } from './logs/LogRow';
 import { LogDetailsModal } from './logs/LogDetailsModal';
+import { ensureLogEntryFields } from '@/contexts/webhook/webhookUtils';
 
 interface WebhookLogsTableProps {
   compact?: boolean;
@@ -18,7 +19,8 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact }) =
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const handleViewDetails = (log: WebhookLogEntry) => {
-    setSelectedLog(log);
+    // Ensure all fields are present in the log entry
+    setSelectedLog(ensureLogEntryFields(log));
     setIsDetailsModalOpen(true);
   };
 
@@ -26,7 +28,7 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact }) =
     setIsDetailsModalOpen(false);
   };
 
-  if (webhookLogs.length === 0) {
+  if (!webhookLogs || webhookLogs.length === 0) {
     return <EmptyLogs message="No webhook logs found" />;
   }
 
@@ -38,8 +40,8 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact }) =
           <TableBody>
             {webhookLogs.map(log => (
               <LogRow
-                key={log.id}
-                log={log}
+                key={log.id || 'placeholder-id'}
+                log={ensureLogEntryFields(log)}
                 onViewDetails={handleViewDetails}
                 compact={compact}
               />

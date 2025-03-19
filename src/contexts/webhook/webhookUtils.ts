@@ -1,5 +1,5 @@
 
-import { WebhookBody } from '@/types/webhook';
+import { WebhookBody, WebhookLogEntry, IncomingWebhookLogEntry } from '@/types/webhook';
 
 // Parse webhook body content based on content type
 export const parseBodyContent = (body?: WebhookBody): string | object | undefined => {
@@ -55,5 +55,55 @@ export const generateSampleResponse = (status: number = 200) => {
       }
     }),
     duration: Math.floor(Math.random() * 300) + 50 // Random duration between 50-350ms
+  };
+};
+
+// Utility function to ensure webhook log entries have all required fields
+export const ensureLogEntryFields = (logEntry: Partial<WebhookLogEntry>): WebhookLogEntry => {
+  return {
+    id: logEntry.id || 'placeholder-id',
+    webhookId: logEntry.webhookId || 'placeholder-webhook-id',
+    webhookName: logEntry.webhookName || 'Unnamed Webhook',
+    timestamp: logEntry.timestamp || new Date().toISOString(),
+    requestUrl: logEntry.requestUrl || 'https://example.com/api',
+    requestMethod: logEntry.requestMethod || 'GET',
+    requestHeaders: logEntry.requestHeaders || {},
+    requestBody: logEntry.requestBody || undefined,
+    responseStatus: logEntry.responseStatus || 200,
+    responseHeaders: logEntry.responseHeaders || {},
+    responseBody: logEntry.responseBody || undefined,
+    duration: logEntry.duration || 0,
+    success: logEntry.success ?? true,
+    error: logEntry.error,
+    // Add fallbacks for missing properties used in components
+    url: logEntry.url || logEntry.requestUrl || 'https://example.com/api',
+    method: logEntry.method || logEntry.requestMethod || 'GET'
+  };
+};
+
+// Utility function to ensure incoming webhook log entries have all required fields
+export const ensureIncomingLogEntryFields = (logEntry: Partial<IncomingWebhookLogEntry>): IncomingWebhookLogEntry => {
+  return {
+    id: logEntry.id || 'placeholder-id',
+    webhookId: logEntry.webhookId || 'placeholder-webhook-id',
+    webhookName: logEntry.webhookName || 'Unnamed Webhook',
+    timestamp: logEntry.timestamp || new Date().toISOString(),
+    requestHeaders: logEntry.requestHeaders || {},
+    requestMethod: logEntry.requestMethod || 'POST',
+    requestBody: logEntry.requestBody || undefined,
+    requestQuery: logEntry.requestQuery || {},
+    parsedData: logEntry.parsedData || undefined,
+    isParsed: logEntry.isParsed ?? false,
+    success: logEntry.success ?? true,
+    sourceIp: logEntry.sourceIp || '127.0.0.1',
+    contentType: logEntry.contentType || 'application/json',
+    error: logEntry.error,
+    // Add fallbacks for missing properties used in components
+    responseStatus: logEntry.responseStatus || 200,
+    responseBody: logEntry.responseBody || undefined,
+    responseHeaders: logEntry.responseHeaders || {},
+    method: logEntry.method || logEntry.requestMethod || 'POST',
+    ipAddress: logEntry.ipAddress || logEntry.sourceIp || '127.0.0.1',
+    queryParams: logEntry.queryParams || logEntry.requestQuery || {}
   };
 };

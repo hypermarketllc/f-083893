@@ -61,7 +61,7 @@ export interface WebhookLogEntry {
   duration: number; // in milliseconds
   success: boolean;
   error?: string;
-  // Add missing properties used in components
+  // Additional properties used in components
   url?: string;
   method?: HttpMethod;
 }
@@ -91,7 +91,7 @@ export interface IncomingWebhookLogEntry {
   sourceIp?: string;
   contentType?: string;
   error?: string;
-  // Add missing properties used in the components
+  // Additional properties used in components
   responseStatus?: number;
   responseBody?: string;
   responseHeaders?: Record<string, string>;

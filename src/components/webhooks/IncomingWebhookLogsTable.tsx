@@ -7,6 +7,7 @@ import { EmptyLogs } from './logs/EmptyLogs';
 import { IncomingLogsTableHeader } from './logs/IncomingLogsTableHeader';
 import { IncomingLogRow } from './logs/IncomingLogRow';
 import { IncomingLogDetailsModal } from './logs/IncomingLogDetailsModal';
+import { ensureIncomingLogEntryFields } from '@/contexts/webhook/webhookUtils';
 
 interface IncomingWebhookLogsTableProps {
   compact?: boolean;
@@ -18,7 +19,8 @@ export const IncomingWebhookLogsTable: React.FC<IncomingWebhookLogsTableProps> =
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const handleViewDetails = (log: IncomingWebhookLogEntry) => {
-    setSelectedLog(log);
+    // Ensure all fields are present in the log entry
+    setSelectedLog(ensureIncomingLogEntryFields(log));
     setIsDetailsModalOpen(true);
   };
 
@@ -26,7 +28,7 @@ export const IncomingWebhookLogsTable: React.FC<IncomingWebhookLogsTableProps> =
     setIsDetailsModalOpen(false);
   };
 
-  if (incomingWebhookLogs.length === 0) {
+  if (!incomingWebhookLogs || incomingWebhookLogs.length === 0) {
     return <EmptyLogs message="No incoming webhook logs found" />;
   }
 
@@ -38,8 +40,8 @@ export const IncomingWebhookLogsTable: React.FC<IncomingWebhookLogsTableProps> =
           <TableBody>
             {incomingWebhookLogs.map(log => (
               <IncomingLogRow
-                key={log.id}
-                log={log}
+                key={log.id || 'placeholder-id'}
+                log={ensureIncomingLogEntryFields(log)}
                 onViewDetails={handleViewDetails}
                 compact={compact}
               />

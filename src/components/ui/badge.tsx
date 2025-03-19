@@ -20,6 +20,17 @@ const badgeVariants = cva(
           "border-transparent bg-green-500 text-white hover:bg-green-500/80",
         warning:
           "border-transparent bg-yellow-500 text-black hover:bg-yellow-500/80",
+        info:
+          "border-transparent bg-blue-500 text-white hover:bg-blue-500/80",
+        error:
+          "border-transparent bg-red-500 text-white hover:bg-red-500/80",
+        // Add more fallback variants to prevent styling errors
+        clickup_red: "border-transparent bg-red-500 text-white hover:bg-red-500/80",
+        clickup_blue: "border-transparent bg-blue-500 text-white hover:bg-blue-500/80",
+        clickup_green: "border-transparent bg-green-500 text-white hover:bg-green-500/80",
+        clickup_yellow: "border-transparent bg-yellow-500 text-black hover:bg-yellow-500/80",
+        clickup_orange: "border-transparent bg-orange-500 text-white hover:bg-orange-500/80",
+        gray: "border-transparent bg-gray-500 text-white hover:bg-gray-500/80",
       },
     },
     defaultVariants: {
