@@ -1,31 +1,40 @@
 
 import { WebhookLogEntry, IncomingWebhookLogEntry } from '@/types/webhook';
+import { useMemo } from 'react';
 
 export const useWebhookSearch = (
   webhookLogs: WebhookLogEntry[],
   incomingWebhookLogs: IncomingWebhookLogEntry[],
   searchQuery: string
 ) => {
-  // Filter webhook logs based on search query
-  const filteredWebhookLogs = searchQuery
-    ? webhookLogs.filter(log => 
-        log.webhookName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.requestUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (log.error && log.error.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        String(log.responseStatus).includes(searchQuery)
-      )
-    : webhookLogs;
+  const filteredWebhookLogs = useMemo(() => {
+    if (!searchQuery.trim()) return webhookLogs;
+    
+    const query = searchQuery.toLowerCase();
+    return webhookLogs.filter(log => {
+      return (
+        (log.webhookName && log.webhookName.toLowerCase().includes(query)) ||
+        (log.requestUrl && log.requestUrl.toLowerCase().includes(query)) ||
+        (log.responseStatus && log.responseStatus.toString().includes(query)) ||
+        (log.error && log.error.toLowerCase().includes(query))
+      );
+    });
+  }, [webhookLogs, searchQuery]);
 
-  // Filter incoming webhook logs based on search query
-  const filteredIncomingWebhookLogs = searchQuery
-    ? incomingWebhookLogs.filter(log => 
-        log.webhookName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (log.requestBody && log.requestBody.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (log.parsedData && log.parsedData.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (log.sourceIp && log.sourceIp.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (log.contentType && log.contentType.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : incomingWebhookLogs;
+  const filteredIncomingWebhookLogs = useMemo(() => {
+    if (!searchQuery.trim()) return incomingWebhookLogs;
+    
+    const query = searchQuery.toLowerCase();
+    return incomingWebhookLogs.filter(log => {
+      return (
+        (log.webhookName && log.webhookName.toLowerCase().includes(query)) ||
+        (log.requestMethod && log.requestMethod.toLowerCase().includes(query)) ||
+        (log.sourceIp && log.sourceIp.toLowerCase().includes(query)) ||
+        (log.contentType && log.contentType.toLowerCase().includes(query)) ||
+        (log.error && log.error.toLowerCase().includes(query))
+      );
+    });
+  }, [incomingWebhookLogs, searchQuery]);
 
   return {
     filteredWebhookLogs,

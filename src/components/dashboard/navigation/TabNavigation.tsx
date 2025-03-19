@@ -1,14 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  BarChart2, 
-  FileText, 
-  Settings,
-  Webhook
-} from 'lucide-react';
+import { Home, ListTodo, LineChart, WebhookIcon, FileText, Settings } from 'lucide-react';
 
 interface TabNavigationProps {
   activeTab: string;
@@ -16,46 +9,56 @@ interface TabNavigationProps {
   children: React.ReactNode;
 }
 
-const TabNavigation: React.FC<TabNavigationProps> = ({ 
-  activeTab, 
-  setActiveTab, 
-  children 
-}) => {
+export default function TabNavigation({ activeTab, setActiveTab, children }: TabNavigationProps) {
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    
+    // Update URL to reflect the tab
+    if (value !== 'overview') {
+      window.history.pushState(null, '', `/${value}`);
+    } else {
+      window.history.pushState(null, '', '/dashboard');
+    }
+  };
+  
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-      <div className="border-b sticky top-0 z-10 bg-background">
-        <TabsList className="w-full justify-start rounded-none border-b px-2 bg-transparent h-12">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-background">
-            <LayoutDashboard className="h-4 w-4 mr-2" />
-            Overview
+    <Tabs 
+      value={activeTab} 
+      onValueChange={handleTabChange} 
+      className="w-full"
+    >
+      <div className="border-b px-6 pt-3 pb-0 sticky top-0 bg-background z-10">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 w-full mb-0">
+          <TabsTrigger value="overview" className="gap-2 h-10">
+            <Home className="h-4 w-4" />
+            <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="tasks" className="data-[state=active]:bg-background">
-            <CheckSquare className="h-4 w-4 mr-2" />
-            Tasks
+          <TabsTrigger value="tasks" className="gap-2 h-10">
+            <ListTodo className="h-4 w-4" />
+            <span className="hidden sm:inline">Tasks</span>
           </TabsTrigger>
-          <TabsTrigger value="webhooks" className="data-[state=active]:bg-background">
-            <Webhook className="h-4 w-4 mr-2" />
-            Webhooks
+          <TabsTrigger value="webhooks" className="gap-2 h-10">
+            <WebhookIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Webhooks</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-background">
-            <BarChart2 className="h-4 w-4 mr-2" />
-            Analytics
+          <TabsTrigger value="analytics" className="gap-2 h-10">
+            <LineChart className="h-4 w-4" />
+            <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="reports" className="data-[state=active]:bg-background">
-            <FileText className="h-4 w-4 mr-2" />
-            Reports
+          <TabsTrigger value="reports" className="gap-2 h-10">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Reports</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="data-[state=active]:bg-background">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+          <TabsTrigger value="settings" className="gap-2 h-10">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>
       </div>
-      <div className="p-4">
+      
+      <div className="p-0">
         {children}
       </div>
     </Tabs>
   );
-};
-
-export default TabNavigation;
+}

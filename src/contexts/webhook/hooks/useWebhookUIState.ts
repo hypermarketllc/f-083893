@@ -2,26 +2,25 @@
 import { useState } from 'react';
 import { Webhook, IncomingWebhook } from '@/types/webhook';
 
-/**
- * Custom hook for managing UI state related to webhooks
- */
 export const useWebhookUIState = () => {
-  // Modal state
+  // State for modals
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
   const [isIncomingWebhookModalOpen, setIsIncomingWebhookModalOpen] = useState(false);
   
-  // Selected and editing webhooks
+  // Selected webhooks
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
   const [selectedIncomingWebhook, setSelectedIncomingWebhook] = useState<IncomingWebhook | null>(null);
+  
+  // Editing webhooks
   const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
   const [editingIncomingWebhook, setEditingIncomingWebhook] = useState<IncomingWebhook | null>(null);
   
-  // Test mode state
+  // Test mode
   const [isTestMode, setIsTestMode] = useState(false);
   const [testResponse, setTestResponse] = useState<any>(null);
   const [isTestLoading, setIsTestLoading] = useState(false);
   
-  // Search state
+  // Search
   const [searchQuery, setSearchQuery] = useState('');
 
   return {

@@ -1,28 +1,43 @@
 
 import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { toast } from 'sonner';
 import { Webhook } from '@/types/webhook';
+import { toast } from 'sonner';
 
-export const useCreateWebhook = (
+export function useCreateWebhook(
   webhooks: Webhook[],
   setWebhooks: React.Dispatch<React.SetStateAction<Webhook[]>>,
   setIsWebhookModalOpen: React.Dispatch<React.SetStateAction<boolean>>
-) => {
-  // Create a new webhook
-  const createWebhook = (webhook: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date().toISOString();
-    const newWebhook: Webhook = {
-      ...webhook,
-      id: uuidv4(),
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    setWebhooks(prevWebhooks => [...prevWebhooks, newWebhook]);
-    setIsWebhookModalOpen(false);
-    toast.success('Webhook created successfully');
+) {
+  const createWebhook = (webhookData: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      // Generate a new ID
+      const newId = `webhook-${Date.now()}`;
+      const now = new Date().toISOString();
+      
+      // Create the new webhook object
+      const newWebhook: Webhook = {
+        id: newId,
+        ...webhookData,
+        createdAt: now,
+        updatedAt: now
+      };
+      
+      // Add to the webhooks list
+      setWebhooks(prevWebhooks => [...prevWebhooks, newWebhook]);
+      
+      // Close the modal
+      setIsWebhookModalOpen(false);
+      
+      // Show a success toast
+      toast.success('Webhook created successfully');
+      
+      return newWebhook;
+    } catch (error) {
+      console.error('Failed to create webhook:', error);
+      toast.error('Failed to create webhook');
+      return null;
+    }
   };
-
+  
   return { createWebhook };
-};
+}

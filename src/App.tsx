@@ -73,6 +73,22 @@ const App = () => (
                 }
               />
               <Route
+                path="/webhooks"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard tab="webhooks" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/webhooks/:section"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard tab="webhooks" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/spaces/:spaceId"
                 element={
                   <ProtectedRoute>

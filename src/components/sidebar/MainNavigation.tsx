@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { Home, Bell, BarChart3 } from 'lucide-react';
+import { Home, Bell, BarChart3, Webhook } from 'lucide-react';
 import SidebarNavItem from './SidebarNavItem';
 
 const MainNavigation: React.FC = () => {
@@ -26,6 +26,12 @@ const MainNavigation: React.FC = () => {
         icon={BarChart3} 
         label="Goals"
         isActive={pathname === "/goals"}
+      />
+      <SidebarNavItem 
+        to="/webhooks" 
+        icon={Webhook} 
+        label="Webhooks"
+        isActive={pathname === "/webhooks" || pathname.startsWith("/webhooks/")}
       />
     </ul>
   );

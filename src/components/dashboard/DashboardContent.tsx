@@ -16,10 +16,14 @@ import ReportsSection from '@/components/dashboard/ReportsSection';
 
 interface DashboardContentProps {
   searchQuery?: string;
+  initialActiveTab?: string;
 }
 
-export default function DashboardContent({ searchQuery = '' }: DashboardContentProps) {
-  const [activeTab, setActiveTab] = useState("overview");
+export default function DashboardContent({ 
+  searchQuery = '', 
+  initialActiveTab = "overview" 
+}: DashboardContentProps) {
+  const [activeTab, setActiveTab] = useState(initialActiveTab);
   const [activeView, setActiveView] = useState("list");
   const { 
     filteredTasks, 
@@ -41,6 +45,11 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
     setSearchQuery(searchQuery);
     console.log("DashboardContent rendered with tab:", activeTab);
   }, [searchQuery, setSearchQuery, activeTab]);
+  
+  // Update active tab when initialActiveTab changes (from parent props)
+  useEffect(() => {
+    setActiveTab(initialActiveTab);
+  }, [initialActiveTab]);
   
   return (
     <div className="flex-1 overflow-auto">
