@@ -49,7 +49,9 @@ export default function Sidebar() {
           title="Dashboards" 
           defaultExpanded={dashboardsExpanded}
         >
-          {/* Add dashboard content here when available */}
+          <div className="text-sm text-muted-foreground py-2">
+            Dashboard content will be added soon
+          </div>
         </SidebarSection>
 
         {/* Docs */}
