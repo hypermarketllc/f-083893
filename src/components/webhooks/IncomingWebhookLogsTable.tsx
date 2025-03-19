@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { IncomingWebhookLogEntry } from '@/types/webhook';
@@ -9,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { formatDistanceToNow } from 'date-fns';
 import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { EmptyLogs } from './WebhookLogsTable';
+import { EmptyLogs } from './EmptyLogs';
 
 // Incoming logs table header component
 const IncomingLogsTableHeader: React.FC = () => {

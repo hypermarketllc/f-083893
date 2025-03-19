@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LineChart, ChevronLeft, ChevronRight, Checkbox, BarChart3 } from 'lucide-react';
+import { LineChart, ChevronLeft, ChevronRight, CheckSquare, BarChart3 } from 'lucide-react';
 
 import SidebarHeader from './sidebar/SidebarHeader';
 import MainNavigation from './sidebar/MainNavigation';
@@ -24,7 +23,6 @@ export default function Sidebar() {
   const [analyticsExpanded, setAnalyticsExpanded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  // Check if sidebar collapse state is saved in localStorage
   useEffect(() => {
     const savedCollapsed = localStorage.getItem('sidebar-collapsed');
     if (savedCollapsed) {
@@ -40,7 +38,6 @@ export default function Sidebar() {
 
   return (
     <div className={`h-screen border-r border-border bg-card flex flex-col relative ${collapsed ? 'w-16' : 'w-64'} transition-all duration-200`}>
-      {/* Toggle button */}
       <Button 
         variant="ghost" 
         size="icon" 
@@ -54,24 +51,20 @@ export default function Sidebar() {
         )}
       </Button>
 
-      {/* Logo */}
       <SidebarHeader collapsed={collapsed} />
 
-      {/* Main Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-2">
         <MainNavigation collapsed={collapsed} />
 
-        {/* Tasks Section */}
         <SidebarSection 
           title="Tasks" 
-          icon={<Checkbox className="h-4 w-4" />}
+          icon={<CheckSquare className="h-4 w-4" />}
           defaultExpanded={tasksExpanded}
           collapsed={collapsed}
         >
           <TasksList collapsed={collapsed} />
         </SidebarSection>
 
-        {/* Analytics Section */}
         <SidebarSection 
           title="Analytics" 
           icon={<BarChart3 className="h-4 w-4" />}
@@ -81,7 +74,6 @@ export default function Sidebar() {
           <AnalyticsList collapsed={collapsed} />
         </SidebarSection>
 
-        {/* Spaces */}
         <SidebarSection 
           title="Spaces" 
           defaultExpanded={spacesExpanded}
@@ -90,7 +82,6 @@ export default function Sidebar() {
           <SpacesList collapsed={collapsed} />
         </SidebarSection>
 
-        {/* Reports Section */}
         <SidebarSection 
           title="Reports" 
           icon={<LineChart className="h-4 w-4" />}
@@ -100,7 +91,6 @@ export default function Sidebar() {
           <ReportsList collapsed={collapsed} />
         </SidebarSection>
 
-        {/* Dashboards */}
         <SidebarSection 
           title="Dashboards" 
           defaultExpanded={dashboardsExpanded}
@@ -111,7 +101,6 @@ export default function Sidebar() {
           </div>
         </SidebarSection>
 
-        {/* Docs */}
         <SidebarSection 
           title="Docs" 
           defaultExpanded={docsExpanded}
@@ -121,7 +110,6 @@ export default function Sidebar() {
         </SidebarSection>
       </nav>
 
-      {/* User Profile */}
       <UserProfile collapsed={collapsed} />
     </div>
   );

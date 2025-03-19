@@ -1,7 +1,8 @@
 
 import { 
   Home, Bell, BarChart3, LayoutGrid, GanttChart,
-  DollarSign, PhoneCall, Users, Building2, LineChart, Settings
+  DollarSign, PhoneCall, Users, Building2, LineChart, Settings,
+  FileText, Book, BookOpen, Bookmark
 } from 'lucide-react';
 
 export interface SpaceProps {
@@ -24,4 +25,11 @@ export const REPORTS = [
   { id: 'leads', name: 'Leads', icon: Users },
   { id: 'agents', name: 'Agents', icon: Users },
   { id: 'pubs', name: 'Pubs', icon: Building2 },
+];
+
+export const DOCS = [
+  { id: 'guides', name: 'Guides', icon: Book },
+  { id: 'api', name: 'API Reference', icon: FileText },
+  { id: 'tutorials', name: 'Tutorials', icon: BookOpen },
+  { id: 'resources', name: 'Resources', icon: Bookmark },
 ];

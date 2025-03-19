@@ -70,17 +70,17 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
           </div>
           <Badge 
             className={`${
-              webhookLog.status >= 200 && webhookLog.status < 300 
+              webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 
                 ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                 : 'bg-red-100 text-red-800 hover:bg-red-200'
             }`}
           >
-            {webhookLog.status >= 200 && webhookLog.status < 300 ? (
+            {webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 ? (
               <Check className="h-3 w-3 mr-1" />
             ) : (
               <X className="h-3 w-3 mr-1" />
             )}
-            Status: {webhookLog.status}
+            Status: {webhookLog.responseStatus}
           </Badge>
         </div>
         <CardDescription className="flex items-center gap-4">
@@ -93,7 +93,7 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
             {format(new Date(webhookLog.timestamp), 'HH:mm:ss')}
           </span>
           <span className="flex items-center">
-            <WebhookMethodBadge method={webhookLog.method} />
+            <WebhookMethodBadge method={webhookLog.requestMethod} />
           </span>
         </CardDescription>
       </CardHeader>
@@ -110,13 +110,13 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
                 <h3 className="text-sm font-medium mb-2">URL</h3>
                 <div className="relative">
                   <pre className="bg-muted p-3 rounded-md text-sm overflow-x-auto">
-                    {webhookLog.url}
+                    {webhookLog.requestUrl}
                   </pre>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="absolute top-2 right-2"
-                    onClick={() => copyToClipboard(webhookLog.url)}
+                    onClick={() => copyToClipboard(webhookLog.requestUrl)}
                   >
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
@@ -126,13 +126,13 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
               <div>
                 <h3 className="text-sm font-medium mb-2">Headers</h3>
                 <div className="bg-muted p-3 rounded-md text-sm">
-                  {webhookLog.headers.map((header, index) => (
+                  {Object.entries(webhookLog.requestHeaders).map(([key, value], index) => (
                     <div key={index} className="flex items-start py-1 border-b last:border-0">
-                      <div className="font-medium min-w-32">{header.key}:</div>
-                      <div className="text-muted-foreground truncate">{header.value}</div>
+                      <div className="font-medium min-w-32">{key}:</div>
+                      <div className="text-muted-foreground truncate">{value}</div>
                     </div>
                   ))}
-                  {webhookLog.headers.length === 0 && (
+                  {Object.keys(webhookLog.requestHeaders).length === 0 && (
                     <div className="text-muted-foreground">No headers</div>
                   )}
                 </div>
@@ -141,30 +141,30 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
               <div>
                 <h3 className="text-sm font-medium mb-2">URL Parameters</h3>
                 <div className="bg-muted p-3 rounded-md text-sm">
-                  {webhookLog.urlParams.map((param, index) => (
+                  {webhookLog.requestQuery && Object.entries(webhookLog.requestQuery).map(([key, value], index) => (
                     <div key={index} className="flex items-start py-1 border-b last:border-0">
-                      <div className="font-medium min-w-32">{param.key}:</div>
-                      <div className="text-muted-foreground truncate">{param.value}</div>
+                      <div className="font-medium min-w-32">{key}:</div>
+                      <div className="text-muted-foreground truncate">{value}</div>
                     </div>
                   ))}
-                  {webhookLog.urlParams.length === 0 && (
+                  {(!webhookLog.requestQuery || Object.keys(webhookLog.requestQuery).length === 0) && (
                     <div className="text-muted-foreground">No URL parameters</div>
                   )}
                 </div>
               </div>
 
-              {webhookLog.body && (
+              {webhookLog.requestBody && (
                 <div>
                   <h3 className="text-sm font-medium mb-2">Request Body</h3>
                   <div className="relative">
                     <pre className="bg-muted p-3 rounded-md text-sm overflow-x-auto whitespace-pre-wrap">
-                      {formatJSON(webhookLog.body)}
+                      {formatJSON(webhookLog.requestBody)}
                     </pre>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="absolute top-2 right-2"
-                      onClick={() => copyToClipboard(webhookLog.body)}
+                      onClick={() => copyToClipboard(webhookLog.requestBody)}
                     >
                       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     </Button>
@@ -182,15 +182,15 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
                   <div className="flex items-center mt-1">
                     <Badge 
                       className={`${
-                        webhookLog.status >= 200 && webhookLog.status < 300 
+                        webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 
                           ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                           : 'bg-red-100 text-red-800 hover:bg-red-200'
                       }`}
                     >
-                      {webhookLog.status}
+                      {webhookLog.responseStatus}
                     </Badge>
                     <span className="ml-2 text-sm text-muted-foreground">
-                      {webhookLog.status >= 200 && webhookLog.status < 300 
+                      {webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 
                         ? 'Success' 
                         : 'Error'}
                     </span>
@@ -209,13 +209,13 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
               <div>
                 <h3 className="text-sm font-medium mb-2">Response Headers</h3>
                 <div className="bg-muted p-3 rounded-md text-sm">
-                  {webhookLog.responseHeaders && webhookLog.responseHeaders.map((header, index) => (
+                  {webhookLog.responseHeaders && Object.entries(webhookLog.responseHeaders).map(([key, value], index) => (
                     <div key={index} className="flex items-start py-1 border-b last:border-0">
-                      <div className="font-medium min-w-32">{header.key}:</div>
-                      <div className="text-muted-foreground truncate">{header.value}</div>
+                      <div className="font-medium min-w-32">{key}:</div>
+                      <div className="text-muted-foreground truncate">{value}</div>
                     </div>
                   ))}
-                  {(!webhookLog.responseHeaders || webhookLog.responseHeaders.length === 0) && (
+                  {(!webhookLog.responseHeaders || Object.keys(webhookLog.responseHeaders).length === 0) && (
                     <div className="text-muted-foreground">No response headers</div>
                   )}
                 </div>

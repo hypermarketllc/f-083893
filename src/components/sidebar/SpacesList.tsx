@@ -16,7 +16,7 @@ const SpacesList: React.FC<SpacesListProps> = ({ collapsed = false }) => {
             to={`/spaces/${space.id}`} 
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
           >
-            <space.icon className="h-4 w-4" />
+            <div className="h-4 w-4 flex items-center justify-center">{space.icon}</div>
             {!collapsed && space.name}
             {collapsed && <span className="sr-only">{space.name}</span>}
           </Link>

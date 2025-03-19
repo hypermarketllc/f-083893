@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pencil, Trash2, Copy, CheckCheck } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { EmptyLogs } from './WebhookLogsTable';
+import { EmptyLogs } from './EmptyLogs';
 
 interface IncomingWebhookTableProps {
   compact?: boolean;
