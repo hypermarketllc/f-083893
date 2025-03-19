@@ -19,7 +19,6 @@ import SettingsSection from '@/components/dashboard/SettingsSection';
 import Sidebar from '@/components/Sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Task interface
 interface Task {
   id: string;
   title: string;
@@ -31,7 +30,6 @@ interface Task {
   tags: string[];
 }
 
-// Sample tasks
 const TASKS: Task[] = [
   {
     id: '1',
@@ -94,7 +92,6 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   
   useEffect(() => {
-    // Set loaded state after a short delay to ensure components mount properly
     if (!loading) {
       const timer = setTimeout(() => {
         setIsLoaded(true);
@@ -103,13 +100,11 @@ export default function Dashboard() {
     }
   }, [loading]);
 
-  // Get user initials for avatar
   const getInitials = () => {
     if (!user?.email) return 'U';
     return user.email.charAt(0).toUpperCase();
   };
 
-  // Filter tasks by status
   const getTasksByStatus = (status: Task['status']) => {
     return tasks.filter(task => task.status === status);
   };
@@ -127,13 +122,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Sidebar */}
       <div className={`${sidebarOpen ? 'block' : 'hidden'} md:block`}>
         <Sidebar />
       </div>
 
       <div className="flex-1 flex flex-col">
-        {/* Dashboard Header */}
         <header className="bg-card border-b border-border shadow-sm">
           <div className="container mx-auto px-4 py-4">
             <div className="flex justify-between items-center">
@@ -166,7 +159,6 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Dashboard Content */}
         <div className="flex-1 overflow-auto">
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="p-6">
             <div className="flex justify-between items-center mb-4">
@@ -190,7 +182,6 @@ export default function Dashboard() {
               </TabsList>
             </div>
 
-            {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-4">
               <Card>
                 <CardHeader>
@@ -301,7 +292,6 @@ export default function Dashboard() {
               </Card>
             </TabsContent>
 
-            {/* Tasks Tab */}
             <TabsContent value="tasks" className="space-y-4">
               <Card>
                 <CardHeader className="pb-3">
@@ -456,7 +446,7 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                                     ''
                                   }`}>
                                     {task.priority}
@@ -496,7 +486,6 @@ export default function Dashboard() {
                   
                   {activeView === "board" && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      {/* To Do Column */}
                       <div className="border rounded-md overflow-hidden">
                         <div className="bg-gray-50 p-3 border-b">
                           <div className="flex items-center justify-between">
@@ -519,7 +508,7 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                                     ''
                                   }`}>
                                     {task.priority}
@@ -539,7 +528,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                       
-                      {/* In Progress Column */}
                       <div className="border rounded-md overflow-hidden">
                         <div className="bg-blue-50 p-3 border-b">
                           <div className="flex items-center justify-between">
@@ -562,7 +550,7 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                                     ''
                                   }`}>
                                     {task.priority}
@@ -582,7 +570,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                       
-                      {/* Review Column */}
                       <div className="border rounded-md overflow-hidden">
                         <div className="bg-yellow-50 p-3 border-b">
                           <div className="flex items-center justify-between">
@@ -605,7 +592,7 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                                     ''
                                   }`}>
                                     {task.priority}
@@ -625,7 +612,6 @@ export default function Dashboard() {
                         </div>
                       </div>
                       
-                      {/* Done Column */}
                       <div className="border rounded-md overflow-hidden">
                         <div className="bg-green-50 p-3 border-b">
                           <div className="flex items-center justify-between">
@@ -648,7 +634,7 @@ export default function Dashboard() {
                                     task.priority === 'low' ? 'bg-gray-100' :
                                     task.priority === 'medium' ? 'bg-blue-100 text-blue-800' :
                                     task.priority === 'high' ? 'bg-orange-100 text-orange-800' :
-                                    task.priority === 'red' ? 'bg-red-100 text-red-800' :
+                                    task.priority === 'urgent' ? 'bg-red-100 text-red-800' :
                                     ''
                                   }`}>
                                     {task.priority}
@@ -697,12 +683,10 @@ export default function Dashboard() {
               </Card>
             </TabsContent>
 
-            {/* Analytics Tab */}
             <TabsContent value="analytics">
               <AnalyticsSection />
             </TabsContent>
 
-            {/* Settings Tab */}
             <TabsContent value="settings">
               <SettingsSection />
             </TabsContent>
