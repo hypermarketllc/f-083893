@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,9 +16,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const formSchema = z.object({
-  siteTitle: z.string().min(2).max(50),
+  siteTitle: z.string().min(2, {
+    message: "Site title must be at least 2 characters.",
+  }).max(50, {
+    message: "Site title must not be longer than 50 characters.",
+  }),
 });
 
 export function GeneralSettings() {
@@ -31,6 +36,11 @@ export function GeneralSettings() {
     },
   });
 
+  // Update form when localStorage value changes
+  useEffect(() => {
+    form.setValue('siteTitle', siteTitle);
+  }, [siteTitle, form]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     setSiteTitle(values.siteTitle);
     toast.success('Site settings updated successfully');
@@ -38,35 +48,38 @@ export function GeneralSettings() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium">General Settings</h3>
-        <p className="text-sm text-muted-foreground">
-          Configure the general settings for your workspace.
-        </p>
-      </div>
-      
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="siteTitle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Site Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Site title" {...field} />
-                </FormControl>
-                <FormDescription>
-                  This is the name displayed in the sidebar header.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <Button type="submit">Save changes</Button>
-        </form>
-      </Form>
+      <Card>
+        <CardHeader>
+          <CardTitle>Organization Settings</CardTitle>
+          <CardDescription>
+            Configure the general settings for your organization.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="siteTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Organization Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter organization name" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      This is the name displayed in the sidebar header and across the application.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button type="submit">Save changes</Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

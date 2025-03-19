@@ -1,9 +1,21 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useNavigate } from 'react-router-dom';
 
 const SidebarHeader: React.FC = () => {
-  const [siteTitle, setSiteTitle] = useLocalStorage('site-title', 'ClickUp');
+  const [siteTitle] = useLocalStorage('site-title', 'ClickUp');
+  const [displayTitle, setDisplayTitle] = useState(siteTitle);
+  const navigate = useNavigate();
+  
+  // Update displayed title when localStorage value changes
+  useEffect(() => {
+    setDisplayTitle(siteTitle);
+  }, [siteTitle]);
+  
+  const handleTitleClick = () => {
+    navigate('/dashboard?tab=settings');
+  };
   
   return (
     <div className="p-4 flex items-center gap-2">
@@ -12,7 +24,13 @@ const SidebarHeader: React.FC = () => {
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>
       </div>
-      <span className="font-bold text-xl">{siteTitle}</span>
+      <span 
+        className="font-bold text-xl cursor-pointer hover:text-primary transition-colors" 
+        onClick={handleTitleClick}
+        title="Edit organization name in Settings"
+      >
+        {displayTitle}
+      </span>
     </div>
   );
 };

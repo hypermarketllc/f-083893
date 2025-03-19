@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { useLocation } from 'react-router-dom';
-import { Home, Bell, BarChart3, Webhook } from 'lucide-react';
+import { Home, Bell, BarChart3, Webhook, Settings } from 'lucide-react';
 import SidebarNavItem from './SidebarNavItem';
 
 const MainNavigation: React.FC = () => {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const isSettingsActive = search.includes('tab=settings');
 
   return (
     <ul className="space-y-1">
@@ -13,7 +14,7 @@ const MainNavigation: React.FC = () => {
         to="/dashboard" 
         icon={Home} 
         label="Home"
-        isActive={pathname === "/dashboard"}
+        isActive={pathname === "/dashboard" && !search}
       />
       <SidebarNavItem 
         to="/notifications" 
@@ -32,6 +33,12 @@ const MainNavigation: React.FC = () => {
         icon={Webhook} 
         label="Webhooks"
         isActive={pathname === "/webhooks" || pathname.startsWith("/webhooks/")}
+      />
+      <SidebarNavItem 
+        to="/dashboard?tab=settings" 
+        icon={Settings} 
+        label="Settings"
+        isActive={isSettingsActive}
       />
     </ul>
   );

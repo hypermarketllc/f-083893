@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -8,14 +9,23 @@ import {
   DropdownMenuItem, 
   DropdownMenuLabel, 
   DropdownMenuSeparator, 
-  DropdownMenuTrigger,
-  DropdownMenuGroup
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { 
   Popover,
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { 
   Search, 
   Bell, 
@@ -31,6 +41,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/auth';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   id: string;
@@ -58,11 +70,13 @@ const DashboardHeader = ({
   setTheme
 }: DashboardHeaderProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const displayName = user ? user.email?.split('@')[0] : 'User';
   const initials = displayName ? displayName.charAt(0).toUpperCase() : 'U';
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [notifications, setNotifications] = useLocalStorage<Notification[]>('notifications', [
     {
       id: '1',
       title: 'New task assigned',
@@ -90,7 +104,7 @@ const DashboardHeader = ({
   
   const formatTimestamp = (date: Date) => {
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
+    const diffMs = now.getTime() - new Date(date).getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
     if (diffMins < 60) {
@@ -122,6 +136,19 @@ const DashboardHeader = ({
     if (setTheme) {
       setTheme(theme === 'dark' ? 'light' : 'dark');
     }
+  };
+
+  const handleNavigateToSettings = () => {
+    navigate('/dashboard?tab=settings');
+  };
+  
+  const handleLogout = () => {
+    setConfirmLogout(true);
+  };
+
+  const confirmSignOut = () => {
+    signOut();
+    setConfirmLogout(false);
   };
   
   return (
@@ -196,7 +223,7 @@ const DashboardHeader = ({
                     {notifications
                       .sort((a, b) => {
                         if (a.read !== b.read) return a.read ? 1 : -1;
-                        return b.timestamp.getTime() - a.timestamp.getTime();
+                        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
                       })
                       .map((notification) => (
                         <div 
@@ -262,16 +289,16 @@ const DashboardHeader = ({
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/dashboard?tab=profile')}>
                 <User className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleNavigateToSettings}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={signOut}>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Log out
               </DropdownMenuItem>
@@ -279,6 +306,21 @@ const DashboardHeader = ({
           </DropdownMenu>
         </div>
       </div>
+
+      <AlertDialog open={confirmLogout} onOpenChange={setConfirmLogout}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmSignOut}>Log out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 };

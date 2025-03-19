@@ -1,49 +1,38 @@
 
 import React, { useState } from 'react';
-import { Table, TableBody } from '@/components/ui/table';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { WebhookLogEntry } from '@/types/webhook';
-import { EmptyLogs } from './logs/EmptyLogs';
+import { Table, TableBody } from '@/components/ui/table';
 import { LogsTableHeader } from './logs/LogsTableHeader';
 import { LogRow } from './logs/LogRow';
 import { LogDetailsModal } from './logs/LogDetailsModal';
-import { ensureLogEntryFields } from '@/contexts/webhook/webhookUtils';
+import { EmptyLogs } from './logs/EmptyLogs';
 
-interface WebhookLogsTableProps {
-  compact?: boolean;
-}
-
-export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact }) => {
+export const WebhookLogsTable: React.FC = () => {
   const { webhookLogs } = useWebhookContext();
   const [selectedLog, setSelectedLog] = useState<WebhookLogEntry | null>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleViewDetails = (log: WebhookLogEntry) => {
-    // Ensure all fields are present in the log entry
-    setSelectedLog(ensureLogEntryFields(log));
-    setIsDetailsModalOpen(true);
+  const handleViewLog = (log: WebhookLogEntry) => {
+    setSelectedLog(log);
+    setIsModalOpen(true);
   };
 
-  const handleCloseDetailsModal = () => {
-    setIsDetailsModalOpen(false);
-  };
-
-  if (!webhookLogs || webhookLogs.length === 0) {
+  if (webhookLogs.length === 0) {
     return <EmptyLogs message="No webhook logs found" />;
   }
 
   return (
     <>
-      <div className={`border rounded-md ${compact ? 'overflow-hidden' : ''}`}>
+      <div className="border rounded-md overflow-hidden">
         <Table>
-          <LogsTableHeader compact={compact} />
+          <LogsTableHeader />
           <TableBody>
-            {webhookLogs.map(log => (
-              <LogRow
-                key={log.id || 'placeholder-id'}
-                log={ensureLogEntryFields(log)}
-                onViewDetails={handleViewDetails}
-                compact={compact}
+            {webhookLogs.map((log) => (
+              <LogRow 
+                key={log.id} 
+                log={log} 
+                onView={handleViewLog} 
               />
             ))}
           </TableBody>
@@ -51,9 +40,9 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact }) =
       </div>
 
       <LogDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={handleCloseDetailsModal}
         log={selectedLog}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
       />
     </>
   );

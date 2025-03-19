@@ -9,8 +9,25 @@ export function useUpdateWebhook(
   setIsWebhookModalOpen: React.Dispatch<React.SetStateAction<boolean>>,
   setEditingWebhook: React.Dispatch<React.SetStateAction<Webhook | null>>
 ) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  
   const updateWebhook = (updatedWebhook: Webhook) => {
     try {
+      setIsUpdating(true);
+      
+      // Input validation
+      if (!updatedWebhook.name) {
+        toast.error('Webhook name is required');
+        setIsUpdating(false);
+        return null;
+      }
+
+      if (!updatedWebhook.url) {
+        toast.error('Webhook URL is required');
+        setIsUpdating(false);
+        return null;
+      }
+      
       // Update the updatedAt timestamp
       const webhook = {
         ...updatedWebhook,
@@ -38,10 +55,12 @@ export function useUpdateWebhook(
       // Show a success toast
       toast.success('Webhook updated successfully');
       
+      setIsUpdating(false);
       return webhook;
     } catch (error) {
       console.error('Failed to update webhook:', error);
-      toast.error('Failed to update webhook');
+      toast.error(`Failed to update webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsUpdating(false);
       return null;
     }
   };
@@ -52,27 +71,24 @@ export function useUpdateWebhook(
   };
   
   const handleDeleteWebhook = (webhookId: string) => {
-    // Show a confirmation dialog
-    if (confirm('Are you sure you want to delete this webhook?')) {
-      try {
-        // Update the webhooks list by filtering out the one to delete
-        setWebhooks(prevWebhooks => 
-          prevWebhooks.filter(w => w.id !== webhookId)
-        );
-        
-        // Reset the selected webhook if it's the one being deleted
-        setSelectedWebhook(prevSelected => 
-          prevSelected?.id === webhookId ? null : prevSelected
-        );
-        
-        // Show a success toast
-        toast.success('Webhook deleted successfully');
-      } catch (error) {
-        console.error('Failed to delete webhook:', error);
-        toast.error('Failed to delete webhook');
-      }
+    try {
+      // Update the webhooks list by filtering out the one to delete
+      setWebhooks(prevWebhooks => 
+        prevWebhooks.filter(w => w.id !== webhookId)
+      );
+      
+      // Reset the selected webhook if it's the one being deleted
+      setSelectedWebhook(prevSelected => 
+        prevSelected?.id === webhookId ? null : prevSelected
+      );
+      
+      // Show a success toast
+      toast.success('Webhook deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete webhook:', error);
+      toast.error(`Failed to delete webhook: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
-  return { updateWebhook, handleEditWebhook, handleDeleteWebhook };
+  return { updateWebhook, handleEditWebhook, handleDeleteWebhook, isUpdating };
 }
