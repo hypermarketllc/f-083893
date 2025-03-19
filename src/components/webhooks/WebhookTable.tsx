@@ -130,16 +130,36 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) =
                   </ToggleGroup>
 
                   <div className="space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEditWebhook(webhook)}>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditWebhook(webhook);
+                      }}
+                    >
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDeleteWebhook(webhook.id)}>
+                    <Button 
+                      size="sm" 
+                      variant="destructive" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteWebhook(webhook.id);
+                      }}
+                    >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete
                     </Button>
                     {isTestMode && (
-                      <Button size="sm" onClick={() => sendTestRequest(webhook)}>
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sendTestRequest(webhook);
+                        }}
+                      >
                         <Play className="h-4 w-4 mr-1" />
                         Test
                       </Button>

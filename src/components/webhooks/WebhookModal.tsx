@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { HttpMethod, WebhookHeader, WebhookUrlParam } from '@/types/webhook';
@@ -39,8 +40,11 @@ export const WebhookModal: React.FC = () => {
     setIsWebhookModalOpen,
     createWebhook,
     updateWebhook,
-    setSelectedWebhook
+    setSelectedWebhook,
+    editingWebhook
   } = useWebhookContext();
+
+  const currentWebhook = editingWebhook || selectedWebhook;
 
   const [webhookName, setWebhookName] = useState('');
   const [webhookDescription, setWebhookDescription] = useState('');
@@ -58,24 +62,25 @@ export const WebhookModal: React.FC = () => {
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    if (selectedWebhook) {
-      setWebhookName(selectedWebhook.name);
-      setWebhookDescription(selectedWebhook.description);
-      setWebhookUrl(selectedWebhook.url);
-      setWebhookMethod(selectedWebhook.method);
-      setWebhookHeaders(selectedWebhook.headers);
-      setWebhookUrlParams(selectedWebhook.urlParams);
-      setWebhookContentType(selectedWebhook.body?.contentType || 'json');
-      setWebhookBody(selectedWebhook.body?.content || '');
-      setWebhookEnabled(selectedWebhook.enabled);
+    if (currentWebhook) {
+      console.log('Loading webhook for editing:', currentWebhook);
+      setWebhookName(currentWebhook.name);
+      setWebhookDescription(currentWebhook.description);
+      setWebhookUrl(currentWebhook.url);
+      setWebhookMethod(currentWebhook.method);
+      setWebhookHeaders(currentWebhook.headers);
+      setWebhookUrlParams(currentWebhook.urlParams);
+      setWebhookContentType(currentWebhook.body?.contentType || 'json');
+      setWebhookBody(currentWebhook.body?.content || '');
+      setWebhookEnabled(currentWebhook.enabled);
       setHasChanges(false);
     } else {
       resetForm();
     }
-  }, [selectedWebhook]);
+  }, [currentWebhook, isWebhookModalOpen]);
 
   useEffect(() => {
-    if (!selectedWebhook) {
+    if (!currentWebhook) {
       setHasChanges(
         webhookName !== '' || 
         webhookDescription !== '' || 
@@ -88,15 +93,15 @@ export const WebhookModal: React.FC = () => {
     }
     
     setHasChanges(
-      webhookName !== selectedWebhook.name ||
-      webhookDescription !== selectedWebhook.description ||
-      webhookUrl !== selectedWebhook.url ||
-      webhookMethod !== selectedWebhook.method ||
-      webhookEnabled !== selectedWebhook.enabled ||
-      JSON.stringify(webhookHeaders) !== JSON.stringify(selectedWebhook.headers) ||
-      JSON.stringify(webhookUrlParams) !== JSON.stringify(selectedWebhook.urlParams) ||
-      webhookContentType !== (selectedWebhook.body?.contentType || 'json') ||
-      webhookBody !== (selectedWebhook.body?.content || '')
+      webhookName !== currentWebhook.name ||
+      webhookDescription !== currentWebhook.description ||
+      webhookUrl !== currentWebhook.url ||
+      webhookMethod !== currentWebhook.method ||
+      webhookEnabled !== currentWebhook.enabled ||
+      JSON.stringify(webhookHeaders) !== JSON.stringify(currentWebhook.headers) ||
+      JSON.stringify(webhookUrlParams) !== JSON.stringify(currentWebhook.urlParams) ||
+      webhookContentType !== (currentWebhook.body?.contentType || 'json') ||
+      webhookBody !== (currentWebhook.body?.content || '')
     );
   }, [
     webhookName, 
@@ -108,7 +113,7 @@ export const WebhookModal: React.FC = () => {
     webhookBody, 
     webhookContentType, 
     webhookEnabled,
-    selectedWebhook
+    currentWebhook
   ]);
 
   const resetForm = () => {
@@ -171,9 +176,10 @@ export const WebhookModal: React.FC = () => {
         enabled: webhookEnabled
       };
 
-      if (selectedWebhook) {
+      if (currentWebhook) {
+        console.log('Updating webhook:', { ...currentWebhook, ...webhookData });
         updateWebhook({
-          ...selectedWebhook,
+          ...currentWebhook,
           ...webhookData
         });
       } else {
@@ -229,7 +235,7 @@ export const WebhookModal: React.FC = () => {
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedWebhook ? 'Edit Webhook' : 'Create Webhook'}
+              {currentWebhook ? 'Edit Webhook' : 'Create Webhook'}
             </DialogTitle>
             <DialogDescription>
               Configure your webhook to interact with external APIs
@@ -294,7 +300,7 @@ export const WebhookModal: React.FC = () => {
               Cancel
             </Button>
             <Button onClick={handleSubmit} type="button" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : (selectedWebhook ? 'Update' : 'Create')} Webhook
+              {isSubmitting ? 'Saving...' : (currentWebhook ? 'Update' : 'Create')} Webhook
             </Button>
           </DialogFooter>
         </DialogContent>
