@@ -41,10 +41,6 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
             <FileText className="h-4 w-4 mr-2" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="webhooks" className="data-[state=active]:bg-background">
-            <Webhook className="h-4 w-4 mr-2" />
-            Webhooks
-          </TabsTrigger>
           <TabsTrigger value="settings" className="data-[state=active]:bg-background">
             <Settings className="h-4 w-4 mr-2" />
             Settings

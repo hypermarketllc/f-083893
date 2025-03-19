@@ -2,10 +2,9 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { BarChart, DonutChart, LineChart, PieChart } from '@/components/ui/charts';
-import { type ChartConfig, type ChartProps } from '@/components/ui/charts/types';
 
 interface ReportChartsProps {
-  chartData: ChartConfig;
+  chartData: any;
   chartType: string;
   barTitle: string;
   secondChartTitle: string;
@@ -21,13 +20,13 @@ const ReportCharts: React.FC<ReportChartsProps> = ({
   const renderSecondaryChart = () => {
     switch (chartType) {
       case 'donut':
-        return <DonutChart config={chartData} />;
+        return <DonutChart data={chartData} />;
       case 'pie':
-        return <PieChart config={chartData} />;
+        return <PieChart data={chartData} />;
       case 'line':
-        return <LineChart config={chartData} />;
+        return <LineChart data={chartData} />;
       default:
-        return <DonutChart config={chartData} />;
+        return <DonutChart data={chartData} />;
     }
   };
 
@@ -35,7 +34,7 @@ const ReportCharts: React.FC<ReportChartsProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Card className="p-4">
         <h3 className="text-lg font-medium mb-4">{barTitle}</h3>
-        <BarChart config={chartData} />
+        <BarChart data={chartData} />
       </Card>
 
       <Card className="p-4">

@@ -1,6 +1,8 @@
 
 import React, { useState } from 'react';
+import { format } from 'date-fns';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
+import { IncomingWebhookLogEntry } from '@/types/webhook';
 import { 
   Table, 
   TableBody, 
@@ -9,158 +11,162 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
-  ChevronDown, 
-  ChevronRight, 
-  Clock,
-  Code
+  Check,
+  Code,
+  AlertCircle
 } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
 
-export const IncomingWebhookLogsTable: React.FC = () => {
-  const { filteredIncomingWebhookLogs, parseIncomingWebhookLog } = useWebhookContext();
-  const [expandedLogs, setExpandedLogs] = useState<string[]>([]);
+interface IncomingWebhookLogsTableProps {
+  compact?: boolean;
+}
 
-  const toggleExpand = (id: string) => {
-    setExpandedLogs(prev => 
-      prev.includes(id) 
-        ? prev.filter(logId => logId !== id) 
-        : [...prev, id]
+export const IncomingWebhookLogsTable: React.FC<IncomingWebhookLogsTableProps> = ({ compact = false }) => {
+  const { incomingWebhookLogs, searchQuery } = useWebhookContext();
+  const [expandedLogIds, setExpandedLogIds] = useState<string[]>([]);
+
+  const toggleLogExpand = (logId: string) => {
+    if (expandedLogIds.includes(logId)) {
+      setExpandedLogIds(expandedLogIds.filter(id => id !== logId));
+    } else {
+      setExpandedLogIds([...expandedLogIds, logId]);
+    }
+  };
+
+  if (!incomingWebhookLogs) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-32 w-full" />
+      </div>
     );
-  };
+  }
 
-  const isExpanded = (id: string) => expandedLogs.includes(id);
-  
-  const handleParse = (log: typeof filteredIncomingWebhookLogs[0]) => {
-    parseIncomingWebhookLog(log);
-  };
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        {incomingWebhookLogs.length === 0 ? (
+          <div className="text-center p-6 border rounded-lg">
+            <AlertCircle className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-muted-foreground">No logs found</p>
+          </div>
+        ) : (
+          incomingWebhookLogs.map((log) => (
+            <div key={log.id} className="border rounded-md p-3">
+              <div className="flex justify-between items-center">
+                <div className="text-sm font-medium truncate">{log.webhookName}</div>
+                <Badge variant={log.isParsed ? "default" : "outline"}>
+                  {log.isParsed ? <Check className="h-3 w-3" /> : "Unparsed"}
+                </Badge>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')} • {log.requestMethod}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[30px]"></TableHead>
-            <TableHead>Webhook</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>Parsed</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredIncomingWebhookLogs.length > 0 ? (
-            filteredIncomingWebhookLogs.map((log) => (
+    <div>
+      {incomingWebhookLogs.length === 0 ? (
+        <div className="text-center p-8 border rounded-lg">
+          <AlertCircle className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+          <h3 className="text-lg font-medium">No logs found</h3>
+          <p className="text-muted-foreground mt-1">{searchQuery ? 'Try adjusting your search query' : 'Incoming webhook logs will appear here'}</p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Webhook</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead>Parsed</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {incomingWebhookLogs.map((log) => (
               <React.Fragment key={log.id}>
                 <TableRow 
                   className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => toggleExpand(log.id)}
+                  onClick={() => toggleLogExpand(log.id)}
                 >
+                  <TableCell className="font-medium">{log.webhookName}</TableCell>
+                  <TableCell>{format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')}</TableCell>
+                  <TableCell>{log.requestMethod}</TableCell>
                   <TableCell>
-                    {isExpanded(log.id) ? 
-                      <ChevronDown className="h-4 w-4" /> : 
-                      <ChevronRight className="h-4 w-4" />
+                    {log.isParsed ? 
+                      <Badge variant="default"><Check className="h-3 w-3" /></Badge> : 
+                      <Badge variant="outline">Unparsed</Badge>
                     }
                   </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{log.webhookName}</div>
-                  </TableCell>
-                  <TableCell>
-                    {log.requestMethod}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(log.timestamp), 'PPpp')}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })})
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {log.isParsed ? 'Yes' : 'No'}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleParse(log);
-                      }}
-                      disabled={log.isParsed}
-                    >
-                      <Code className="h-4 w-4 mr-2" />
-                      Parse
-                    </Button>
-                  </TableCell>
                 </TableRow>
-                
-                {isExpanded(log.id) && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="p-4 bg-muted/30">
-                      <div className="space-y-4">
-                        <div>
-                          <h4 className="font-semibold mb-2">Request Details</h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <div className="space-y-2">
-                                <div>
-                                  <div className="text-sm font-medium">Method</div>
-                                  <div className="text-sm">{log.requestMethod}</div>
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium">Headers</div>
-                                  <pre className="text-xs bg-background p-2 rounded-md overflow-auto max-h-32">
-                                    {JSON.stringify(log.requestHeaders, null, 2)}
-                                  </pre>
-                                </div>
-                                {log.requestQuery && Object.keys(log.requestQuery).length > 0 && (
-                                  <div>
-                                    <div className="text-sm font-medium">Query Parameters</div>
-                                    <pre className="text-xs bg-background p-2 rounded-md overflow-auto max-h-32">
-                                      {JSON.stringify(log.requestQuery, null, 2)}
-                                    </pre>
-                                  </div>
-                                )}
-                                {log.requestBody && (
-                                  <div>
-                                    <div className="text-sm font-medium">Body</div>
-                                    <pre className="text-xs bg-background p-2 rounded-md overflow-auto max-h-32">
-                                      {log.requestBody}
-                                    </pre>
-                                  </div>
-                                )}
-                              </div>
+                {expandedLogIds.includes(log.id) && (
+                  <TableRow className="bg-muted/30">
+                    <TableCell colSpan={4} className="p-0">
+                      <Accordion type="single" collapsible className="w-full">
+                        <AccordionItem value="request" className="border-0">
+                          <AccordionTrigger className="px-4 py-2">
+                            <div className="flex items-center">
+                              <Code className="h-4 w-4 mr-2" />
+                              Request Details
                             </div>
-                            
-                            {log.isParsed && log.parsedData && (
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-2">
                               <div>
-                                <div className="text-sm font-medium">Parsed Data</div>
-                                <pre className="text-xs bg-background p-2 rounded-md overflow-auto max-h-96">
-                                  {log.parsedData}
+                                <h4 className="font-medium text-sm">Headers</h4>
+                                <pre className="text-xs bg-muted p-2 rounded-md overflow-auto">
+                                  {JSON.stringify(log.requestHeaders, null, 2)}
                                 </pre>
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                              {log.requestQuery && Object.keys(log.requestQuery).length > 0 && (
+                                <div>
+                                  <h4 className="font-medium text-sm">Query Parameters</h4>
+                                  <pre className="text-xs bg-muted p-2 rounded-md overflow-auto">
+                                    {JSON.stringify(log.requestQuery, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+                              {log.requestBody && (
+                                <div>
+                                  <h4 className="font-medium text-sm">Body</h4>
+                                  <pre className="text-xs bg-muted p-2 rounded-md overflow-auto">
+                                    {log.requestBody}
+                                  </pre>
+                                </div>
+                              )}
+                              {log.parsedData && (
+                                <div>
+                                  <h4 className="font-medium text-sm">Parsed Data</h4>
+                                  <pre className="text-xs bg-muted p-2 rounded-md overflow-auto">
+                                    {log.parsedData}
+                                  </pre>
+                                </div>
+                              )}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
                     </TableCell>
                   </TableRow>
                 )}
               </React.Fragment>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center">
-                No logs found
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 };
