@@ -22,7 +22,12 @@ export interface WebhookContextType {
   updateWebhook: (webhook: Webhook) => void;
   handleEditWebhook: (webhook: Webhook) => void;
   handleDeleteWebhook: (id: string) => void;
-  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<void>;
+  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<{
+    status: number;
+    headers: Record<string, string>;
+    body: string;
+    duration: number;
+  }>;
   clearTestResponse: () => void;
   sendTestRequest: (webhook: Webhook) => void;
   incomingWebhooks: IncomingWebhook[];
