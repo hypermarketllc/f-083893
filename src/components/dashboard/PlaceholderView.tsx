@@ -14,12 +14,14 @@ import {
 } from '@/components/ui/card';
 
 interface PlaceholderViewProps {
-  type: 'calendar' | 'gantt';
+  type: 'calendar' | 'gantt' | 'default';
 }
 
 const PlaceholderView: React.FC<PlaceholderViewProps> = ({ type }) => {
-  const Icon = type === 'calendar' ? Calendar : GanttChart;
-  const title = type === 'calendar' ? 'Calendar View' : 'Gantt View';
+  // Default to calendar if type is default
+  const displayType = type === 'default' ? 'calendar' : type;
+  const Icon = displayType === 'calendar' ? Calendar : GanttChart;
+  const title = displayType === 'calendar' ? 'Calendar View' : 'Gantt View';
   const { toast } = useToast();
   const [requested, setRequested] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -51,14 +53,14 @@ const PlaceholderView: React.FC<PlaceholderViewProps> = ({ type }) => {
         </div>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          Visualize your tasks in a {type === 'calendar' ? 'calendar format' : 'timeline format'}
+          Visualize your tasks in a {displayType === 'calendar' ? 'calendar format' : 'timeline format'}
         </CardDescription>
       </CardHeader>
       
       <CardContent className="text-center pb-4">
         <div className="space-y-4">
           <div className="relative h-40 bg-muted/50 rounded-md flex items-center justify-center overflow-hidden">
-            {type === 'calendar' ? (
+            {displayType === 'calendar' ? (
               <div className="grid grid-cols-7 gap-1 p-4 w-full opacity-30">
                 {Array.from({ length: 28 }).map((_, i) => (
                   <div key={i} className="aspect-square border rounded-sm flex items-center justify-center text-xs">
@@ -93,15 +95,15 @@ const PlaceholderView: React.FC<PlaceholderViewProps> = ({ type }) => {
             <ul className="text-sm text-left space-y-1 mx-auto max-w-xs">
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>{type === 'calendar' ? 'Schedule tasks with specific dates and times' : 'Visualize dependencies between tasks'}</span>
+                <span>{displayType === 'calendar' ? 'Schedule tasks with specific dates and times' : 'Visualize dependencies between tasks'}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>{type === 'calendar' ? 'See events and deadlines at a glance' : 'Track project timeline and progress'}</span>
+                <span>{displayType === 'calendar' ? 'See events and deadlines at a glance' : 'Track project timeline and progress'}</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                <span>{type === 'calendar' ? 'Manage your weekly and monthly schedules' : 'Identify critical paths and bottlenecks'}</span>
+                <span>{displayType === 'calendar' ? 'Manage your weekly and monthly schedules' : 'Identify critical paths and bottlenecks'}</span>
               </li>
             </ul>
           </div>

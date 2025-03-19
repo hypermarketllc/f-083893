@@ -54,7 +54,6 @@ export default function DashboardContent({
           filteredTasks={[]} 
           handleTaskClick={handleTaskClick} 
           handleCreateTask={() => {}}
-          searchQuery="" 
         />;
       case 'webhooks':
         return <WebhooksSection />;
@@ -65,7 +64,7 @@ export default function DashboardContent({
       case 'profile':
         return <ProfileSection />;
       default:
-        return <PlaceholderView type="default" />;
+        return <PlaceholderView type="calendar" />;
     }
   };
 
