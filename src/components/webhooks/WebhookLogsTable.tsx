@@ -27,7 +27,7 @@ export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact }) =
   };
 
   if (webhookLogs.length === 0) {
-    return <EmptyLogs />;
+    return <EmptyLogs message="No webhook logs found" />;
   }
 
   return (
