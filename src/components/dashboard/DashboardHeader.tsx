@@ -24,7 +24,9 @@ import {
   User, 
   Settings, 
   X, 
-  Check 
+  Check,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -43,13 +45,17 @@ interface DashboardHeaderProps {
   setSearchQuery: (query: string) => void;
   signOut: () => void;
   toggleSidebar?: () => void;
+  theme?: string;
+  setTheme?: (theme: string) => void;
 }
 
 const DashboardHeader = ({ 
   searchQuery, 
   setSearchQuery, 
   signOut,
-  toggleSidebar
+  toggleSidebar,
+  theme,
+  setTheme
 }: DashboardHeaderProps) => {
   const { user } = useAuth();
   const displayName = user ? user.email?.split('@')[0] : 'User';
@@ -112,6 +118,12 @@ const DashboardHeader = ({
     setNotifications(notifications.filter(notification => notification.id !== id));
   };
   
+  const toggleTheme = () => {
+    if (setTheme) {
+      setTheme(theme === 'dark' ? 'light' : 'dark');
+    }
+  };
+  
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="flex h-14 items-center px-4">
@@ -124,7 +136,16 @@ const DashboardHeader = ({
         <div className="flex-1 flex items-center"></div>
         
         <div className="flex items-center gap-2">
-          {/* Search Button */}
+          {theme && setTheme && (
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+          )}
+          
           <Popover open={isSearchOpen} onOpenChange={setIsSearchOpen}>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -146,7 +167,6 @@ const DashboardHeader = ({
             </PopoverContent>
           </Popover>
           
-          {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
@@ -175,9 +195,7 @@ const DashboardHeader = ({
                   <div className="flex flex-col">
                     {notifications
                       .sort((a, b) => {
-                        // Sort by read status (unread first)
                         if (a.read !== b.read) return a.read ? 1 : -1;
-                        // Then by timestamp (newest first)
                         return b.timestamp.getTime() - a.timestamp.getTime();
                       })
                       .map((notification) => (
@@ -233,7 +251,6 @@ const DashboardHeader = ({
             </PopoverContent>
           </Popover>
           
-          {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
