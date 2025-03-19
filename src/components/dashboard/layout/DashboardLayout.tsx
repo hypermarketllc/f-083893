@@ -5,7 +5,6 @@ import Sidebar from '@/components/Sidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
-import WebhooksSidebar from '@/components/webhooks/WebhooksSidebar';
 import { useTheme } from 'next-themes';
 
 interface DashboardLayoutProps {
@@ -66,16 +65,8 @@ export default function DashboardLayout({
         />
 
         <div className="flex flex-1 relative">
-          <div className="flex-1 overflow-auto transition-all duration-300 pr-80">
+          <div className="flex-1 overflow-auto">
             {children}
-          </div>
-          
-          {/* Webhooks Sidebar - Always visible as a fixed panel on the right */}
-          <div className="fixed top-14 right-0 w-80 h-[calc(100vh-3.5rem)] border-l border-border bg-card overflow-auto shadow-md">
-            <WebhooksSidebar 
-              visible={true}
-              onClose={() => {}}
-            />
           </div>
         </div>
       </div>

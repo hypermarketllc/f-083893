@@ -33,6 +33,10 @@ const TabNavigation: React.FC<TabNavigationProps> = ({
             <CheckSquare className="h-4 w-4 mr-2" />
             Tasks
           </TabsTrigger>
+          <TabsTrigger value="webhooks" className="data-[state=active]:bg-background">
+            <Webhook className="h-4 w-4 mr-2" />
+            Webhooks
+          </TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-background">
             <BarChart2 className="h-4 w-4 mr-2" />
             Analytics

@@ -27,16 +27,24 @@ export function useWebhookOperations(
       updatedAt: now
     };
     
-    setWebhooks([...webhooks, newWebhook]);
+    setWebhooks(prevWebhooks => [...prevWebhooks, newWebhook]);
     setIsWebhookModalOpen(false);
     toast.success('Webhook created successfully');
   };
 
   // Update an existing webhook
   const updateWebhook = (webhook: Webhook) => {
-    setWebhooks(webhooks.map(w => 
-      w.id === webhook.id ? { ...webhook, updatedAt: new Date().toISOString() } : w
-    ));
+    setWebhooks(prevWebhooks => 
+      prevWebhooks.map(w => 
+        w.id === webhook.id ? { ...webhook, updatedAt: new Date().toISOString() } : w
+      )
+    );
+    
+    // Also update selectedWebhook if it's the one being edited
+    if (selectedWebhook?.id === webhook.id) {
+      setSelectedWebhook({ ...webhook, updatedAt: new Date().toISOString() });
+    }
+    
     setIsWebhookModalOpen(false);
     setEditingWebhook(null);
     toast.success('Webhook updated successfully');
@@ -50,7 +58,7 @@ export function useWebhookOperations(
 
   // Delete a webhook
   const handleDeleteWebhook = (id: string) => {
-    setWebhooks(webhooks.filter(w => w.id !== id));
+    setWebhooks(prevWebhooks => prevWebhooks.filter(w => w.id !== id));
     if (selectedWebhook?.id === id) {
       setSelectedWebhook(null);
     }
@@ -62,12 +70,14 @@ export function useWebhookOperations(
     setTestResponse(null);
   };
 
-  // Execute webhook
+  // Execute webhook - now sending actual HTTP requests
   const executeWebhook = async (webhook: Webhook, isTest: boolean = false) => {
     setIsTestLoading(true);
     if (isTest) {
       setTestResponse(null);
     }
+    
+    const startTime = Date.now();
     
     try {
       // Build URL with params
@@ -93,33 +103,66 @@ export function useWebhookOperations(
       // Parse body content
       const bodyContent = parseBodyContent(webhook.body);
       
-      // Simulate a request
-      // In a real app, you would make an actual API call
+      // Log request details for debugging
       console.log(`Sending ${webhook.method} request to ${requestUrl}`);
       console.log('Headers:', headers);
       console.log('Body:', bodyContent);
       
-      // Simulate API response
-      const mockResponse = {
-        status: 200,
-        statusText: 'OK',
-        headers: {
-          'content-type': 'application/json',
-          'server': 'MockServer',
-          'date': new Date().toUTCString()
-        },
-        body: JSON.stringify({
-          success: true,
-          message: 'Webhook test successful',
-          timestamp: new Date().toISOString()
-        }),
-        duration: 152 // milliseconds
+      // Configure request options
+      const requestOptions: RequestInit = {
+        method: webhook.method,
+        headers,
+        mode: 'cors',
+        cache: 'no-cache',
       };
       
-      // Wait a bit to simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Add body for non-GET requests
+      if (webhook.method !== 'GET' && bodyContent) {
+        if (webhook.body?.contentType === 'json') {
+          requestOptions.headers = {
+            ...requestOptions.headers,
+            'Content-Type': 'application/json'
+          };
+          requestOptions.body = JSON.stringify(bodyContent);
+        } else if (webhook.body?.contentType === 'form') {
+          requestOptions.headers = {
+            ...requestOptions.headers,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          };
+          requestOptions.body = webhook.body.content;
+        } else {
+          requestOptions.headers = {
+            ...requestOptions.headers,
+            'Content-Type': 'text/plain'
+          };
+          requestOptions.body = webhook.body?.content;
+        }
+      }
       
-      // Simulate a log entry
+      // Send the actual request
+      const response = await fetch(requestUrl, requestOptions);
+      
+      // Get response data
+      const responseData = await response.text();
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // Get response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+      
+      // Create response object
+      const responseObject = {
+        status: response.status,
+        statusText: response.statusText,
+        headers: responseHeaders,
+        body: responseData,
+        duration
+      };
+      
+      // Create log entry
       const logEntry: WebhookLogEntry = {
         id: uuidv4(),
         webhookId: webhook.id,
@@ -129,21 +172,21 @@ export function useWebhookOperations(
         requestMethod: webhook.method,
         requestHeaders: headers,
         requestBody: bodyContent ? JSON.stringify(bodyContent) : undefined,
-        responseStatus: mockResponse.status,
-        responseHeaders: mockResponse.headers,
-        responseBody: mockResponse.body,
-        duration: mockResponse.duration,
-        success: true
+        responseStatus: response.status,
+        responseHeaders: responseHeaders,
+        responseBody: responseData,
+        duration,
+        success: response.ok
       };
       
       // Only add to logs if it's not a test or if we want to log tests
       if (!isTest) {
-        setWebhookLogs([logEntry, ...webhookLogs]);
+        setWebhookLogs(prevLogs => [logEntry, ...prevLogs]);
       }
       
       // Set response for display if it's a test
       if (isTest) {
-        setTestResponse(mockResponse);
+        setTestResponse(responseObject);
       }
       
       setIsTestLoading(false);
@@ -153,6 +196,8 @@ export function useWebhookOperations(
       
     } catch (error) {
       console.error('Error sending webhook:', error);
+      const endTime = Date.now();
+      const duration = endTime - startTime;
       
       // Create error log
       const logEntry: WebhookLogEntry = {
@@ -163,25 +208,25 @@ export function useWebhookOperations(
         requestUrl: webhook.url,
         requestMethod: webhook.method,
         requestHeaders: {},
-        responseStatus: 500,
+        responseStatus: 0,
         responseHeaders: {},
-        duration: 50, // Simulated duration in ms
+        duration,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
       
       // Only add to logs if it's not a test or if we want to log tests
       if (!isTest) {
-        setWebhookLogs([logEntry, ...webhookLogs]);
+        setWebhookLogs(prevLogs => [logEntry, ...prevLogs]);
       }
       
       if (isTest) {
         setTestResponse({
-          status: 500,
+          status: 0,
           statusText: 'Error',
           headers: {},
           body: JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-          duration: 50
+          duration
         });
       }
       

@@ -61,13 +61,13 @@ export default function DashboardContent({ searchQuery = '' }: DashboardContentP
             handleCreateTask={handleCreateTask}
           />
         </TabsContent>
+        
+        <TabsContent value="webhooks" className="space-y-4">
+          <WebhooksSection />
+        </TabsContent>
 
         <TabsContent value="analytics">
           <AnalyticsSection />
-        </TabsContent>
-
-        <TabsContent value="webhooks">
-          <WebhooksSection />
         </TabsContent>
 
         <TabsContent value="reports">
