@@ -1,11 +1,9 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { BarChart3, ListChecks, Settings } from 'lucide-react';
-import TaskOverview from './TaskOverview';
-import { useTaskContext } from '@/contexts/task/TaskContext';
-import { useAuth } from '@/hooks/auth';
+import { ArrowRight } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface DashboardOverviewProps {
   setActiveTab: (tab: string) => void;
@@ -14,69 +12,164 @@ interface DashboardOverviewProps {
 
 const DashboardOverview: React.FC<DashboardOverviewProps> = ({ 
   setActiveTab,
-  handleTaskClick
+  handleTaskClick 
 }) => {
-  const { user } = useAuth();
-  const { tasks } = useTaskContext();
-  
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground">
+          Welcome back to your dashboard.
+        </p>
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <StatsCard 
+          title="Recent Activity"
+          value="24 actions"
+          description="12% increase from last week"
+          linkText="View activity"
+          onLinkClick={() => setActiveTab('reports')}
+        />
+        
+        <StatsCard 
+          title="Active Webhooks"
+          value="8 webhooks"
+          description="2 new in the last 24h"
+          linkText="View webhooks"
+          onLinkClick={() => setActiveTab('webhooks')}
+        />
+        
+        <StatsCard 
+          title="Reports"
+          value="5 reports"
+          description="3 reports need attention"
+          linkText="View reports"
+          onLinkClick={() => setActiveTab('reports')}
+        />
+      </div>
+
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Access frequently used features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="reports" className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="reports">Reports</TabsTrigger>
+                <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+                <TabsTrigger value="goals">Goals</TabsTrigger>
+              </TabsList>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  variant="outline"
+                  className="justify-start" 
+                  onClick={() => setActiveTab('reports')}
+                >
+                  <span>View P&L Reports</span>
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="justify-start" 
+                  onClick={() => setActiveTab('reports')}
+                >
+                  <span>Agent Performance</span>
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="justify-start" 
+                  onClick={() => setActiveTab('webhooks')}
+                >
+                  <span>Create Webhook</span>
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="justify-start" 
+                  onClick={() => setActiveTab('goals')}
+                >
+                  <span>Set New Goal</span>
+                </Button>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Updates</CardTitle>
+            <CardDescription>
+              Latest system and feature updates
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="border-l-4 border-primary pl-4 py-1">
+                <h4 className="text-sm font-medium">New Reports UI</h4>
+                <p className="text-sm text-muted-foreground">
+                  We've updated the reports interface with improved filtering and visualization options.
+                </p>
+              </div>
+              <div className="border-l-4 border-primary pl-4 py-1">
+                <h4 className="text-sm font-medium">Webhook Testing</h4>
+                <p className="text-sm text-muted-foreground">
+                  You can now test and validate webhooks directly from the interface.
+                </p>
+              </div>
+              <div className="border-l-4 border-primary pl-4 py-1">
+                <h4 className="text-sm font-medium">Authentication Improvements</h4>
+                <p className="text-sm text-muted-foreground">
+                  We've added "Remember Me" functionality to the login system.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+interface StatsCardProps {
+  title: string;
+  value: string;
+  description: string;
+  linkText: string;
+  onLinkClick: () => void;
+}
+
+const StatsCard: React.FC<StatsCardProps> = ({ 
+  title, 
+  value, 
+  description, 
+  linkText, 
+  onLinkClick 
+}) => {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Welcome, {user?.email?.split('@')[0] || 'User'}!</CardTitle>
-        <CardDescription>
-          This is your project management dashboard. Navigate through the tabs to access different sections.
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">
+          {title}
+        </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-indigo-50 to-purple-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("tasks")}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center gap-2">
-                <ListChecks className="h-5 w-5 text-indigo-500" />
-                Tasks
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Manage your tasks and team's workload</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("analytics")}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-emerald-500" />
-                Analytics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">View project statistics and team performance</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 hover:shadow-md transition-shadow cursor-pointer" onClick={() => setActiveTab("settings")}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-md flex items-center gap-2">
-                <Settings className="h-5 w-5 text-blue-500" />
-                Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Customize application preferences</p>
-            </CardContent>
-          </Card>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+        <div className="mt-4">
+          <Button 
+            variant="link" 
+            className="px-0 text-xs" 
+            onClick={onLinkClick}
+          >
+            {linkText}
+            <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
         </div>
-        
-        <TaskOverview 
-          tasks={tasks} 
-          setActiveTab={setActiveTab}
-          handleTaskClick={handleTaskClick}
-        />
       </CardContent>
-      <CardFooter>
-        <Button variant="outline" className="w-full" onClick={() => setActiveTab("tasks")}>
-          View All Tasks
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

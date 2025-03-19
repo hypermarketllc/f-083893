@@ -2,218 +2,111 @@
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { WebhookLogEntry } from '@/types/webhook';
-import { Table, TableBody } from '@/components/ui/table';
-import { 
-  TableHead, 
-  TableHeader,
-  TableRow, 
-  TableCell 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { formatDistanceToNow } from 'date-fns';
-import { Eye, ArrowUpRight, CheckCircle, XCircle } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  Check, 
+  ChevronRight, 
+  Clock, 
+  ExternalLink, 
+  X 
+} from 'lucide-react';
+import { format } from 'date-fns';
+import WebhookDetailView from './WebhookDetailView';
 
-// Empty logs component
-export const EmptyLogs: React.FC<{ message: string }> = ({ message }) => {
+interface WebhookLogsTableProps {
+  compact?: boolean;
+}
+
+export const WebhookLogsTable: React.FC<WebhookLogsTableProps> = ({ compact = false }) => {
+  const { webhookLogs } = useWebhookContext();
+  const [selectedLog, setSelectedLog] = useState<WebhookLogEntry | null>(null);
+
+  // If a log is selected, show the detail view
+  if (selectedLog) {
+    return (
+      <WebhookDetailView 
+        webhookLog={selectedLog} 
+        onBack={() => setSelectedLog(null)} 
+      />
+    );
+  }
+
   return (
-    <div className="border rounded-md p-8 text-center">
-      <p className="text-muted-foreground">{message}</p>
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Timestamp</TableHead>
+            <TableHead>Webhook</TableHead>
+            <TableHead>Method</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Duration</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {webhookLogs.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                No logs found
+              </TableCell>
+            </TableRow>
+          ) : (
+            webhookLogs.map((log) => (
+              <TableRow key={log.id} className="cursor-pointer hover:bg-muted/50">
+                <TableCell onClick={() => setSelectedLog(log)}>
+                  {format(new Date(log.timestamp), 'MMM d, yyyy HH:mm:ss')}
+                </TableCell>
+                <TableCell onClick={() => setSelectedLog(log)}>
+                  {log.webhookName}
+                </TableCell>
+                <TableCell onClick={() => setSelectedLog(log)}>
+                  <span className="font-mono text-xs">
+                    {log.method}
+                  </span>
+                </TableCell>
+                <TableCell onClick={() => setSelectedLog(log)}>
+                  <div className="flex items-center">
+                    {log.status >= 200 && log.status < 300 ? (
+                      <Check className="h-4 w-4 text-green-500 mr-1" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-500 mr-1" />
+                    )}
+                    <span className="font-mono text-xs">{log.status}</span>
+                  </div>
+                </TableCell>
+                <TableCell onClick={() => setSelectedLog(log)}>
+                  <div className="flex items-center">
+                    <Clock className="h-4 w-4 text-muted-foreground mr-1" />
+                    <span>{log.duration}ms</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedLog(log)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <span className="sr-only">View details</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 };
 
-// Logs table header component
-export const LogsTableHeader: React.FC = () => {
-  return (
-    <TableHeader>
-      <TableRow>
-        <TableHead>Status</TableHead>
-        <TableHead>Webhook</TableHead>
-        <TableHead className="hidden md:table-cell">URL</TableHead>
-        <TableHead className="hidden lg:table-cell">Time</TableHead>
-        <TableHead className="text-right">Actions</TableHead>
-      </TableRow>
-    </TableHeader>
-  );
-};
-
-// Log row component
-export const LogRow: React.FC<{ 
-  log: WebhookLogEntry; 
-  onView: (log: WebhookLogEntry) => void 
-}> = ({ log, onView }) => {
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return formatDistanceToNow(date, { addSuffix: true });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  return (
-    <TableRow>
-      <TableCell>
-        <Badge variant={log.success ? 'outline' : 'secondary'} className={log.success ? 'text-green-500' : 'text-red-500'}>
-          {log.success ? (
-            <CheckCircle className="h-3 w-3 mr-1" />
-          ) : (
-            <XCircle className="h-3 w-3 mr-1" />
-          )}
-          {log.responseStatus}
-        </Badge>
-      </TableCell>
-      <TableCell className="font-medium">{log.webhookName}</TableCell>
-      <TableCell className="hidden md:table-cell">
-        <span className="text-xs text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">
-          {log.requestUrl || log.url}
-        </span>
-      </TableCell>
-      <TableCell className="hidden lg:table-cell">
-        {formatDate(log.timestamp)}
-      </TableCell>
-      <TableCell className="text-right">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onView(log)}
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
-};
-
-// Log details modal component
-export const LogDetailsModal: React.FC<{
-  log: WebhookLogEntry | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}> = ({ log, open, onOpenChange }) => {
-  if (!log) return null;
-
-  const formatJson = (json: any) => {
-    try {
-      return JSON.stringify(JSON.parse(json), null, 2);
-    } catch (e) {
-      return json;
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Webhook Log Details</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <p className="text-sm font-medium">Status</p>
-              <Badge variant={log.success ? 'outline' : 'secondary'} className={log.success ? 'text-green-500' : 'text-red-500'}>
-                {log.responseStatus}
-              </Badge>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Webhook</p>
-              <p className="text-sm">{log.webhookName}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-sm font-medium">URL</p>
-              <p className="text-sm text-muted-foreground break-all">{log.requestUrl || log.url}</p>
-            </div>
-            <div className="col-span-2">
-              <p className="text-sm font-medium">Time</p>
-              <p className="text-sm">{new Date(log.timestamp).toLocaleString()}</p>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium mb-1">Request</p>
-            <div className="bg-muted p-2 rounded-md">
-              <ScrollArea className="h-[120px]">
-                <pre className="text-xs">{formatJson(log.requestBody)}</pre>
-              </ScrollArea>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium mb-1">Response</p>
-            <div className="bg-muted p-2 rounded-md">
-              <ScrollArea className="h-[120px]">
-                <pre className="text-xs">{formatJson(log.responseBody)}</pre>
-              </ScrollArea>
-            </div>
-          </div>
-
-          {log.error && (
-            <div>
-              <p className="text-sm font-medium mb-1 text-red-500">Error</p>
-              <div className="bg-red-50 dark:bg-red-950/20 p-2 rounded-md">
-                <ScrollArea className="h-[80px]">
-                  <pre className="text-xs text-red-500">{log.error}</pre>
-                </ScrollArea>
-              </div>
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-          <Button 
-            variant="default" 
-            onClick={() => window.open(log.requestUrl || log.url, '_blank')}
-          >
-            <ArrowUpRight className="h-4 w-4 mr-1" />
-            Open URL
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export const WebhookLogsTable: React.FC<{ compact?: boolean }> = ({ compact }) => {
-  const { webhookLogs } = useWebhookContext();
-  const [selectedLog, setSelectedLog] = useState<WebhookLogEntry | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const handleViewLog = (log: WebhookLogEntry) => {
-    setSelectedLog(log);
-    setIsModalOpen(true);
-  };
-
-  if (webhookLogs.length === 0) {
-    return <EmptyLogs message="No webhook logs found" />;
-  }
-
-  return (
-    <>
-      <div className="border rounded-md overflow-hidden">
-        <Table>
-          <LogsTableHeader />
-          <TableBody>
-            {webhookLogs.map((log) => (
-              <LogRow 
-                key={log.id} 
-                log={log} 
-                onView={handleViewLog} 
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <LogDetailsModal
-        log={selectedLog}
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-      />
-    </>
-  );
-};
+export default WebhookLogsTable;

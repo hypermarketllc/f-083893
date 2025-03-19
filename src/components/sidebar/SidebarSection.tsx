@@ -1,40 +1,67 @@
 
-import React, { useState, ReactNode } from 'react';
+import React, { useState, ReactNode, useEffect } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 
 interface SidebarSectionProps {
   title: string;
-  icon?: React.ReactNode;
-  defaultExpanded?: boolean;
   children: ReactNode;
+  defaultExpanded?: boolean;
+  icon?: ReactNode;
+  collapsed?: boolean;
 }
 
-const SidebarSection: React.FC<SidebarSectionProps> = ({ 
-  title, 
-  icon, 
-  defaultExpanded = false, 
-  children 
+const SidebarSection: React.FC<SidebarSectionProps> = ({
+  title,
+  children,
+  defaultExpanded = false,
+  icon,
+  collapsed = false
 }) => {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+
+  // Reset expansion state when sidebar is collapsed
+  useEffect(() => {
+    if (collapsed) {
+      setIsExpanded(false);
+    } else {
+      setIsExpanded(defaultExpanded);
+    }
+  }, [collapsed, defaultExpanded]);
+
+  const toggleExpanded = () => {
+    if (!collapsed) {
+      setIsExpanded(!isExpanded);
+    }
+  };
 
   return (
-    <div className="mt-2">
-      <button 
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium hover:bg-accent/50 rounded-md transition-colors"
+    <div className="py-2">
+      <div
+        className="flex items-center justify-between px-2 py-1.5 rounded-md text-sm font-medium cursor-pointer hover:bg-accent/50 transition-colors"
+        onClick={toggleExpanded}
       >
-        <span className="flex items-center gap-2">
-          {icon}
-          {title}
-        </span>
-        {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-      </button>
-      
-      {expanded && (
-        <ul className="mt-1 space-y-1 ml-3">
-          {children}
-        </ul>
-      )}
+        <div className="flex items-center">
+          {icon && <span className="mr-2">{icon}</span>}
+          {!collapsed && <span>{title}</span>}
+          {collapsed && <span className="sr-only">{title}</span>}
+        </div>
+        {!collapsed && (
+          <span className="text-muted-foreground">
+            {isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </span>
+        )}
+      </div>
+      <div
+        className={`overflow-hidden transition-all duration-200 ${
+          isExpanded && !collapsed ? 'max-h-96' : 'max-h-0'
+        }`}
+      >
+        <div className="pl-2 mt-1">{children}</div>
+      </div>
     </div>
   );
 };

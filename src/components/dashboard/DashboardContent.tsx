@@ -8,6 +8,8 @@ import SettingsSection from './SettingsSection';
 import ProfileSection from './ProfileSection';
 import ReportsSection from './ReportsSection';
 import PlaceholderView from './PlaceholderView';
+import GoalsSection from './GoalsSection';
+import AnalyticsSection from './AnalyticsSection';
 
 interface DashboardContentProps {
   searchQuery: string;
@@ -15,7 +17,7 @@ interface DashboardContentProps {
 }
 
 // These tabs are displayed in the dashboard
-const validTabs = ['overview', 'tasks', 'webhooks', 'reports', 'settings', 'profile'];
+const validTabs = ['overview', 'tasks', 'webhooks', 'reports', 'settings', 'profile', 'analytics', 'goals'];
 
 export default function DashboardContent({ 
   searchQuery, 
@@ -63,6 +65,10 @@ export default function DashboardContent({
         return <SettingsSection />;
       case 'profile':
         return <ProfileSection />;
+      case 'analytics':
+        return <AnalyticsSection />;
+      case 'goals':
+        return <GoalsSection />;
       default:
         return <PlaceholderView type="calendar" />;
     }
@@ -70,7 +76,7 @@ export default function DashboardContent({
 
   return (
     <div className="h-full flex overflow-y-auto">
-      <div className="flex-1">
+      <div className="flex-1 p-4 md:p-6">
         {renderContent()}
       </div>
     </div>

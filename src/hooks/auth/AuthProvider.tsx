@@ -62,9 +62,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      // Use the appropriate auth options based on "Remember Me" setting
+      const options = rememberMe 
+        ? { 
+            shouldCreateUser: false,
+            storeSession: true, // Explicitly store the session
+            redirectTo: window.location.origin + '/dashboard'
+          }
+        : {
+            shouldCreateUser: false,
+            storeSession: false, // Don't persist the session
+            redirectTo: window.location.origin + '/dashboard'
+          };
+      
+      const { data, error } = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
       
       if (error) {
         handleAuthError(error, "Sign in", toast);

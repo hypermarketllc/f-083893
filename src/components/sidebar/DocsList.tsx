@@ -1,42 +1,27 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { DOCS } from './SidebarConstants';
 
-const DocsList: React.FC = () => {
+interface DocsListProps {
+  collapsed?: boolean;
+}
+
+const DocsList: React.FC<DocsListProps> = ({ collapsed = false }) => {
   return (
     <>
-      <li>
-        <Link 
-          to="/docs/all" 
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
-        >
-          All
-        </Link>
-      </li>
-      <li>
-        <Link 
-          to="/docs/assigned" 
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
-        >
-          Assigned to me
-        </Link>
-      </li>
-      <li>
-        <Link 
-          to="/docs/shared" 
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
-        >
-          Shared
-        </Link>
-      </li>
-      <li>
-        <Link 
-          to="/docs/private" 
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
-        >
-          Private
-        </Link>
-      </li>
+      {DOCS.map((doc) => (
+        <li key={doc.id}>
+          <Link 
+            to={`/docs/${doc.id}`} 
+            className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent/50 transition-colors"
+          >
+            <doc.icon className="h-4 w-4" />
+            {!collapsed && doc.name}
+            {collapsed && <span className="sr-only">{doc.name}</span>}
+          </Link>
+        </li>
+      ))}
     </>
   );
 };
