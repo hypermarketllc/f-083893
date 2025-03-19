@@ -3,12 +3,14 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Filter, ListChecks, Layout, Calendar, GanttChart } from 'lucide-react';
 import TaskListView from './TaskListView';
 import TaskBoardView from './TaskBoardView';
 import PlaceholderView from './PlaceholderView';
 import TaskFilterSidebar from './TaskFilterSidebar';
 import { Task } from '@/types/task';
+import { useTaskContext } from '@/contexts/TaskContext';
 
 interface TasksSectionProps {
   activeView: string;
@@ -25,6 +27,8 @@ const TasksSection: React.FC<TasksSectionProps> = ({
   handleTaskClick,
   handleCreateTask
 }) => {
+  const { isFiltersOpen, setIsFiltersOpen, areFiltersActive } = useTaskContext();
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -69,10 +73,18 @@ const TasksSection: React.FC<TasksSectionProps> = ({
                 Gantt
               </Button>
             </div>
-            <Sheet>
+            <Sheet open={isFiltersOpen} onOpenChange={setIsFiltersOpen}>
               <SheetTrigger asChild>
-                <Button size="icon" variant="ghost">
+                <Button size="icon" variant="ghost" className="relative">
                   <Filter className="h-4 w-4" />
+                  {areFiltersActive && (
+                    <Badge 
+                      variant="secondary" 
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+                    >
+                      •
+                    </Badge>
+                  )}
                 </Button>
               </SheetTrigger>
               <TaskFilterSidebar />
