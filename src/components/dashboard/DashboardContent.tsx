@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import DashboardOverview from './DashboardOverview';
 import TasksSection from './TasksSection';
 import WebhooksSection from './WebhooksSection';
+import Webhook2Section from './Webhook2Section';
 import SettingsSection from './SettingsSection';
 import ProfileSection from './ProfileSection';
 import ReportsSection from './ReportsSection';
@@ -58,7 +59,7 @@ export default function DashboardContent({
           handleCreateTask={() => {}}
         />;
       case 'webhooks':
-        return <WebhooksSection />;
+        return <Webhook2Section />;
       case 'reports':
         return <ReportsSection />;
       case 'settings':
