@@ -88,8 +88,7 @@ export const Webhook2BodyTab: React.FC<Webhook2BodyTabProps> = ({
 
     setBody({
       contentType: value,
-      content: newContent,
-      type: value // For compatibility
+      content: newContent
     });
   };
 

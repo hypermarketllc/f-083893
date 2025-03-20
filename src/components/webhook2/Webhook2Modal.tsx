@@ -9,6 +9,7 @@ import { Webhook2HeadersTab } from './modal/Webhook2HeadersTab';
 import { Webhook2ParamsTab } from './modal/Webhook2ParamsTab';
 import { Webhook2BodyTab } from './modal/Webhook2BodyTab';
 import { Loader2 } from 'lucide-react';
+import { HttpMethod, WebhookBody, WebhookHeader, WebhookParam, WebhookTag } from '@/types/webhook2';
 
 export const Webhook2Modal = () => {
   const { 
@@ -25,16 +26,15 @@ export const Webhook2Modal = () => {
   const [webhookName, setWebhookName] = useState('');
   const [webhookDescription, setWebhookDescription] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookMethod, setWebhookMethod] = useState('GET');
-  const [webhookHeaders, setWebhookHeaders] = useState([]);
-  const [webhookParams, setWebhookParams] = useState([]);
-  const [webhookBody, setWebhookBody] = useState({
+  const [webhookMethod, setWebhookMethod] = useState<HttpMethod>('GET');
+  const [webhookHeaders, setWebhookHeaders] = useState<WebhookHeader[]>([]);
+  const [webhookParams, setWebhookParams] = useState<WebhookParam[]>([]);
+  const [webhookBody, setWebhookBody] = useState<WebhookBody>({
     contentType: 'json',
-    content: '',
-    type: 'json' // For compatibility
+    content: ''
   });
   const [webhookEnabled, setWebhookEnabled] = useState(true);
-  const [webhookTags, setWebhookTags] = useState([]);
+  const [webhookTags, setWebhookTags] = useState<WebhookTag[]>([]);
 
   useEffect(() => {
     if (selectedWebhook) {
@@ -44,7 +44,7 @@ export const Webhook2Modal = () => {
       setWebhookMethod(selectedWebhook.method);
       setWebhookHeaders(selectedWebhook.headers);
       setWebhookParams(selectedWebhook.params);
-      setWebhookBody(selectedWebhook.body || { contentType: 'json', content: '', type: 'json' });
+      setWebhookBody(selectedWebhook.body || { contentType: 'json', content: '' });
       setWebhookEnabled(selectedWebhook.enabled);
       setWebhookTags(selectedWebhook.tags || []);
     } else {
@@ -61,8 +61,7 @@ export const Webhook2Modal = () => {
     setWebhookParams([]);
     setWebhookBody({
       contentType: 'json',
-      content: '',
-      type: 'json'
+      content: ''
     });
     setWebhookEnabled(true);
     setWebhookTags([]);
@@ -81,7 +80,7 @@ export const Webhook2Modal = () => {
       name: webhookName,
       description: webhookDescription,
       url: webhookUrl,
-      method: webhookMethod as HttpMethod,
+      method: webhookMethod,
       headers: webhookHeaders,
       params: webhookParams,
       body: webhookBody,
@@ -156,7 +155,7 @@ export const Webhook2Modal = () => {
             <Webhook2BodyTab
               body={webhookBody}
               setBody={setWebhookBody}
-              method={webhookMethod as HttpMethod}
+              method={webhookMethod}
             />
           </TabsContent>
         </Tabs>

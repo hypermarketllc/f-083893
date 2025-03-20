@@ -34,6 +34,13 @@ export const mapDbWebhookToWebhook = (dbWebhook: any): Webhook => {
   if (!dbWebhook) return null as unknown as Webhook;
   
   try {
+    // Ensure body is properly formatted
+    const body = fromJson<WebhookBody>(dbWebhook.body);
+    const formattedBody: WebhookBody = body ? {
+      contentType: body.contentType || 'json',
+      content: body.content || ''
+    } : { contentType: 'json', content: '' };
+    
     return {
       id: dbWebhook.id,
       name: dbWebhook.name,
@@ -42,7 +49,7 @@ export const mapDbWebhookToWebhook = (dbWebhook: any): Webhook => {
       method: dbWebhook.method as HttpMethod,
       headers: fromJson<WebhookHeader[]>(dbWebhook.headers) || [],
       params: fromJson<WebhookParam[]>(dbWebhook.params) || [],
-      body: fromJson<WebhookBody>(dbWebhook.body) || { contentType: 'json', content: '{}' },
+      body: formattedBody,
       enabled: dbWebhook.enabled,
       createdAt: dbWebhook.created_at,
       updatedAt: dbWebhook.updated_at,
@@ -62,6 +69,9 @@ export const mapWebhookToDbWebhook = (webhook: Webhook): any => {
   if (!webhook) return null;
   
   try {
+    // Ensure body is correctly formatted before converting to JSON
+    const body: WebhookBody = webhook.body || { contentType: 'json', content: '' };
+    
     return {
       id: webhook.id,
       name: webhook.name,
@@ -70,7 +80,7 @@ export const mapWebhookToDbWebhook = (webhook: Webhook): any => {
       method: webhook.method,
       headers: toJson<WebhookHeader[]>(webhook.headers || []),
       params: toJson<WebhookParam[]>(webhook.params || []),
-      body: toJson<WebhookBody>(webhook.body || { contentType: 'json', content: '{}' }),
+      body: toJson<WebhookBody>(body),
       enabled: webhook.enabled,
       tags: toJson<WebhookTag[]>(webhook.tags || []),
       last_executed_at: webhook.lastExecutedAt,
