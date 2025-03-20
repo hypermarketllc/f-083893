@@ -44,6 +44,8 @@ export interface Webhook {
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
+  lastExecutedAt: string | null;
+  lastExecutionStatus: 'success' | 'error' | null;
 }
 
 export interface WebhookLogEntry {
@@ -55,18 +57,26 @@ export interface WebhookLogEntry {
   requestMethod: HttpMethod;
   requestHeaders: Record<string, string>;
   requestBody?: string;
+  requestQuery?: Record<string, string>;
   responseStatus: number;
   responseHeaders: Record<string, string>;
   responseBody?: string;
   duration: number; // in milliseconds
   success: boolean;
   error?: string;
+  // Time fields
+  requestTime?: string;
+  responseTime?: string;
   // Additional properties used in components
   url?: string;
   method?: HttpMethod;
   status?: number; // Alias for responseStatus
   request?: string; // Alias for requestBody 
   response?: string; // Alias for responseBody
+  headers?: Record<string, string>; // Alias for requestHeaders
+  payload?: string; // Alias for requestBody
+  ipAddress?: string;
+  queryParams?: Record<string, string>; // Alias for requestQuery
 }
 
 export interface IncomingWebhook {
@@ -77,6 +87,8 @@ export interface IncomingWebhook {
   createdAt: string;
   updatedAt: string;
   enabled: boolean;
+  lastCalledAt: string | null;
+  secretKey?: string;
 }
 
 export interface IncomingWebhookLogEntry {

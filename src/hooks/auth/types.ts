@@ -6,6 +6,10 @@ export type UserProfile = {
   email?: string;
   name?: string;
   avatarUrl?: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  role?: string;
 };
 
 export type AuthContextType = {
@@ -17,4 +21,5 @@ export type AuthContextType = {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
+  updateProfile?: (data: Partial<UserProfile>) => Promise<void>;
 };

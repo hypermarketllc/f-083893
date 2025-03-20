@@ -25,6 +25,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser({
         id,
         email,
+        firstName: currentSession.user.user_metadata?.first_name,
+        lastName: currentSession.user.user_metadata?.last_name,
+        company: currentSession.user.user_metadata?.company,
+        role: currentSession.user.user_metadata?.role,
+        avatarUrl: currentSession.user.user_metadata?.avatar_url
       });
       console.log(`User authenticated: ${email}`);
     } else {
@@ -215,6 +220,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateProfile = async (userData: Partial<UserProfile>) => {
+    try {
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Update failed",
+          description: "You must be logged in to update your profile.",
+        });
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          company: userData.company,
+          role: userData.role,
+          avatar_url: userData.avatarUrl
+        }
+      });
+
+      if (error) {
+        handleAuthError(error, "Profile update", toast);
+        return;
+      }
+
+      // Update local user state
+      setUser(prev => prev ? { ...prev, ...userData } : null);
+
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+    } catch (error) {
+      console.error("Unexpected error during profile update:", error);
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: "An unexpected error occurred. Please try again.",
+      });
+    }
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -224,6 +272,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     signOut,
     resetPassword,
     updatePassword,
+    updateProfile
   };
 
   return (

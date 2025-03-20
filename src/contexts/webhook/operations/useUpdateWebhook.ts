@@ -28,11 +28,35 @@ export function useUpdateWebhook(
         return null;
       }
       
+      // Validate URL format
+      try {
+        // Use URL constructor to validate the URL format
+        new URL(updatedWebhook.url);
+      } catch (e) {
+        // If URL is invalid, try to fix it by adding https:// prefix
+        if (!updatedWebhook.url.startsWith('http://') && !updatedWebhook.url.startsWith('https://')) {
+          updatedWebhook.url = 'https://' + updatedWebhook.url;
+          try {
+            new URL(updatedWebhook.url);
+          } catch (e) {
+            toast.error('Invalid URL format. Please include a valid protocol (http:// or https://)');
+            setIsUpdating(false);
+            return null;
+          }
+        } else {
+          toast.error('Invalid URL format');
+          setIsUpdating(false);
+          return null;
+        }
+      }
+      
       // Update the updatedAt timestamp
       const webhook = {
         ...updatedWebhook,
         updatedAt: new Date().toISOString()
       };
+      
+      console.log('Updating webhook with URL:', webhook.url);
       
       // Update the webhooks list
       setWebhooks(prevWebhooks => 
@@ -66,7 +90,7 @@ export function useUpdateWebhook(
   };
   
   const handleEditWebhook = (webhook: Webhook) => {
-    setEditingWebhook(webhook);
+    setEditingWebhook({...webhook});
     setIsWebhookModalOpen(true);
   };
   

@@ -27,6 +27,17 @@ export function useExecuteWebhook(
       const endTime = Date.now();
       const duration = endTime - startTime;
       
+      // Prepare the URL with any parameters
+      let fullUrl = webhook.url;
+      if (webhook.urlParams && webhook.urlParams.length > 0) {
+        const queryParams = webhook.urlParams
+          .filter(param => param.enabled)
+          .reduce((acc, param, index) => {
+            return `${acc}${index === 0 ? '?' : '&'}${encodeURIComponent(param.key)}=${encodeURIComponent(param.value)}`;
+          }, '');
+        fullUrl += queryParams;
+      }
+      
       // Create a simulated response
       const response = {
         status: statusCode,
@@ -56,7 +67,7 @@ export function useExecuteWebhook(
           webhookId: webhook.id,
           webhookName: webhook.name,
           timestamp: new Date().toISOString(),
-          requestUrl: webhook.url,
+          requestUrl: fullUrl,
           requestMethod: webhook.method,
           requestHeaders: webhook.headers.reduce((acc, header) => {
             if (header.enabled) {
@@ -74,7 +85,9 @@ export function useExecuteWebhook(
             ? statusCode === 400 
               ? "Bad Request: The request was invalid" 
               : "Server Error: An error occurred while processing the request"
-            : undefined
+            : undefined,
+          requestTime: new Date().toISOString(),
+          responseTime: new Date(Date.now() + duration).toISOString()
         };
         
         // Add to logs

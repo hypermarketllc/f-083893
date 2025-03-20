@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Webhook, WebhookLogEntry } from '@/types/webhook';
+import { WebhookLogEntry } from '@/types/webhook';
 import {
   Card,
   CardContent,
@@ -20,7 +20,6 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Check, 
   Copy, 
-  ArrowRight, 
   Clock, 
   Calendar, 
   X,
@@ -44,7 +43,8 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const formatJSON = (json: string) => {
+  const formatJSON = (json: string | undefined) => {
+    if (!json) return '';
     try {
       return JSON.stringify(JSON.parse(json), null, 2);
     } catch (e) {
@@ -53,7 +53,7 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
   };
 
   return (
-    <Card className="border shadow-sm">
+    <Card className="border shadow-sm bg-gradient-to-b from-background to-muted/10">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -71,9 +71,9 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
           <Badge 
             className={`${
               webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 
-                ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                : 'bg-red-100 text-red-800 hover:bg-red-200'
-            }`}
+                ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' 
+                : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+            } transition-colors`}
           >
             {webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 ? (
               <Check className="h-3 w-3 mr-1" />
@@ -126,13 +126,13 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
               <div>
                 <h3 className="text-sm font-medium mb-2">Headers</h3>
                 <div className="bg-muted p-3 rounded-md text-sm">
-                  {Object.entries(webhookLog.requestHeaders).map(([key, value], index) => (
+                  {Object.entries(webhookLog.requestHeaders || {}).map(([key, value], index) => (
                     <div key={index} className="flex items-start py-1 border-b last:border-0">
                       <div className="font-medium min-w-32">{key}:</div>
                       <div className="text-muted-foreground truncate">{value}</div>
                     </div>
                   ))}
-                  {Object.keys(webhookLog.requestHeaders).length === 0 && (
+                  {(!webhookLog.requestHeaders || Object.keys(webhookLog.requestHeaders).length === 0) && (
                     <div className="text-muted-foreground">No headers</div>
                   )}
                 </div>
@@ -147,7 +147,7 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
                       <div className="text-muted-foreground truncate">{value}</div>
                     </div>
                   ))}
-                  {(!webhookLog.requestQuery || Object.keys(webhookLog.requestQuery).length === 0) && (
+                  {(!webhookLog.requestQuery || Object.keys(webhookLog.requestQuery || {}).length === 0) && (
                     <div className="text-muted-foreground">No URL parameters</div>
                   )}
                 </div>
@@ -183,9 +183,9 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
                     <Badge 
                       className={`${
                         webhookLog.responseStatus >= 200 && webhookLog.responseStatus < 300 
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
-                      }`}
+                          ? 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' 
+                          : 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400'
+                      } transition-colors`}
                     >
                       {webhookLog.responseStatus}
                     </Badge>
@@ -212,7 +212,7 @@ const WebhookDetailView: React.FC<WebhookDetailViewProps> = ({ webhookLog, onBac
                   {webhookLog.responseHeaders && Object.entries(webhookLog.responseHeaders).map(([key, value], index) => (
                     <div key={index} className="flex items-start py-1 border-b last:border-0">
                       <div className="font-medium min-w-32">{key}:</div>
-                      <div className="text-muted-foreground truncate">{value}</div>
+                      <div className="text-muted-foreground truncate">{typeof value === 'string' ? value : JSON.stringify(value)}</div>
                     </div>
                   ))}
                   {(!webhookLog.responseHeaders || Object.keys(webhookLog.responseHeaders).length === 0) && (

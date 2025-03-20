@@ -41,6 +41,7 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
           value={webhookName}
           onChange={(e) => setWebhookName(e.target.value)}
           placeholder="Enter webhook name"
+          className="transition-all focus-visible:ring-primary/70"
         />
       </div>
 
@@ -51,6 +52,7 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
           value={webhookDescription}
           onChange={(e) => setWebhookDescription(e.target.value)}
           placeholder="Enter webhook description"
+          className="transition-all focus-visible:ring-primary/70 min-h-[80px]"
         />
       </div>
 
@@ -61,7 +63,7 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
             value={webhookMethod}
             onValueChange={(value) => setWebhookMethod(value as HttpMethod)}
           >
-            <SelectTrigger id="webhook-method">
+            <SelectTrigger id="webhook-method" className="transition-all">
               <SelectValue placeholder="Select method" />
             </SelectTrigger>
             <SelectContent>
@@ -81,7 +83,11 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
             value={webhookUrl}
             onChange={(e) => setWebhookUrl(e.target.value)}
             placeholder="https://example.com/api/endpoint"
+            className="transition-all focus-visible:ring-primary/70"
           />
+          <p className="text-xs text-muted-foreground mt-1">
+            Enter the full URL including the protocol (http:// or https://)
+          </p>
         </div>
       </div>
 
@@ -90,6 +96,7 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
           id="webhook-enabled"
           checked={webhookEnabled}
           onCheckedChange={setWebhookEnabled}
+          className="data-[state=checked]:bg-primary"
         />
         <Label htmlFor="webhook-enabled">Enabled</Label>
       </div>

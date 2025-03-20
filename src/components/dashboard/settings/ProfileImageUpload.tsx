@@ -43,26 +43,28 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({ onImageUpload }
       
       // Create a data URL for preview
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const url = e.target?.result as string;
         setImageUrl(url);
         
         // In a real app, we would upload to storage here
-        // For now, we'll just simulate a successful upload
-        setTimeout(() => {
-          if (onImageUpload) onImageUpload(url);
-          
-          // Update user profile if that function exists
-          if (updateProfile) {
-            updateProfile({ avatarUrl: url })
-              .then(() => toast.success('Profile image updated'))
-              .catch((error) => toast.error('Failed to update profile image'));
-          } else {
+        // For now, we'll just update the user profile with the data URL
+        if (onImageUpload) onImageUpload(url);
+        
+        // Update user profile
+        if (updateProfile) {
+          try {
+            await updateProfile({ avatarUrl: url });
             toast.success('Profile image updated');
+          } catch (error) {
+            toast.error('Failed to update profile image');
+            console.error('Error updating profile:', error);
           }
-          
-          setIsUploading(false);
-        }, 1000);
+        } else {
+          toast.success('Profile image updated');
+        }
+        
+        setIsUploading(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -72,15 +74,19 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({ onImageUpload }
     }
   };
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = async () => {
     setImageUrl('');
     if (onImageUpload) onImageUpload('');
     
-    // Update user profile if that function exists
+    // Update user profile
     if (updateProfile) {
-      updateProfile({ avatarUrl: '' })
-        .then(() => toast.success('Profile image removed'))
-        .catch((error) => toast.error('Failed to remove profile image'));
+      try {
+        await updateProfile({ avatarUrl: '' });
+        toast.success('Profile image removed');
+      } catch (error) {
+        toast.error('Failed to remove profile image');
+        console.error('Error updating profile:', error);
+      }
     } else {
       toast.success('Profile image removed');
     }
@@ -93,9 +99,9 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({ onImageUpload }
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
       >
-        <Avatar className="h-32 w-32 border-4 border-background shadow-md transition-all hover:shadow-lg cursor-pointer">
+        <Avatar className="h-32 w-32 border-4 border-background shadow-md transition-all hover:shadow-lg cursor-pointer bg-gradient-to-br from-muted/50 to-background">
           <AvatarImage src={imageUrl} />
-          <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
+          <AvatarFallback className="text-3xl bg-gradient-to-br from-primary/70 to-primary text-primary-foreground">
             {getInitials()}
           </AvatarFallback>
         </Avatar>
@@ -126,7 +132,7 @@ const ProfileImageUpload: React.FC<ProfileImageUploadProps> = ({ onImageUpload }
       <div className="flex gap-2">
         <Button 
           variant="outline" 
-          className="gap-2" 
+          className="gap-2 bg-gradient-to-r from-background to-muted/30 hover:from-muted/50 hover:to-muted/50 transition-all" 
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
         >

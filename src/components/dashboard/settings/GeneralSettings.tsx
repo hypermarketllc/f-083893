@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import ProfileImageUpload from './ProfileImageUpload';
 
 export const GeneralSettings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -19,20 +19,50 @@ export const GeneralSettings: React.FC = () => {
     role: user?.role || ''
   });
 
+  // Update form when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        company: user.company || '',
+        role: user.role || ''
+      });
+    }
+  }, [user]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, we would update the user profile here
-    toast.success('Profile updated successfully');
+    
+    if (!updateProfile) {
+      toast.error('Profile update functionality is not available');
+      return;
+    }
+
+    try {
+      await updateProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        company: formData.company,
+        role: formData.role
+      });
+      
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      toast.error('Failed to update profile');
+    }
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Card>
+      <Card className="border shadow-sm overflow-hidden bg-gradient-to-b from-background to-muted/5">
         <CardHeader>
           <CardTitle>Profile</CardTitle>
           <CardDescription>
@@ -55,6 +85,7 @@ export const GeneralSettings: React.FC = () => {
                     value={formData.firstName}
                     onChange={handleChange}
                     placeholder="John"
+                    className="transition-all focus-visible:ring-primary/70"
                   />
                 </div>
                 
@@ -66,6 +97,7 @@ export const GeneralSettings: React.FC = () => {
                     value={formData.lastName}
                     onChange={handleChange}
                     placeholder="Doe"
+                    className="transition-all focus-visible:ring-primary/70"
                   />
                 </div>
               </div>
@@ -81,6 +113,7 @@ export const GeneralSettings: React.FC = () => {
                   readOnly
                   disabled
                   placeholder="john@example.com"
+                  className="bg-muted/50"
                 />
                 <p className="text-sm text-muted-foreground">
                   Your email address is used for login and cannot be changed
@@ -96,6 +129,7 @@ export const GeneralSettings: React.FC = () => {
                     value={formData.company}
                     onChange={handleChange}
                     placeholder="Acme Inc."
+                    className="transition-all focus-visible:ring-primary/70"
                   />
                 </div>
                 
@@ -107,14 +141,21 @@ export const GeneralSettings: React.FC = () => {
                     value={formData.role}
                     onChange={handleChange}
                     placeholder="Product Manager"
+                    className="transition-all focus-visible:ring-primary/70"
                   />
                 </div>
               </div>
             </form>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button type="submit" onClick={handleSubmit}>Save Changes</Button>
+        <CardFooter className="flex justify-end bg-muted/5">
+          <Button 
+            type="submit" 
+            onClick={handleSubmit}
+            className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-sm transition-all"
+          >
+            Save Changes
+          </Button>
         </CardFooter>
       </Card>
     </div>
