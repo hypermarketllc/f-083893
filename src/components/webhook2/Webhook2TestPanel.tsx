@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useWebhook2Context } from '@/contexts/webhook2/Webhook2Context';
-import { Webhook, WebhookLogEntry } from '@/types/webhook2';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Webhook } from '@/types/webhook2';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,8 +24,6 @@ export const Webhook2TestPanel: React.FC<Webhook2TestPanelProps> = ({ webhook })
     setIsTestMode 
   } = useWebhook2Context();
   
-  const [activeTab, setActiveTab] = useState('request');
-
   const handleTest = async () => {
     try {
       await sendTestRequest(webhook);

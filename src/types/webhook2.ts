@@ -22,6 +22,7 @@ export interface WebhookParam {
 export interface WebhookBody {
   contentType: 'json' | 'form' | 'text';
   content: string;
+  type?: 'none' | 'json' | 'form' | 'text'; // Added type property for compatibility
 }
 
 // Metadata
@@ -82,6 +83,12 @@ export interface WebhookTestResponse {
   body?: string;
   duration: number;
   error?: string;
+  success?: boolean;  // Added for compatibility
+  responseStatus?: number;  // Added for compatibility
+  responseBody?: string;  // Added for compatibility
+  responseHeaders?: Record<string, string>;  // Added for compatibility
+  webhookId?: string;  // Added for compatibility
+  webhookName?: string;  // Added for compatibility
 }
 
 export interface WebhookFilters {

@@ -7,6 +7,7 @@ import { useWebhookCrud } from './hooks/useWebhookCrud';
 import { useWebhookDataSync } from './hooks/useWebhookDataSync';
 import { mockIncomingWebhooks, mockIncomingWebhookLogs } from './data';
 import { useAuth } from '@/hooks/auth';
+import { Webhook } from '@/types/webhook2';
 
 const Webhook2Context = createContext<Webhook2ContextType | undefined>(undefined);
 
@@ -64,7 +65,7 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     handleEditIncomingWebhook,
     handleDeleteIncomingWebhook,
     fetchWebhooks,
-    isCreating // Add this from the updated hook
+    isCreating
   } = useWebhookCrud({
     webhooks,
     setWebhooks,
@@ -102,6 +103,15 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [webhooks.length]);
 
+  // Create wrapper functions to ensure they adhere to the context type
+  const executeWebhookWrapper = (webhook: Webhook) => {
+    return executeWebhook(webhook);
+  };
+
+  const sendTestRequestWrapper = (webhook: Webhook) => {
+    return sendTestRequest(webhook);
+  };
+
   return (
     <Webhook2Context.Provider
       value={{
@@ -130,8 +140,8 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         createWebhook,
         updateWebhook,
         deleteWebhook,
-        executeWebhook,
-        sendTestRequest,
+        executeWebhook: executeWebhookWrapper,
+        sendTestRequest: sendTestRequestWrapper,
         createIncomingWebhook,
         updateIncomingWebhook,
         deleteIncomingWebhook,
@@ -142,7 +152,7 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         clearTestResponse,
         refreshWebhooks: fetchWebhooks,
         refreshWebhookLogs,
-        isCreating // Expose this to the context
+        isCreating
       }}
     >
       {children}

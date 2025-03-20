@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { Webhook, WebhookLogEntry, IncomingWebhook, WebhookTag } from '@/types/webhook2';
+import { Webhook, IncomingWebhook } from '@/types/webhook2';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth';
@@ -39,7 +40,7 @@ export const useWebhookCrud = ({
   const { user } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
 
-  const createWebhook = async (webhookData: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>): Promise<Webhook | null> => {
+  const createWebhook = async (webhookData: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt' | 'lastExecutedAt' | 'lastExecutionStatus'>): Promise<Webhook | null> => {
     try {
       setIsCreating(true);
       
@@ -62,7 +63,9 @@ export const useWebhookCrud = ({
           id: newId,
           ...webhookData,
           createdAt: now,
-          updatedAt: now
+          updatedAt: now,
+          lastExecutedAt: null,
+          lastExecutionStatus: null
         };
         
         setWebhooks(prev => [newWebhook, ...prev]);
@@ -172,7 +175,7 @@ export const useWebhookCrud = ({
     }
   };
 
-  const deleteWebhook = async (id: string): Promise<void> => {
+  const deleteWebhook = async (id: string): Promise<boolean> => {
     try {
       // If user is not logged in, delete locally only
       if (!user) {
@@ -184,7 +187,7 @@ export const useWebhookCrud = ({
         }
         
         toast.success('Webhook deleted successfully (offline mode)');
-        return;
+        return true;
       }
       
       const { error } = await supabase
@@ -195,7 +198,7 @@ export const useWebhookCrud = ({
       if (error) {
         console.error('Error deleting webhook:', error);
         toast.error(`Failed to delete webhook: ${error.message}`);
-        return;
+        return false;
       }
       
       setWebhooks(prev => prev.filter(w => w.id !== id));
@@ -206,13 +209,15 @@ export const useWebhookCrud = ({
       }
       
       toast.success('Webhook deleted successfully');
+      return true;
     } catch (err) {
       console.error('Error deleting webhook:', err);
       toast.error('Failed to delete webhook. Please try again.');
+      return false;
     }
   };
 
-  const createIncomingWebhook = async (webhookData: Partial<IncomingWebhook>): Promise<IncomingWebhook | null> => {
+  const createIncomingWebhook = async (webhookData: Omit<IncomingWebhook, 'id' | 'createdAt' | 'updatedAt' | 'lastCalledAt'>): Promise<IncomingWebhook | null> => {
     try {
       if (!webhookData.name) {
         toast.error('Webhook name is required');
@@ -281,7 +286,7 @@ export const useWebhookCrud = ({
     }
   };
 
-  const deleteIncomingWebhook = async (id: string): Promise<void> => {
+  const deleteIncomingWebhook = async (id: string): Promise<boolean> => {
     try {
       setIncomingWebhooks(prev => prev.filter(w => w.id !== id));
       
@@ -290,9 +295,11 @@ export const useWebhookCrud = ({
       }
       
       toast.success('Incoming webhook deleted successfully');
+      return true;
     } catch (err) {
       console.error('Error deleting incoming webhook:', err);
       toast.error('Failed to delete incoming webhook');
+      return false;
     }
   };
 
@@ -301,9 +308,9 @@ export const useWebhookCrud = ({
     setIsWebhookModalOpen(true);
   };
 
-  const handleDeleteWebhook = (id: string) => {
+  const handleDeleteWebhook = async (webhook: Webhook): Promise<void> => {
     if (window.confirm('Are you sure you want to delete this webhook?')) {
-      deleteWebhook(id);
+      await deleteWebhook(webhook.id);
     }
   };
 
@@ -312,9 +319,9 @@ export const useWebhookCrud = ({
     setIsIncomingWebhookModalOpen(true);
   };
 
-  const handleDeleteIncomingWebhook = (id: string) => {
+  const handleDeleteIncomingWebhook = async (webhook: IncomingWebhook): Promise<void> => {
     if (window.confirm('Are you sure you want to delete this incoming webhook?')) {
-      deleteIncomingWebhook(id);
+      await deleteIncomingWebhook(webhook.id);
     }
   };
 

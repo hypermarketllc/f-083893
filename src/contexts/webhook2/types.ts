@@ -2,6 +2,18 @@
 // Add isCreating to the Webhook2ContextType
 import { Webhook, WebhookLogEntry, WebhookTestResponse, IncomingWebhook, IncomingWebhookLogEntry, WebhookFilters } from '@/types/webhook2';
 
+// Define missing UseWebhookOperationsParams interface
+export interface UseWebhookOperationsParams {
+  webhooks: Webhook[];
+  setWebhooks: React.Dispatch<React.SetStateAction<Webhook[]>>;
+  webhookLogs: WebhookLogEntry[];
+  setWebhookLogs: React.Dispatch<React.SetStateAction<WebhookLogEntry[]>>;
+  selectedWebhook: Webhook | null;
+  setSelectedWebhook: React.Dispatch<React.SetStateAction<Webhook | null>>;
+  setTestResponse: React.Dispatch<React.SetStateAction<WebhookLogEntry | null>>;
+  setIsTestLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
 export interface Webhook2ContextType {
   // State
   webhooks: Webhook[];
@@ -21,7 +33,7 @@ export interface Webhook2ContextType {
   setIsIncomingWebhookModalOpen: (isOpen: boolean) => void;
   isTestMode: boolean;
   setIsTestMode: (isTestMode: boolean) => void;
-  testResponse: WebhookTestResponse | null;
+  testResponse: WebhookLogEntry | null;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   filterOptions: WebhookFilters;
@@ -33,8 +45,8 @@ export interface Webhook2ContextType {
   deleteWebhook: (id: string) => Promise<boolean>;
   
   // Execution operations
-  executeWebhook: (id: string) => Promise<WebhookLogEntry | null>;
-  sendTestRequest: (webhook: Partial<Webhook>) => Promise<WebhookTestResponse | null>;
+  executeWebhook: (webhook: Webhook) => Promise<WebhookLogEntry | null>;
+  sendTestRequest: (webhook: Webhook) => Promise<WebhookTestResponse | null>;
   
   // Incoming webhook operations
   createIncomingWebhook: (webhook: Omit<IncomingWebhook, 'id' | 'createdAt' | 'updatedAt' | 'lastCalledAt'>) => Promise<IncomingWebhook | null>;

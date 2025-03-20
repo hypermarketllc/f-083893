@@ -1,31 +1,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWebhook2Context } from '@/contexts/webhook2/Webhook2Context';
-import { WebhookBody, WebhookHeader, WebhookParam, HttpMethod } from '@/types/webhook2';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WebhookGeneralTab } from '@/components/webhooks/modal/WebhookGeneralTab';
 import { Webhook2HeadersTab } from './modal/Webhook2HeadersTab';
 import { Webhook2ParamsTab } from './modal/Webhook2ParamsTab';
 import { Webhook2BodyTab } from './modal/Webhook2BodyTab';
 import { Loader2 } from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
 
-export const Webhook2Modal: React.FC = () => {
-  const {
-    selectedWebhook,
-    isWebhookModalOpen,
-    setIsWebhookModalOpen,
-    createWebhook,
-    updateWebhook,
+export const Webhook2Modal = () => {
+  const { 
+    selectedWebhook, 
+    isWebhookModalOpen, 
+    setIsWebhookModalOpen, 
+    createWebhook, 
+    updateWebhook, 
     setSelectedWebhook,
     isCreating
   } = useWebhook2Context();
@@ -34,15 +25,16 @@ export const Webhook2Modal: React.FC = () => {
   const [webhookName, setWebhookName] = useState('');
   const [webhookDescription, setWebhookDescription] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookMethod, setWebhookMethod] = useState<HttpMethod>('GET');
-  const [webhookHeaders, setWebhookHeaders] = useState<WebhookHeader[]>([]);
-  const [webhookParams, setWebhookParams] = useState<WebhookParam[]>([]);
-  const [webhookBody, setWebhookBody] = useState<WebhookBody>({
+  const [webhookMethod, setWebhookMethod] = useState('GET');
+  const [webhookHeaders, setWebhookHeaders] = useState([]);
+  const [webhookParams, setWebhookParams] = useState([]);
+  const [webhookBody, setWebhookBody] = useState({
     contentType: 'json',
-    content: ''
+    content: '',
+    type: 'json' // For compatibility
   });
   const [webhookEnabled, setWebhookEnabled] = useState(true);
-  const [webhookTags, setWebhookTags] = useState<string[]>([]);
+  const [webhookTags, setWebhookTags] = useState([]);
 
   useEffect(() => {
     if (selectedWebhook) {
@@ -50,11 +42,11 @@ export const Webhook2Modal: React.FC = () => {
       setWebhookDescription(selectedWebhook.description);
       setWebhookUrl(selectedWebhook.url);
       setWebhookMethod(selectedWebhook.method);
-      setWebhookHeaders(selectedWebhook.headers || []);
-      setWebhookParams(selectedWebhook.params || []);
-      setWebhookBody(selectedWebhook.body || { contentType: 'json', content: '' });
+      setWebhookHeaders(selectedWebhook.headers);
+      setWebhookParams(selectedWebhook.params);
+      setWebhookBody(selectedWebhook.body || { contentType: 'json', content: '', type: 'json' });
       setWebhookEnabled(selectedWebhook.enabled);
-      setWebhookTags(selectedWebhook.tags?.map(tag => tag.name) || []);
+      setWebhookTags(selectedWebhook.tags || []);
     } else {
       resetForm();
     }
@@ -69,7 +61,8 @@ export const Webhook2Modal: React.FC = () => {
     setWebhookParams([]);
     setWebhookBody({
       contentType: 'json',
-      content: ''
+      content: '',
+      type: 'json'
     });
     setWebhookEnabled(true);
     setWebhookTags([]);
@@ -88,25 +81,18 @@ export const Webhook2Modal: React.FC = () => {
       name: webhookName,
       description: webhookDescription,
       url: webhookUrl,
-      method: webhookMethod,
+      method: webhookMethod as HttpMethod,
       headers: webhookHeaders,
       params: webhookParams,
       body: webhookBody,
       enabled: webhookEnabled,
-      lastExecutedAt: null,
-      lastExecutionStatus: null,
-      tags: webhookTags.map(tagName => ({ 
-        id: uuidv4(),
-        name: tagName,
-        color: '#' + Math.floor(Math.random()*16777215).toString(16) // Generate random color
-      }))
+      tags: webhookTags
     };
 
     if (selectedWebhook) {
       await updateWebhook({
         ...selectedWebhook,
-        ...webhookData,
-        tags: webhookData.tags
+        ...webhookData
       });
     } else {
       await createWebhook(webhookData);
@@ -123,9 +109,7 @@ export const Webhook2Modal: React.FC = () => {
             {selectedWebhook ? 'Edit Webhook' : 'Create Webhook'}
           </DialogTitle>
           <DialogDescription>
-            {selectedWebhook 
-              ? 'Update your webhook configuration' 
-              : 'Configure a new webhook to send data to external services'}
+            {selectedWebhook ? 'Update your webhook configuration' : 'Configure a new webhook to send data to external services'}
           </DialogDescription>
         </DialogHeader>
 
@@ -172,7 +156,7 @@ export const Webhook2Modal: React.FC = () => {
             <Webhook2BodyTab
               body={webhookBody}
               setBody={setWebhookBody}
-              method={webhookMethod}
+              method={webhookMethod as HttpMethod}
             />
           </TabsContent>
         </Tabs>
