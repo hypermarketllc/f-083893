@@ -7,11 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pencil, Trash2, Copy, CheckCheck, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { EmptyLogs } from './EmptyLogs';
+import WebhookEmptyState from './WebhookEmptyState';
 import WebhookToggle from './WebhookToggle';
 import ActivityIndicator from './ActivityIndicator';
 import { WebhookFilterBar } from './filters/WebhookFilterBar';
-import TagsManager from './tags/TagsManager';
 
 interface IncomingWebhookTableProps {
   compact?: boolean;
@@ -119,7 +118,7 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
 
   if (incomingWebhooks.length === 0) {
     return (
-      <EmptyLogs message="No incoming webhooks found" />
+      <WebhookEmptyState message="No incoming webhooks found" />
     );
   }
 

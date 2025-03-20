@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { WebhookTable } from './WebhookTable';
-import { EmptyLogs } from './EmptyLogs';
+import WebhookEmptyState from './WebhookEmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export const WebhookList: React.FC = () => {
@@ -38,7 +38,7 @@ export const WebhookList: React.FC = () => {
   }
 
   if (webhooks.length === 0) {
-    return <EmptyLogs message="No webhooks found. Create your first webhook to get started." />;
+    return <WebhookEmptyState message="No webhooks found. Create your first webhook to get started." />;
   }
 
   return <WebhookTable />;

@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Pencil, Trash2, Play, CheckCheck, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { EmptyLogs } from './EmptyLogs';
+import WebhookEmptyState from './WebhookEmptyState';
 import WebhookToggle from './WebhookToggle';
 import ActivityIndicator from './ActivityIndicator';
 
@@ -122,7 +122,7 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
 
   if (webhooks.length === 0) {
     return (
-      <EmptyLogs message="No webhooks found" />
+      <WebhookEmptyState message="No webhooks found" />
     );
   }
 

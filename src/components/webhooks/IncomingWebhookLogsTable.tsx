@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { IncomingWebhookLogEntry } from '@/types/webhook';
@@ -9,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { formatDistanceToNow } from 'date-fns';
 import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { EmptyLogs } from './EmptyLogs';
+import WebhookEmptyState from './WebhookEmptyState';
 
 // Incoming logs table header component
 const IncomingLogsTableHeader: React.FC = () => {
@@ -183,7 +182,7 @@ export const IncomingWebhookLogsTable: React.FC<{ compact?: boolean }> = ({ comp
   };
 
   if (incomingWebhookLogs.length === 0) {
-    return <EmptyLogs message="No incoming webhook logs found" />;
+    return <WebhookEmptyState message="No incoming webhook logs found" />;
   }
 
   return (
