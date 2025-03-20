@@ -9,14 +9,14 @@ export interface SpaceProps {
   id: string;
   name: string;
   color: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 export const SPACES: SpaceProps[] = [
-  { id: 'everything', name: 'Everything', color: 'gray', icon: 'grid' },
-  { id: 'development', name: 'Development', color: 'indigo', icon: 'D' },
-  { id: 'marketing', name: 'Marketing', color: 'yellow', icon: 'M' },
-  { id: 'product', name: 'Product', color: 'pink', icon: 'P' },
+  { id: 'everything', name: 'Everything', color: 'gray', icon: <LayoutGrid className="h-4 w-4" /> },
+  { id: 'development', name: 'Development', color: 'indigo', icon: <GanttChart className="h-4 w-4" /> },
+  { id: 'marketing', name: 'Marketing', color: 'yellow', icon: <Bell className="h-4 w-4" /> },
+  { id: 'product', name: 'Product', color: 'pink', icon: <Home className="h-4 w-4" /> },
 ];
 
 export const REPORTS = [

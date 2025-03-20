@@ -1,23 +1,17 @@
 
 import React from 'react';
-import { History } from 'lucide-react';
+import { FileX } from 'lucide-react';
 
 interface EmptyLogsProps {
   message?: string;
 }
 
-export const EmptyLogs: React.FC<EmptyLogsProps> = ({ 
-  message = 'No logs found' 
-}) => (
-  <div className="text-center p-8 border rounded-lg bg-muted/20">
-    <div className="w-16 h-16 flex items-center justify-center rounded-full bg-primary/10 mx-auto mb-4">
-      <History className="h-8 w-8 text-muted-foreground" />
+export const EmptyLogs: React.FC<EmptyLogsProps> = ({ message = "No logs found" }) => {
+  return (
+    <div className="border rounded-md p-8 flex flex-col items-center justify-center text-muted-foreground text-center">
+      <FileX className="h-12 w-12 mb-4 opacity-50" />
+      <p>{message}</p>
+      <p className="text-sm mt-2">Logs will appear here once generated</p>
     </div>
-    <h3 className="text-lg font-medium">{message}</h3>
-    <p className="text-muted-foreground mt-1">
-      Execute a webhook to see activity here
-    </p>
-  </div>
-);
-
-export default EmptyLogs;
+  );
+};

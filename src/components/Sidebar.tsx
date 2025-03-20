@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { LineChart, ChevronLeft, ChevronRight, CheckSquare, BarChart3 } from 'lucide-react';
@@ -8,7 +9,6 @@ import SidebarSection from './sidebar/SidebarSection';
 import SpacesList from './sidebar/SpacesList';
 import ReportsList from './sidebar/ReportsList';
 import DocsList from './sidebar/DocsList';
-import UserProfile from './sidebar/UserProfile';
 import TasksList from './sidebar/TasksList';
 import AnalyticsList from './sidebar/AnalyticsList';
 import { Button } from '@/components/ui/button';
@@ -38,19 +38,6 @@ export default function Sidebar() {
 
   return (
     <div className={`h-screen border-r border-border bg-card flex flex-col relative ${collapsed ? 'w-16' : 'w-64'} transition-all duration-200`}>
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="absolute -right-3 top-16 h-6 w-6 bg-background border rounded-full shadow-sm z-10 text-muted-foreground hidden md:flex"
-        onClick={toggleSidebar}
-      >
-        {collapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
-      </Button>
-
       <SidebarHeader collapsed={collapsed} />
 
       <nav className="flex-1 overflow-y-auto px-3 py-2">
@@ -110,7 +97,23 @@ export default function Sidebar() {
         </SidebarSection>
       </nav>
 
-      <UserProfile collapsed={collapsed} />
+      <div className="mt-auto mb-4 flex justify-center">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-10 w-10 rounded-full border border-border shadow-sm hover:bg-accent"
+          onClick={toggleSidebar}
+        >
+          {collapsed ? (
+            <ChevronRight className="h-5 w-5 text-primary" />
+          ) : (
+            <ChevronLeft className="h-5 w-5 text-primary" />
+          )}
+          <span className="sr-only">
+            {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          </span>
+        </Button>
+      </div>
     </div>
   );
 }

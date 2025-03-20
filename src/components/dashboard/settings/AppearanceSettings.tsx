@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,20 @@ export default function AppearanceSettings() {
   // Ensure theme is only accessed after mounting to prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
+    // Load saved accent color
+    const savedAccentColor = localStorage.getItem('accent-color');
+    if (savedAccentColor) {
+      setAccentColor(savedAccentColor);
+      applyAccentColor(savedAccentColor);
+    }
+    
+    // Load saved font scale
+    const savedFontScale = localStorage.getItem('font-scale');
+    if (savedFontScale) {
+      const scale = parseFloat(savedFontScale);
+      setFontScale([scale]);
+      document.documentElement.style.fontSize = `${scale * 100}%`;
+    }
   }, []);
 
   // Only show the correct theme toggle after component has mounted
@@ -33,19 +47,37 @@ export default function AppearanceSettings() {
   const handleFontScaleChange = (value: number[]) => {
     setFontScale(value);
     document.documentElement.style.fontSize = `${value[0] * 100}%`;
+    localStorage.setItem('font-scale', value[0].toString());
     toast.success(`Font size updated`);
   };
 
+  const applyAccentColor = useCallback((color: string) => {
+    // Convert hex to RGB
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    
+    // Update CSS variables for primary color
+    document.documentElement.style.setProperty('--primary', `${r} ${g}% ${b}%`);
+    document.documentElement.style.setProperty('--ring', `${r} ${g}% ${b}%`);
+    document.documentElement.style.setProperty('--sidebar-primary', `${r} ${g}% ${b}%`);
+    
+    // Also update CSS for accent (lighter variant)
+    document.documentElement.style.setProperty('--accent', `${r} ${g}% 97%`);
+    document.documentElement.style.setProperty('--accent-foreground', `${r} ${g}% ${b}%`);
+  }, []);
+
   const handleAccentColorChange = (color: string) => {
     setAccentColor(color);
-    // Apply accent color to CSS variables (this is a placeholder; real implementation would update CSS variables)
+    localStorage.setItem('accent-color', color);
+    applyAccentColor(color);
     toast.success(`Accent color updated`);
   };
 
   return (
-    <Card>
+    <Card className="animate-fade-in">
       <CardHeader>
-        <CardTitle>Appearance</CardTitle>
+        <CardTitle className="text-2xl">Appearance</CardTitle>
         <CardDescription>
           Customize how the application looks and feels.
         </CardDescription>
@@ -101,10 +133,17 @@ export default function AppearanceSettings() {
               onChange={(e) => handleAccentColorChange(e.target.value)}
               className="w-12 h-8 p-1"
             />
+            <div 
+              className="w-8 h-8 rounded-full" 
+              style={{ backgroundColor: accentColor }}
+            />
             <p className="text-sm text-muted-foreground">
               {accentColor}
             </p>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Changes will apply throughout the application.
+          </p>
         </div>
       </CardContent>
     </Card>

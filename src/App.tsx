@@ -31,7 +31,7 @@ const DarkModeEnforcer = () => {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} forcedTheme="dark">
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <DarkModeEnforcer />
       <TooltipProvider>
         <Toaster />
