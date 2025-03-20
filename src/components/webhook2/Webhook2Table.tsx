@@ -157,7 +157,7 @@ export const Webhook2Table: React.FC<Webhook2TableProps> = ({ compact }) => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteWebhook(webhook.id);
+                          handleDeleteWebhook(webhook);
                         }}
                       >
                         Delete

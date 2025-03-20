@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HttpMethod, WebhookTag } from '@/types/webhook';
+import { HttpMethod, WebhookTag } from '@/types/webhook2';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -19,8 +19,8 @@ interface WebhookGeneralTabProps {
   setWebhookMethod: (method: HttpMethod) => void;
   webhookEnabled: boolean;
   setWebhookEnabled: (enabled: boolean) => void;
-  webhookTags?: string[];
-  setWebhookTags?: (tags: string[]) => void;
+  webhookTags?: WebhookTag[];
+  setWebhookTags?: (tags: WebhookTag[]) => void;
   availableTags?: WebhookTag[];
   onTagCreate?: (tag: Omit<WebhookTag, 'id'>) => void;
 }

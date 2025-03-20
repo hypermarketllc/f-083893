@@ -10,6 +10,7 @@ import {
   HttpMethod, 
   ExecutionStatus 
 } from "@/types/webhook2";
+import { isHttpMethod } from "./webhookTypeGuards";
 
 // Helper function to safely convert any type to Json
 export const toJson = <T>(value: T): Json => {
@@ -41,12 +42,18 @@ export const mapDbWebhookToWebhook = (dbWebhook: any): Webhook => {
       content: body.content || ''
     } : { contentType: 'json', content: '' };
     
+    // Ensure method is a valid HttpMethod
+    const method = dbWebhook.method;
+    const validMethod: HttpMethod = isHttpMethod(method) 
+      ? method 
+      : 'GET'; // Default to GET if invalid
+    
     return {
       id: dbWebhook.id,
       name: dbWebhook.name,
       description: dbWebhook.description || '',
       url: dbWebhook.url,
-      method: dbWebhook.method as HttpMethod,
+      method: validMethod,
       headers: fromJson<WebhookHeader[]>(dbWebhook.headers) || [],
       params: fromJson<WebhookParam[]>(dbWebhook.params) || [],
       body: formattedBody,
@@ -98,13 +105,19 @@ export const mapDbLogToWebhookLog = (dbLog: any, webhookName?: string): WebhookL
   if (!dbLog) return null as unknown as WebhookLogEntry;
   
   try {
+    // Ensure method is a valid HttpMethod
+    const method = dbLog.request_method;
+    const validMethod: HttpMethod = isHttpMethod(method) 
+      ? method 
+      : 'GET'; // Default to GET if invalid
+    
     return {
       id: dbLog.id,
       webhookId: dbLog.webhook_id,
       webhookName: webhookName || 'Unknown Webhook',
       timestamp: dbLog.timestamp,
       requestUrl: dbLog.request_url,
-      requestMethod: dbLog.request_method as HttpMethod,
+      requestMethod: validMethod,
       requestHeaders: fromJson<Record<string, string>>(dbLog.request_headers) || {},
       requestBody: dbLog.request_body,
       responseStatus: dbLog.response_status,

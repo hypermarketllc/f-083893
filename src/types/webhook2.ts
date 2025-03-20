@@ -83,6 +83,12 @@ export interface WebhookTestResponse {
   duration: number;
   error?: string;
   success: boolean;
+  // Add missing properties that are being used in the code
+  responseStatus?: number;
+  responseBody?: string;
+  responseHeaders?: Record<string, string>;
+  webhookId?: string;
+  webhookName?: string;
 }
 
 export interface WebhookFilters {

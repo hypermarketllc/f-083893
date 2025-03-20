@@ -190,7 +190,7 @@ export const IncomingWebhook2Table: React.FC<IncomingWebhook2TableProps> = ({ co
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteIncomingWebhook(webhook.id);
+                          handleDeleteIncomingWebhook(webhook);
                         }}
                       >
                         <Trash2 className="h-4 w-4" />
