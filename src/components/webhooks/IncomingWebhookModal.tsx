@@ -60,7 +60,8 @@ export const IncomingWebhookModal: React.FC = () => {
       name: webhookName,
       description: webhookDescription,
       endpointPath: webhookEndpoint.startsWith('/') ? webhookEndpoint : `/${webhookEndpoint}`,
-      enabled: webhookEnabled
+      enabled: webhookEnabled,
+      lastCalledAt: null
     };
 
     if (selectedIncomingWebhook) {

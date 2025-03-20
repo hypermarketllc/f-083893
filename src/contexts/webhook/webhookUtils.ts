@@ -1,4 +1,3 @@
-
 import { WebhookLogEntry, IncomingWebhookLogEntry } from '@/types/webhook';
 
 /**
@@ -22,10 +21,9 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
       success: false,
       error: 'No log data available',
       // Add missing properties
-      url: 'https://example.com',
-      method: 'GET',
-      requestBody: '{}',
-      responseBody: '{}'
+      requestTime: new Date().toISOString(),
+      responseTime: null,
+      body: '{}'
     };
   }
 
@@ -47,8 +45,9 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
     success: log.success !== undefined ? log.success : false,
     error: log.error || undefined,
     // Add missing properties
-    url: log.url || log.requestUrl || 'https://example.com',
-    method: log.method || log.requestMethod || 'GET'
+    requestTime: log.requestTime || log.timestamp || new Date().toISOString(),
+    responseTime: log.responseTime || null,
+    body: log.responseBody || '{}'
   };
 };
 

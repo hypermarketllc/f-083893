@@ -21,7 +21,9 @@ export const mockWebhooks: Webhook[] = [
     },
     enabled: true,
     createdAt: subDays(new Date(), 30).toISOString(),
-    updatedAt: subDays(new Date(), 2).toISOString()
+    updatedAt: subDays(new Date(), 2).toISOString(),
+    lastExecutedAt: subDays(new Date(), 1).toISOString(),
+    lastExecutionStatus: 'success'
   },
   {
     id: 'webhook-2',
@@ -39,7 +41,9 @@ export const mockWebhooks: Webhook[] = [
     },
     enabled: true,
     createdAt: subDays(new Date(), 45).toISOString(),
-    updatedAt: subDays(new Date(), 5).toISOString()
+    updatedAt: subDays(new Date(), 5).toISOString(),
+    lastExecutedAt: subDays(new Date(), 2).toISOString(),
+    lastExecutionStatus: 'success'
   },
   {
     id: 'webhook-3',
@@ -60,7 +64,9 @@ export const mockWebhooks: Webhook[] = [
     },
     enabled: false,
     createdAt: subDays(new Date(), 60).toISOString(),
-    updatedAt: subDays(new Date(), 1).toISOString()
+    updatedAt: subDays(new Date(), 1).toISOString(),
+    lastExecutedAt: subDays(new Date(), 3).toISOString(),
+    lastExecutionStatus: 'error'
   }
 ];
 
@@ -84,7 +90,9 @@ export const mockWebhookLogs: WebhookLogEntry[] = [
     },
     responseBody: '{\n  "success": true,\n  "id": "1234"\n}',
     duration: 237,
-    success: true
+    success: true,
+    requestTime: subMinutes(new Date(), 15).toISOString(),
+    responseTime: subMinutes(new Date(), 15).toISOString()
   },
   {
     id: 'log-2',
@@ -103,7 +111,9 @@ export const mockWebhookLogs: WebhookLogEntry[] = [
     },
     responseBody: 'ok',
     duration: 413,
-    success: true
+    success: true,
+    requestTime: subHours(new Date(), 2).toISOString(),
+    responseTime: subHours(new Date(), 2).toISOString()
   },
   {
     id: 'log-3',
@@ -124,7 +134,9 @@ export const mockWebhookLogs: WebhookLogEntry[] = [
     responseBody: '{\n  "error": "Unauthorized",\n  "message": "Invalid credentials"\n}',
     duration: 298,
     success: false,
-    error: 'Unauthorized: Invalid credentials'
+    error: 'Unauthorized: Invalid credentials',
+    requestTime: subDays(new Date(), 1).toISOString(),
+    responseTime: subDays(new Date(), 1).toISOString()
   }
 ];
 
@@ -137,7 +149,8 @@ export const mockIncomingWebhooks: IncomingWebhook[] = [
     endpointPath: '/github',
     createdAt: subDays(new Date(), 20).toISOString(),
     updatedAt: subDays(new Date(), 3).toISOString(),
-    enabled: true
+    enabled: true,
+    lastCalledAt: subDays(new Date(), 1).toISOString()
   },
   {
     id: 'incoming-webhook-2',
@@ -146,7 +159,8 @@ export const mockIncomingWebhooks: IncomingWebhook[] = [
     endpointPath: '/stripe/payments',
     createdAt: subDays(new Date(), 35).toISOString(),
     updatedAt: subDays(new Date(), 4).toISOString(),
-    enabled: true
+    enabled: true,
+    lastCalledAt: subHours(new Date(), 5).toISOString()
   },
   {
     id: 'incoming-webhook-3',
@@ -155,7 +169,8 @@ export const mockIncomingWebhooks: IncomingWebhook[] = [
     endpointPath: '/mailchimp/events',
     createdAt: subDays(new Date(), 55).toISOString(),
     updatedAt: subDays(new Date(), 2).toISOString(),
-    enabled: false
+    enabled: false,
+    lastCalledAt: subDays(new Date(), 10).toISOString()
   }
 ];
 

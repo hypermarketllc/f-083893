@@ -1,329 +1,205 @@
-
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Filter,
-  X,
-  Calendar as CalendarIcon,
-  Tag,
-  CheckCircle,
-  XCircle,
-  ChevronsUpDown,
-  Clock,
-  Activity,
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  ArrowDown, 
+  ArrowUp, 
+  Calendar as CalendarIcon, 
+  ChevronDown, 
+  ChevronUp, 
+  Filter, 
+  FilterX,
+  GripVertical,
+  GripVerticalLine
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { HttpMethod, WebhookTag } from '@/types/webhook';
 
 interface WebhookFilterBarProps {
-  onFilterChange: (filters: WebhookFilters) => void;
-  tags?: WebhookTag[];
-  showMethodFilter?: boolean;
-  showStatusFilter?: boolean;
-  showDateFilter?: boolean;
-  showTagFilter?: boolean;
+  onSearch: (query: string) => void;
+  onStatusFilter: (status: 'success' | 'error' | undefined) => void;
+  onDateFilter: (dateRange: { from: Date; to: Date } | undefined) => void;
+  onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  sortOptions?: { label: string; value: string }[];
 }
 
-export interface WebhookFilters {
-  search: string;
-  method?: HttpMethod | null;
-  status?: 'success' | 'error' | null;
-  dateFrom?: Date | null;
-  dateTo?: Date | null;
-  tags?: string[];
-}
-
-export const WebhookFilterBar: React.FC<WebhookFilterBarProps> = ({
-  onFilterChange,
-  tags = [],
-  showMethodFilter = true,
-  showStatusFilter = true,
-  showDateFilter = true,
-  showTagFilter = true
+export const WebhookFilterBar: React.FC<WebhookFilterBarProps> = ({ 
+  onSearch,
+  onStatusFilter,
+  onDateFilter,
+  onSort,
+  sortOptions = []
 }) => {
-  const [filters, setFilters] = useState<WebhookFilters>({
-    search: '',
-    method: null,
-    status: null,
-    dateFrom: null,
-    dateTo: null,
-    tags: []
-  });
-
-  const [dateRange, setDateRange] = useState<{
-    from: Date | null;
-    to: Date | null;
-  }>({
-    from: null,
-    to: null
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'success' | 'error' | undefined>(undefined);
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [sortBy, setSortBy] = useState(sortOptions.length > 0 ? sortOptions[0].value : '');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFilters = { ...filters, search: e.target.value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    const query = e.target.value;
+    setSearchQuery(query);
+    onSearch(query);
   };
 
-  const handleMethodChange = (value: HttpMethod | null) => {
-    const newFilters = { ...filters, method: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+  const handleStatusFilterChange = (status: 'success' | 'error' | undefined) => {
+    setStatusFilter(status);
+    onStatusFilter(status);
   };
 
-  const handleStatusChange = (value: 'success' | 'error' | null) => {
-    const newFilters = { ...filters, status: value };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
-  const handleDateChange = (range: { from: Date | null; to: Date | null }) => {
-    setDateRange(range);
-    const newFilters = { ...filters, dateFrom: range.from, dateTo: range.to };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
-  const handleTagToggle = (tagId: string) => {
-    const newTags = filters.tags?.includes(tagId)
-      ? filters.tags.filter(id => id !== tagId)
-      : [...(filters.tags || []), tagId];
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+  if (range && range.from) {
+    setStartDate(range.from);
+    // Ensure to is defined
+    setEndDate(range.to || range.from);
     
-    const newFilters = { ...filters, tags: newTags };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
+    // Apply the filter
+    if (range.from && range.to) {
+      onDateFilter({ from: range.from, to: range.to });
+    } else if (range.from) {
+      // If no end date, use the same date as end date
+      onDateFilter({ from: range.from, to: range.from });
+    }
+  } else {
+    // Clear the filter
+    setStartDate(undefined);
+    setEndDate(undefined);
+    onDateFilter(undefined);
+  }
+};
+
+  const handleSortChange = (value: string) => {
+    setSortBy(value);
+    onSort(value, sortOrder);
+  };
+
+  const handleSortOrderChange = () => {
+    const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newSortOrder);
+    onSort(sortBy, newSortOrder);
   };
 
   const clearFilters = () => {
-    const newFilters = {
-      search: '',
-      method: null,
-      status: null,
-      dateFrom: null,
-      dateTo: null,
-      tags: []
-    };
-    setFilters(newFilters);
-    setDateRange({ from: null, to: null });
-    onFilterChange(newFilters);
-  };
-
-  const hasActiveFilters = () => {
-    return (
-      filters.search !== '' ||
-      filters.method !== null ||
-      filters.status !== null ||
-      filters.dateFrom !== null ||
-      filters.dateTo !== null ||
-      (filters.tags && filters.tags.length > 0)
-    );
+    setSearchQuery('');
+    setStatusFilter(undefined);
+    setStartDate(undefined);
+    setEndDate(undefined);
+    onSearch('');
+    onStatusFilter(undefined);
+    onDateFilter(undefined);
   };
 
   return (
-    <div className="flex flex-col space-y-2 animate-in fade-in duration-300">
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Filter className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search webhooks..."
-            className="pl-8 w-full transition-all"
-            value={filters.search}
-            onChange={handleSearchChange}
-          />
-        </div>
-
-        <div className="flex items-center space-x-1">
-          {showMethodFilter && (
-            <Select
-              value={filters.method || ''}
-              onValueChange={(value) => handleMethodChange(value as HttpMethod || null)}
-            >
-              <SelectTrigger className="w-[120px] h-10 text-xs">
-                <SelectValue placeholder="Method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Methods</SelectItem>
-                <SelectItem value="GET">GET</SelectItem>
-                <SelectItem value="POST">POST</SelectItem>
-                <SelectItem value="PUT">PUT</SelectItem>
-                <SelectItem value="DELETE">DELETE</SelectItem>
-                <SelectItem value="PATCH">PATCH</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-
-          {showStatusFilter && (
-            <Select
-              value={filters.status || ''}
-              onValueChange={(value) => handleStatusChange(value as 'success' | 'error' || null)}
-            >
-              <SelectTrigger className="w-[120px] h-10 text-xs">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
-                <SelectItem value="success" className="flex items-center">
-                  <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
-                  <span>Success</span>
-                </SelectItem>
-                <SelectItem value="error" className="flex items-center">
-                  <XCircle className="h-3 w-3 mr-1 text-red-500" />
-                  <span>Error</span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-
-          {showDateFilter && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className={`h-10 text-xs px-3 ${dateRange.from ? 'text-primary border-primary/50' : ''}`}
-                >
-                  <CalendarIcon className="h-3.5 w-3.5 mr-1" />
-                  {dateRange.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "MMM d")} - {format(dateRange.to, "MMM d")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "MMM d, yyyy")
-                    )
-                  ) : (
-                    "Date Range"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="range"
-                  selected={dateRange}
-                  onSelect={(range) => handleDateChange(range || { from: null, to: null })}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-          )}
-
-          {showTagFilter && tags.length > 0 && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className={`h-10 text-xs px-3 ${filters.tags?.length ? 'text-primary border-primary/50' : ''}`}
-                >
-                  <Tag className="h-3.5 w-3.5 mr-1" />
-                  Tags {filters.tags?.length ? `(${filters.tags.length})` : ''}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-2" align="end">
-                <div className="space-y-2">
-                  {tags.map(tag => (
-                    <div 
-                      key={tag.id} 
-                      className={`flex items-center p-1.5 rounded cursor-pointer transition-colors ${
-                        filters.tags?.includes(tag.id) ? 'bg-muted/70' : 'hover:bg-muted/30'
-                      }`}
-                      onClick={() => handleTagToggle(tag.id)}
-                    >
-                      <div 
-                        className="w-2 h-2 rounded-full mr-2" 
-                        style={{ backgroundColor: tag.color }}
-                      />
-                      <span className="text-sm">{tag.name}</span>
-                    </div>
-                  ))}
-                  {tags.length === 0 && (
-                    <div className="text-sm text-muted-foreground p-1">No tags available</div>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-
-          {hasActiveFilters() && (
-            <Button variant="ghost" size="icon" onClick={clearFilters} className="h-10 w-10">
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+    <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4 p-4 bg-secondary rounded-md">
+      {/* Search Input */}
+      <div className="relative w-full md:w-1/3">
+        <Input
+          type="search"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="shadow-sm"
+        />
       </div>
 
-      {hasActiveFilters() && (
-        <div className="flex flex-wrap gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
-          {filters.method && (
-            <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 h-6">
-              <span className="text-xs">Method: {filters.method}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => handleMethodChange(null)} 
-              />
-            </Badge>
-          )}
-          
-          {filters.status && (
-            <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 h-6">
-              <span className="text-xs">Status: {filters.status}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => handleStatusChange(null)} 
-              />
-            </Badge>
-          )}
-          
-          {(filters.dateFrom || filters.dateTo) && (
-            <Badge variant="outline" className="flex items-center gap-1 px-2 py-1 h-6">
-              <span className="text-xs">
-                Date: {filters.dateFrom ? format(filters.dateFrom, "MMM d") : 'Any'} 
-                {filters.dateTo ? ` - ${format(filters.dateTo, "MMM d")}` : ''}
-              </span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => handleDateChange({ from: null, to: null })} 
-              />
-            </Badge>
-          )}
-          
-          {filters.tags?.map(tagId => {
-            const tag = tags.find(t => t.id === tagId);
-            if (!tag) return null;
-            return (
-              <Badge 
-                key={tag.id} 
-                variant="outline" 
-                className="flex items-center gap-1 px-2 py-1 h-6"
-              >
-                <div 
-                  className="w-2 h-2 rounded-full" 
-                  style={{ backgroundColor: tag.color }}
-                />
-                <span className="text-xs">{tag.name}</span>
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => handleTagToggle(tag.id)} 
-                />
-              </Badge>
-            );
-          })}
-        </div>
-      )}
+      {/* Filters and Sorting */}
+      <div className="flex items-center space-x-2">
+        {/* Status Filter */}
+        <Select value={statusFilter || ''} onValueChange={(value) => handleStatusFilterChange(value === '' ? undefined : value as 'success' | 'error')}>
+          <SelectTrigger className="w-[180px] shadow-sm">
+            <SelectValue placeholder="Filter by Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="success">Success</SelectItem>
+            <SelectItem value="error">Error</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Date Range Picker */}
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant={'outline'}
+              className={
+                'justify-start text-left font-normal shadow-sm' +
+                (startDate ? ' text-foreground' : ' text-muted-foreground')
+              }
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {startDate ? (
+                endDate ? (
+                  `${startDate?.toLocaleDateString()} - ${endDate?.toLocaleDateString()}`
+                ) : (
+                  startDate?.toLocaleDateString()
+                )
+              ) : (
+                <span>Pick a date range</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center" side="bottom">
+            <Calendar
+              mode="range"
+              defaultMonth={startDate}
+              selected={{
+                from: startDate,
+                to: endDate,
+              }}
+              onSelect={handleDateRangeChange}
+              numberOfMonths={2}
+            />
+          </PopoverContent>
+        </Popover>
+
+        {/* Sort By */}
+        {sortOptions.length > 0 && (
+          <div className="flex items-center space-x-2">
+            <Select value={sortBy} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-[180px] shadow-sm">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleSortOrderChange}
+              className="shadow-sm"
+            >
+              {sortOrder === 'asc' ? (
+                <ArrowUp className="h-4 w-4" />
+              ) : (
+                <ArrowDown className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* Clear Filters Button */}
+        {(searchQuery || statusFilter || startDate || endDate) && (
+          <Button
+            variant="ghost"
+            onClick={clearFilters}
+            className="shadow-sm"
+          >
+            <FilterX className="h-4 w-4 mr-2" />
+            Clear Filters
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
-
-export default WebhookFilterBar;

@@ -84,6 +84,7 @@ export interface WebhookLogEntry {
   payload?: string; // Alias for requestBody
   ipAddress?: string;
   queryParams?: Record<string, string>; // Alias for requestQuery
+  body?: string; // Alias for responseBody (needed for compatibility)
 }
 
 export interface IncomingWebhook {

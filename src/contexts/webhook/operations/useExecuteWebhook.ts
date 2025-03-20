@@ -39,27 +39,31 @@ export function useExecuteWebhook(
       }
       
       // Create a simulated response
+      const responseBody = success
+        ? JSON.stringify({ success: true, message: "Operation completed successfully" }, null, 2)
+        : JSON.stringify({ 
+            success: false, 
+            error: statusCode === 400 ? "Bad Request" : "Internal Server Error",
+            message: statusCode === 400 
+              ? "The request was invalid" 
+              : "An error occurred while processing the request"
+          }, null, 2);
+      
       const response = {
         status: statusCode,
         headers: {
           'Content-Type': 'application/json',
           'X-Request-ID': `req-${Date.now()}`
         },
-        body: success
-          ? JSON.stringify({ success: true, message: "Operation completed successfully" }, null, 2)
-          : JSON.stringify({ 
-              success: false, 
-              error: statusCode === 400 ? "Bad Request" : "Internal Server Error",
-              message: statusCode === 400 
-                ? "The request was invalid" 
-                : "An error occurred while processing the request"
-            }, null, 2),
+        body: responseBody,
         duration
       };
       
       // If this is a test, only update the test response state
       if (isTest) {
         setTestResponse(response);
+        setIsTestLoading(false);
+        return response;
       } else {
         // If this is a real execution, add to logs
         const log: WebhookLogEntry = {
@@ -78,7 +82,7 @@ export function useExecuteWebhook(
           requestBody: webhook.body?.content,
           responseStatus: statusCode,
           responseHeaders: response.headers,
-          responseBody: response.body,
+          responseBody: responseBody,
           duration,
           success,
           error: !success 
@@ -87,7 +91,8 @@ export function useExecuteWebhook(
               : "Server Error: An error occurred while processing the request"
             : undefined,
           requestTime: new Date().toISOString(),
-          responseTime: new Date(Date.now() + duration).toISOString()
+          responseTime: new Date(Date.now() + duration).toISOString(),
+          body: responseBody // Adding this for compatibility
         };
         
         // Add to logs
@@ -99,9 +104,10 @@ export function useExecuteWebhook(
         } else {
           toast.error(`Webhook execution failed: ${statusCode} ${log.error}`);
         }
+        
+        setIsTestLoading(false);
+        return response;
       }
-      
-      return response;
     } catch (error) {
       console.error('Failed to execute webhook:', error);
       
@@ -123,9 +129,8 @@ export function useExecuteWebhook(
         toast.error('Failed to execute webhook: Network Error');
       }
       
-      return errorResponse;
-    } finally {
       setIsTestLoading(false);
+      return errorResponse;
     }
   };
   
@@ -134,7 +139,7 @@ export function useExecuteWebhook(
   };
   
   const sendTestRequest = (webhook: Webhook) => {
-    executeWebhook(webhook, true);
+    return executeWebhook(webhook, true);
   };
   
   return { executeWebhook, clearTestResponse, sendTestRequest };

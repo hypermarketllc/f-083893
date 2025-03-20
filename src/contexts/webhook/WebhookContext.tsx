@@ -13,6 +13,7 @@ import {
 } from './useWebhookOperations';
 import { useWebhookSearch } from './hooks/useWebhookSearch';
 import { useWebhookUIState } from './hooks/useWebhookUIState';
+import { useExecuteWebhook } from './operations/useExecuteWebhook';
 import { toast } from 'sonner';
 
 const WebhookContext = createContext<WebhookContextType | undefined>(undefined);
@@ -151,10 +152,7 @@ export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) =>
     createWebhook,
     updateWebhook,
     handleEditWebhook,
-    handleDeleteWebhook,
-    executeWebhook,
-    clearTestResponse,
-    sendTestRequest
+    handleDeleteWebhook
   } = useWebhookOperations(
     webhooks,
     setWebhooks,
@@ -164,6 +162,18 @@ export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) =>
     setSelectedWebhook,
     setIsWebhookModalOpen,
     setEditingWebhook,
+    setTestResponse,
+    setIsTestLoading
+  );
+
+  // Execute webhook hook
+  const {
+    executeWebhook,
+    clearTestResponse,
+    sendTestRequest
+  } = useExecuteWebhook(
+    webhookLogs,
+    setWebhookLogs,
     setTestResponse,
     setIsTestLoading
   );

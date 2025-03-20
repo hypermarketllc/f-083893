@@ -1,3 +1,4 @@
 
 // Reexport from the new location for backward compatibility
-export { useAuth, AuthProvider } from './auth';
+export { useAuth } from './auth';
+export { AuthProvider } from './auth/AuthProvider';
