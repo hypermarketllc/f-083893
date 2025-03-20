@@ -99,6 +99,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          accent_color: string | null
+          created_at: string | null
+          email_notifications: boolean | null
+          font_scale: number | null
+          marketing_emails: boolean | null
+          security_alerts: boolean | null
+          sidebar_collapsed: boolean | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          accent_color?: string | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          font_scale?: number | null
+          marketing_emails?: boolean | null
+          security_alerts?: boolean | null
+          sidebar_collapsed?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          accent_color?: string | null
+          created_at?: string | null
+          email_notifications?: boolean | null
+          font_scale?: number | null
+          marketing_emails?: boolean | null
+          security_alerts?: boolean | null
+          sidebar_collapsed?: boolean | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
           duration: number
