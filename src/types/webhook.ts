@@ -26,6 +26,13 @@ export interface WebhookTag {
   color: string;
 }
 
+export interface WebhookSchedule {
+  type: 'daily' | 'weekly' | 'interval';
+  time?: string;
+  days?: string[];
+  interval?: number;
+}
+
 export interface Webhook {
   id: string;
   name: string;
@@ -34,13 +41,15 @@ export interface Webhook {
   method: HttpMethod;
   headers: WebhookHeader[];
   params: WebhookParam[];
+  urlParams?: WebhookParam[];
   body?: WebhookBody;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
   lastExecutedAt: string | null;
   lastExecutionStatus: 'success' | 'error' | null;
-  tags: WebhookTag[];
+  tags?: WebhookTag[];
+  schedule?: WebhookSchedule;
 }
 
 export interface WebhookLogEntry {
@@ -58,6 +67,13 @@ export interface WebhookLogEntry {
   duration: number;
   success: boolean;
   error?: string;
+  
+  // For backwards compatibility with existing code
+  method?: HttpMethod;
+  url?: string;
+  body?: string;
+  requestTime?: string;
+  responseTime?: string;
 }
 
 export interface WebhookTestResponse {
@@ -73,4 +89,33 @@ export interface WebhookFilters {
   method: HttpMethod | null;
   status: 'success' | 'error' | null;
   tags: string[];
+}
+
+export interface IncomingWebhook {
+  id: string;
+  name: string;
+  description: string;
+  endpointPath: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  lastCalledAt: string | null;
+  secretKey?: string;
+  tags?: WebhookTag[];
+}
+
+export interface IncomingWebhookLogEntry {
+  id: string;
+  webhookId: string;
+  webhookName: string;
+  timestamp: string;
+  requestHeaders: Record<string, string>;
+  requestMethod: string;
+  requestBody?: string;
+  isParsed: boolean;
+  parsedData?: string;
+  success: boolean;
+  sourceIp: string;
+  contentType: string;
+  error?: string;
 }

@@ -1,76 +1,47 @@
 
 import React from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from '@/components/ui/tooltip';
-import { CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
 interface ActivityIndicatorProps {
   timestamp: string | null;
   status: 'success' | 'error' | null;
-  showLabel?: boolean;
-  className?: string;
 }
 
-export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({
-  timestamp,
-  status,
-  showLabel = true,
-  className = ''
-}) => {
+const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({ timestamp, status }) => {
   if (!timestamp) {
     return (
-      <div className={`flex items-center text-muted-foreground ${className}`}>
-        <Clock className="h-3.5 w-3.5 mr-1" />
-        {showLabel && <span className="text-sm">Never executed</span>}
+      <div className="flex items-center text-muted-foreground text-xs">
+        <Clock className="h-3 w-3 mr-1" />
+        Never
       </div>
     );
   }
 
-  const getStatusIcon = () => {
-    if (!status) return <AlertCircle className="h-3.5 w-3.5" />;
-    
-    return status === 'success' 
-      ? <CheckCircle className="h-3.5 w-3.5 text-green-500" /> 
-      : <XCircle className="h-3.5 w-3.5 text-red-500" />;
-  };
+  const formattedTime = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 
-  const getStatusText = () => {
-    if (!status) return 'Unknown status';
-    return status === 'success' ? 'Last execution successful' : 'Last execution failed';
-  };
-
-  try {
-    const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-    
+  if (status === 'success') {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`flex items-center ${className}`}>
-              {getStatusIcon()}
-              {showLabel && <span className="text-sm ml-1">{timeAgo}</span>}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{getStatusText()}</p>
-            <p className="text-xs text-muted-foreground">{new Date(timestamp).toLocaleString()}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="flex items-center text-green-600 text-xs">
+        <CheckCircle className="h-3 w-3 mr-1" />
+        {formattedTime}
+      </div>
     );
-  } catch (error) {
+  } else if (status === 'error') {
     return (
-      <div className={`flex items-center text-muted-foreground ${className}`}>
-        <AlertCircle className="h-3.5 w-3.5 mr-1" />
-        {showLabel && <span className="text-sm">Invalid date</span>}
+      <div className="flex items-center text-red-600 text-xs">
+        <XCircle className="h-3 w-3 mr-1" />
+        {formattedTime}
       </div>
     );
   }
+
+  return (
+    <div className="flex items-center text-muted-foreground text-xs">
+      <Clock className="h-3 w-3 mr-1" />
+      {formattedTime}
+    </div>
+  );
 };
 
 export default ActivityIndicator;

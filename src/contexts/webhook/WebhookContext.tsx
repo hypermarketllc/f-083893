@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Webhook, WebhookLogEntry, WebhookTag, HttpMethod, IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook';
+import { Webhook, WebhookLogEntry, WebhookTestResponse, WebhookTag, HttpMethod, IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth';
+import { useWebhookOperations } from './useWebhookOperations';
 
 interface WebhookContextType {
   // Webhooks
@@ -12,6 +12,7 @@ interface WebhookContextType {
   incomingWebhooks: IncomingWebhook[];
   incomingWebhookLogs: IncomingWebhookLogEntry[];
   isLoading: boolean;
+  isTestLoading: boolean;
   error: Error | null;
   selectedWebhook: Webhook | null;
   setSelectedWebhook: (webhook: Webhook | null) => void;
@@ -34,13 +35,14 @@ interface WebhookContextType {
   setSearchQuery: (query: string) => void;
   
   // CRUD operations
-  createWebhook: (webhook: Partial<Webhook>) => Promise<void>;
-  updateWebhook: (webhook: Webhook) => Promise<void>;
+  createWebhook: (webhook: Partial<Webhook>) => Promise<Webhook | null>;
+  updateWebhook: (webhook: Webhook) => Promise<Webhook | null>;
   deleteWebhook: (id: string) => Promise<void>;
-  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<void>;
+  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<WebhookTestResponse | null>;
+  sendTestRequest: (webhook: Webhook) => Promise<WebhookTestResponse | null>;
   
-  createIncomingWebhook: (webhook: Partial<IncomingWebhook>) => Promise<void>;
-  updateIncomingWebhook: (webhook: IncomingWebhook) => Promise<void>;
+  createIncomingWebhook: (webhook: Partial<IncomingWebhook>) => Promise<IncomingWebhook | null>;
+  updateIncomingWebhook: (webhook: IncomingWebhook) => Promise<IncomingWebhook | null>;
   deleteIncomingWebhook: (id: string) => Promise<void>;
   
   // UI Operations
@@ -60,6 +62,7 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [incomingWebhooks, setIncomingWebhooks] = useState<IncomingWebhook[]>([]);
   const [incomingWebhookLogs, setIncomingWebhookLogs] = useState<IncomingWebhookLogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTestLoading, setIsTestLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
   const [selectedIncomingWebhook, setSelectedIncomingWebhook] = useState<IncomingWebhook | null>(null);
@@ -68,10 +71,20 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isTestMode, setIsTestMode] = useState(false);
   const [testResponse, setTestResponse] = useState<WebhookLogEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
 
-  // Mock data for development
+  const { executeWebhook, clearTestResponse, sendTestRequest } = useWebhookOperations(
+    webhooks,
+    setWebhooks,
+    webhookLogs,
+    setWebhookLogs,
+    selectedWebhook,
+    setSelectedWebhook,
+    setTestResponse,
+    setIsTestLoading
+  );
+
   useEffect(() => {
-    // Mock webhooks
     const mockWebhooks: Webhook[] = [
       {
         id: 'webhook-1',
@@ -83,6 +96,7 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
           { id: 'header-1', key: 'Authorization', value: 'Bearer ghp_123456789', enabled: true },
           { id: 'header-2', key: 'Content-Type', value: 'application/json', enabled: true }
         ],
+        params: [],
         urlParams: [],
         body: {
           contentType: 'json',
@@ -107,6 +121,7 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
         headers: [
           { id: 'header-3', key: 'Content-Type', value: 'application/json', enabled: true }
         ],
+        params: [],
         urlParams: [],
         body: {
           contentType: 'json',
@@ -129,6 +144,7 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
         url: 'https://api.example.com/status',
         method: 'GET',
         headers: [],
+        params: [],
         urlParams: [
           { id: 'param-1', key: 'format', value: 'json', enabled: true }
         ],
@@ -144,7 +160,6 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     ];
 
-    // Mock webhook logs
     const mockWebhookLogs: WebhookLogEntry[] = [
       {
         id: 'log-1',
@@ -207,7 +222,6 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     ];
 
-    // Mock incoming webhooks
     const mockIncomingWebhooks: IncomingWebhook[] = [
       {
         id: 'incoming-webhook-1',
@@ -243,7 +257,6 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     ];
 
-    // Mock incoming webhook logs
     const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
       {
         id: 'incoming-log-1',
@@ -319,16 +332,26 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setIsLoading(false);
   }, []);
 
-  // CRUD operations for outgoing webhooks
-  const createWebhook = async (webhookData: Partial<Webhook>) => {
+  const createWebhook = async (webhookData: Partial<Webhook>): Promise<Webhook | null> => {
     try {
+      if (!webhookData.name) {
+        toast.error('Webhook name is required');
+        return null;
+      }
+      
+      if (!webhookData.url) {
+        toast.error('Webhook URL is required');
+        return null;
+      }
+      
       const newWebhook: Webhook = {
-        id: uuidv4(),
-        name: webhookData.name || 'New Webhook',
+        id: `webhook-${uuidv4()}`,
+        name: webhookData.name,
         description: webhookData.description || '',
-        url: webhookData.url || '',
+        url: webhookData.url,
         method: webhookData.method || 'GET',
         headers: webhookData.headers || [],
+        params: webhookData.params || [],
         urlParams: webhookData.urlParams || [],
         body: webhookData.body,
         enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
@@ -342,219 +365,81 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       setWebhooks(prev => [newWebhook, ...prev]);
       toast.success('Webhook created successfully');
+      return newWebhook;
     } catch (err) {
       console.error('Error creating webhook:', err);
       toast.error('Failed to create webhook');
-      throw err;
+      return null;
     }
   };
 
-  const updateWebhook = async (webhook: Webhook) => {
+  const updateWebhook = async (webhook: Webhook): Promise<Webhook | null> => {
     try {
+      if (!webhook.name) {
+        toast.error('Webhook name is required');
+        return null;
+      }
+      
+      if (!webhook.url) {
+        toast.error('Webhook URL is required');
+        return null;
+      }
+      
+      const updatedWebhook = {
+        ...webhook,
+        updatedAt: new Date().toISOString()
+      };
+      
       setWebhooks(prev => 
-        prev.map(w => w.id === webhook.id ? { ...webhook, updatedAt: new Date().toISOString() } : w)
+        prev.map(w => w.id === webhook.id ? updatedWebhook : w)
       );
+      
+      if (selectedWebhook && selectedWebhook.id === webhook.id) {
+        setSelectedWebhook(updatedWebhook);
+      }
+      
       toast.success('Webhook updated successfully');
+      return updatedWebhook;
     } catch (err) {
       console.error('Error updating webhook:', err);
       toast.error('Failed to update webhook');
-      throw err;
+      return null;
     }
   };
 
-  const deleteWebhook = async (id: string) => {
+  const deleteWebhook = async (id: string): Promise<void> => {
     try {
       setWebhooks(prev => prev.filter(w => w.id !== id));
+      
+      if (selectedWebhook && selectedWebhook.id === id) {
+        setSelectedWebhook(null);
+        setIsTestMode(false);
+      }
+      
       toast.success('Webhook deleted successfully');
     } catch (err) {
       console.error('Error deleting webhook:', err);
       toast.error('Failed to delete webhook');
-      throw err;
     }
   };
 
-  const executeWebhook = async (webhook: Webhook, isTest = false) => {
+  const createIncomingWebhook = async (webhookData: Partial<IncomingWebhook>): Promise<IncomingWebhook | null> => {
     try {
-      // Clear any previous test response if this is a test run
-      if (isTest) {
-        setTestResponse(null);
+      if (!webhookData.name) {
+        toast.error('Webhook name is required');
+        return null;
       }
       
-      const startTime = Date.now();
-      
-      // Prepare request URL with params
-      let url = webhook.url;
-      if (webhook.urlParams && webhook.urlParams.length > 0) {
-        const enabledParams = webhook.urlParams.filter(param => param.enabled);
-        if (enabledParams.length > 0) {
-          const queryParams = new URLSearchParams();
-          enabledParams.forEach(param => {
-            queryParams.append(param.key, param.value);
-          });
-          
-          // Check if URL already has query parameters
-          url += url.includes('?') ? '&' : '?';
-          url += queryParams.toString();
-        }
+      if (!webhookData.endpointPath) {
+        toast.error('Endpoint path is required');
+        return null;
       }
       
-      // Prepare headers
-      let headers: Record<string, string> = {};
-      if (webhook.headers && webhook.headers.length > 0) {
-        webhook.headers
-          .filter(header => header.enabled)
-          .forEach(header => {
-            headers[header.key] = header.value;
-          });
-      }
-      
-      // Prepare body based on content type
-      let body: string | undefined;
-      let contentTypeHeader = '';
-      
-      if (webhook.method !== 'GET' && webhook.body) {
-        body = webhook.body.content;
-        
-        if (webhook.body.contentType === 'json') {
-          contentTypeHeader = 'application/json';
-        } else if (webhook.body.contentType === 'form') {
-          contentTypeHeader = 'application/x-www-form-urlencoded';
-        } else {
-          contentTypeHeader = 'text/plain';
-        }
-        
-        if (contentTypeHeader && !headers['Content-Type']) {
-          headers['Content-Type'] = contentTypeHeader;
-        }
-      }
-      
-      // Make HTTP request
-      const response = await fetch(url, {
-        method: webhook.method,
-        headers,
-        body,
-      });
-      
-      const endTime = Date.now();
-      const duration = endTime - startTime;
-      
-      // Get response data
-      let responseText = '';
-      let responseData;
-      
-      try {
-        responseText = await response.text();
-        // Try to parse as JSON if it looks like JSON
-        if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
-          try {
-            responseData = JSON.parse(responseText);
-            // Re-stringify with proper formatting
-            responseText = JSON.stringify(responseData, null, 2);
-          } catch {
-            // If it's not valid JSON, keep as text
-          }
-        }
-      } catch (err) {
-        console.error('Error reading response body:', err);
-      }
-      
-      // Get response headers
-      const responseHeaders: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
-      });
-      
-      // Create log entry
-      const logEntry: WebhookLogEntry = {
-        id: uuidv4(),
-        webhookId: webhook.id,
-        webhookName: webhook.name,
-        timestamp: new Date().toISOString(),
-        requestUrl: url,
-        requestMethod: webhook.method,
-        requestHeaders: headers,
-        requestBody: body,
-        responseStatus: response.status,
-        responseHeaders: responseHeaders,
-        responseBody: responseText,
-        duration,
-        success: response.ok
-      };
-      
-      // Record test response if in test mode
-      if (isTest) {
-        setTestResponse(logEntry);
-      } else {
-        // Add to logs
-        setWebhookLogs(prev => [logEntry, ...prev]);
-        
-        // Update webhook's last execution status
-        setWebhooks(prev => 
-          prev.map(w => 
-            w.id === webhook.id 
-              ? { 
-                  ...w, 
-                  lastExecutedAt: new Date().toISOString(), 
-                  lastExecutionStatus: response.ok ? 'success' : 'error' 
-                } 
-              : w
-          )
-        );
-        
-        toast.success(`Webhook executed: ${response.status} ${response.statusText}`);
-      }
-    } catch (err) {
-      console.error('Error executing webhook:', err);
-      
-      // Create error log entry
-      const errorLogEntry: WebhookLogEntry = {
-        id: uuidv4(),
-        webhookId: webhook.id,
-        webhookName: webhook.name,
-        timestamp: new Date().toISOString(),
-        requestUrl: webhook.url,
-        requestMethod: webhook.method,
-        requestHeaders: {},
-        responseStatus: 0,
-        responseHeaders: {},
-        duration: 0,
-        success: false,
-        error: err instanceof Error ? err.message : 'Network error'
-      };
-      
-      // Record error in test response if in test mode
-      if (isTest) {
-        setTestResponse(errorLogEntry);
-      } else {
-        // Add to logs
-        setWebhookLogs(prev => [errorLogEntry, ...prev]);
-        
-        // Update webhook's last execution status
-        setWebhooks(prev => 
-          prev.map(w => 
-            w.id === webhook.id 
-              ? { 
-                  ...w, 
-                  lastExecutedAt: new Date().toISOString(), 
-                  lastExecutionStatus: 'error' 
-                } 
-              : w
-          )
-        );
-        
-        toast.error(`Failed to execute webhook: ${err instanceof Error ? err.message : 'Network error'}`);
-      }
-    }
-  };
-
-  // CRUD operations for incoming webhooks
-  const createIncomingWebhook = async (webhookData: Partial<IncomingWebhook>) => {
-    try {
       const newWebhook: IncomingWebhook = {
-        id: uuidv4(),
-        name: webhookData.name || 'New Incoming Webhook',
+        id: `incoming-webhook-${uuidv4()}`,
+        name: webhookData.name,
         description: webhookData.description || '',
-        endpointPath: webhookData.endpointPath || '',
+        endpointPath: webhookData.endpointPath,
         enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -565,39 +450,65 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
       
       setIncomingWebhooks(prev => [newWebhook, ...prev]);
       toast.success('Incoming webhook created successfully');
+      return newWebhook;
     } catch (err) {
       console.error('Error creating incoming webhook:', err);
       toast.error('Failed to create incoming webhook');
-      throw err;
+      return null;
     }
   };
 
-  const updateIncomingWebhook = async (webhook: IncomingWebhook) => {
+  const updateIncomingWebhook = async (webhook: IncomingWebhook): Promise<IncomingWebhook | null> => {
     try {
+      if (!webhook.name) {
+        toast.error('Webhook name is required');
+        return null;
+      }
+      
+      if (!webhook.endpointPath) {
+        toast.error('Endpoint path is required');
+        return null;
+      }
+      
+      const updatedWebhook = {
+        ...webhook,
+        updatedAt: new Date().toISOString()
+      };
+      
       setIncomingWebhooks(prev => 
-        prev.map(w => w.id === webhook.id ? { ...webhook, updatedAt: new Date().toISOString() } : w)
+        prev.map(w => w.id === webhook.id ? updatedWebhook : w)
       );
+      
+      if (selectedIncomingWebhook && selectedIncomingWebhook.id === webhook.id) {
+        setSelectedIncomingWebhook(updatedWebhook);
+      }
+      
       toast.success('Incoming webhook updated successfully');
+      return updatedWebhook;
     } catch (err) {
       console.error('Error updating incoming webhook:', err);
       toast.error('Failed to update incoming webhook');
-      throw err;
+      return null;
     }
   };
 
-  const deleteIncomingWebhook = async (id: string) => {
+  const deleteIncomingWebhook = async (id: string): Promise<void> => {
     try {
       setIncomingWebhooks(prev => prev.filter(w => w.id !== id));
+      
+      if (selectedIncomingWebhook && selectedIncomingWebhook.id === id) {
+        setSelectedIncomingWebhook(null);
+      }
+      
       toast.success('Incoming webhook deleted successfully');
     } catch (err) {
       console.error('Error deleting incoming webhook:', err);
       toast.error('Failed to delete incoming webhook');
-      throw err;
     }
   };
 
-  // UI Operations
   const handleEditWebhook = (webhook: Webhook) => {
+    setEditingWebhook(webhook);
     setSelectedWebhook(webhook);
     setIsWebhookModalOpen(true);
   };
@@ -619,10 +530,6 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
-  const clearTestResponse = () => {
-    setTestResponse(null);
-  };
-
   return (
     <WebhookContext.Provider
       value={{
@@ -631,6 +538,7 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
         incomingWebhooks,
         incomingWebhookLogs,
         isLoading,
+        isTestLoading,
         error,
         selectedWebhook,
         setSelectedWebhook,
@@ -649,6 +557,7 @@ export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateWebhook,
         deleteWebhook,
         executeWebhook,
+        sendTestRequest,
         createIncomingWebhook,
         updateIncomingWebhook,
         deleteIncomingWebhook,

@@ -1,9 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { WebhookProvider } from '@/contexts/webhook/WebhookContext';
 import WebhooksPage from '../webhooks/WebhooksPage';
 
 const WebhooksSection: React.FC = () => {
-  return <WebhooksPage />;
+  return (
+    <WebhookProvider>
+      <div className="animate-in fade-in duration-300">
+        <WebhooksPage />
+      </div>
+    </WebhookProvider>
+  );
 };
 
 export default WebhooksSection;

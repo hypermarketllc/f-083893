@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { Webhook } from '@/types/webhook';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface WebhookTestPanelProps {
   webhook: Webhook;
@@ -18,7 +19,8 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
     setIsTestMode, 
     executeWebhook, 
     testResponse, 
-    clearTestResponse 
+    clearTestResponse,
+    isTestLoading
   } = useWebhookContext();
 
   const handleTestMode = (enabled: boolean) => {
@@ -29,7 +31,27 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
   };
 
   const handleExecuteTest = async () => {
+    // Validate webhook data before testing
+    if (!webhook.url) {
+      alert('Webhook URL is required before testing');
+      return;
+    }
+    
     await executeWebhook(webhook, true);
+  };
+
+  // Format the response body for better display
+  const formatResponseBody = (body?: string) => {
+    if (!body) return 'No response body';
+    
+    try {
+      // Try to parse as JSON and prettify
+      const parsed = JSON.parse(body);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      // If not valid JSON, return as is
+      return body;
+    }
   };
 
   return (
@@ -52,13 +74,35 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
             variant="default" 
             size="sm" 
             onClick={handleExecuteTest}
+            disabled={isTestLoading}
           >
-            Send Test Request
+            {isTestLoading ? 'Sending...' : 'Send Test Request'}
           </Button>
         )}
       </div>
 
-      {isTestMode && testResponse && (
+      {isTestMode && isTestLoading && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle>Test Results</CardTitle>
+            <CardDescription>
+              <div className="flex items-center space-x-2">
+                <Clock className="h-4 w-4 animate-spin" />
+                <span>Waiting for response...</span>
+              </div>
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isTestMode && testResponse && !isTestLoading && (
         <Card>
           <CardHeader className="pb-2">
             <div className="flex justify-between items-center">
@@ -82,15 +126,15 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
             <div className="space-y-4">
               <div>
                 <div className="flex items-center space-x-2 mb-2">
-                  {testResponse.status >= 200 && testResponse.status < 300 ? (
+                  {testResponse.responseStatus >= 200 && testResponse.responseStatus < 300 ? (
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                  ) : testResponse.status === 0 ? (
+                  ) : testResponse.responseStatus === 0 ? (
                     <AlertCircle className="h-5 w-5 text-amber-500" />
                   ) : (
                     <XCircle className="h-5 w-5 text-destructive" />
                   )}
                   <h3 className="font-medium">
-                    Status: {testResponse.status === 0 ? 'Error' : testResponse.status}
+                    Status: {testResponse.responseStatus === 0 ? 'Error' : testResponse.responseStatus}
                   </h3>
                 </div>
 
@@ -98,14 +142,14 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
                   <div>
                     <h4 className="text-sm font-medium">Headers</h4>
                     <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-auto max-h-32">
-                      {JSON.stringify(testResponse.headers, null, 2) || 'No headers'}
+                      {JSON.stringify(testResponse.responseHeaders, null, 2) || 'No headers'}
                     </pre>
                   </div>
 
                   <div>
                     <h4 className="text-sm font-medium">Response Body</h4>
                     <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-auto max-h-64">
-                      {testResponse.body || 'No response body'}
+                      {formatResponseBody(testResponse.responseBody)}
                     </pre>
                   </div>
 

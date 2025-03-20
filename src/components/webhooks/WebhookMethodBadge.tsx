@@ -1,26 +1,38 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { HttpMethod } from '@/types/webhook';
 
 interface WebhookMethodBadgeProps {
-  method: string;
+  method: HttpMethod;
 }
 
 const WebhookMethodBadge: React.FC<WebhookMethodBadgeProps> = ({ method }) => {
-  const methodStyles = {
-    GET: "bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-    POST: "bg-green-100 hover:bg-green-200 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    PUT: "bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    DELETE: "bg-red-100 hover:bg-red-200 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-    PATCH: "bg-purple-100 hover:bg-purple-200 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-  };
-
-  const upperMethod = method.toUpperCase();
-  const className = methodStyles[upperMethod as keyof typeof methodStyles] || "";
-
+  let color;
+  
+  switch (method) {
+    case 'GET':
+      color = 'bg-blue-50 text-blue-700 border-blue-200';
+      break;
+    case 'POST':
+      color = 'bg-green-50 text-green-700 border-green-200';
+      break;
+    case 'PUT':
+      color = 'bg-amber-50 text-amber-700 border-amber-200';
+      break;
+    case 'DELETE':
+      color = 'bg-red-50 text-red-700 border-red-200';
+      break;
+    case 'PATCH':
+      color = 'bg-purple-50 text-purple-700 border-purple-200';
+      break;
+    default:
+      color = 'bg-gray-50 text-gray-700 border-gray-200';
+  }
+  
   return (
-    <Badge variant="outline" className={`font-mono text-xs py-0.5 ${className}`}>
-      {upperMethod}
+    <Badge variant="outline" className={`font-mono ${color}`}>
+      {method}
     </Badge>
   );
 };

@@ -1,198 +1,204 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
-import { WebhookLogEntry } from '@/types/webhook';
-import { 
-  Table, TableHeader, TableBody, 
-  TableHead, TableRow, TableCell 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { 
-  Dialog, DialogContent, DialogHeader, 
-  DialogTitle, DialogFooter
-} from '@/components/ui/dialog';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle, XCircle, Eye } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import WebhookMethodBadge from './WebhookMethodBadge';
+import { WebhookLogEntry } from '@/types/webhook';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, XCircle, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { EmptyLogs } from './EmptyLogs';
+import { Skeleton } from '@/components/ui/skeleton';
+import WebhookMethodBadge from './WebhookMethodBadge';
 
 export const WebhookLogsTable: React.FC = () => {
-  const { webhookLogs, searchQuery } = useWebhookContext();
-  const [selectedLog, setSelectedLog] = useState<WebhookLogEntry | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { webhookLogs, searchQuery, isLoading } = useWebhookContext();
+  const [expandedLog, setExpandedLog] = useState<string | null>(null);
+  const [filteredLogs, setFilteredLogs] = useState<WebhookLogEntry[]>([]);
 
-  // Filter logs based on search query
-  const filteredLogs = React.useMemo(() => {
-    if (!searchQuery) return webhookLogs;
-    
-    const lowerSearchQuery = searchQuery.toLowerCase();
-    return webhookLogs.filter(log => 
-      log.webhookName.toLowerCase().includes(lowerSearchQuery) ||
-      log.requestUrl.toLowerCase().includes(lowerSearchQuery) ||
-      (log.requestBody && log.requestBody.toLowerCase().includes(lowerSearchQuery)) ||
-      (log.responseBody && log.responseBody.toLowerCase().includes(lowerSearchQuery))
-    );
+  useEffect(() => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      setFilteredLogs(webhookLogs.filter(log => 
+        log.webhookName.toLowerCase().includes(query) ||
+        log.requestUrl.toLowerCase().includes(query) ||
+        (log.responseBody && log.responseBody.toLowerCase().includes(query))
+      ));
+    } else {
+      setFilteredLogs(webhookLogs);
+    }
   }, [webhookLogs, searchQuery]);
 
-  const handleViewLog = (log: WebhookLogEntry) => {
-    setSelectedLog(log);
-    setIsModalOpen(true);
+  const toggleLogExpansion = (id: string) => {
+    setExpandedLog(prevId => prevId === id ? null : id);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </div>
+    );
+  }
+
+  if (filteredLogs.length === 0) {
+    return <EmptyLogs message={searchQuery ? "No logs matching your search criteria" : "No webhook logs found"} />;
+  }
 
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString);
-      return formatDistanceToNow(date, { addSuffix: true });
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
     } catch (e) {
       return dateString;
     }
   };
 
-  if (webhookLogs.length === 0) {
-    return <EmptyLogs message="No webhook logs found" />;
-  }
+  const formatBody = (body?: string) => {
+    if (!body) return null;
+    
+    try {
+      // Try to parse as JSON
+      const parsed = JSON.parse(body);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      // If not valid JSON, return as is
+      return body;
+    }
+  };
 
   return (
-    <>
-      <div className="border rounded-md overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Status</TableHead>
-              <TableHead>Webhook</TableHead>
-              <TableHead className="hidden md:table-cell">Method</TableHead>
-              <TableHead className="hidden lg:table-cell">Time</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredLogs.map((log) => (
-              <TableRow key={log.id}>
-                <TableCell>
-                  <Badge variant={log.success ? 'outline' : 'secondary'} className={log.success ? 'text-green-500' : 'text-red-500'}>
-                    {log.success ? (
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                    ) : (
-                      <XCircle className="h-3 w-3 mr-1" />
-                    )}
-                    {log.responseStatus}
-                  </Badge>
+    <div className="border rounded-md overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[200px]">Webhook</TableHead>
+            <TableHead className="hidden md:table-cell">URL</TableHead>
+            <TableHead className="w-[100px]">Method</TableHead>
+            <TableHead className="w-[100px]">Status</TableHead>
+            <TableHead className="hidden md:table-cell w-[100px]">Time</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredLogs.map(log => (
+            <React.Fragment key={log.id}>
+              <TableRow className="hover:bg-muted/50">
+                <TableCell className="font-medium">
+                  {log.webhookName}
                 </TableCell>
-                <TableCell className="font-medium">{log.webhookName}</TableCell>
                 <TableCell className="hidden md:table-cell">
+                  <div className="truncate max-w-[300px]">
+                    {log.requestUrl}
+                  </div>
+                </TableCell>
+                <TableCell>
                   <WebhookMethodBadge method={log.requestMethod} />
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
-                  {formatDate(log.timestamp)}
+                <TableCell>
+                  {log.success ? (
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {log.responseStatus}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                      <XCircle className="h-3 w-3 mr-1" />
+                      {log.responseStatus || "Error"}
+                    </Badge>
+                  )}
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewLog(log)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+                <TableCell className="hidden md:table-cell">
+                  <span className="text-xs text-muted-foreground">
+                    {formatDate(log.timestamp)}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleLogExpansion(log.id)}
+                    >
+                      {expandedLog === log.id ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Webhook Log Details</DialogTitle>
-          </DialogHeader>
-          {selectedLog && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-sm font-medium">Status</p>
-                  <Badge variant={selectedLog.success ? 'outline' : 'secondary'} className={selectedLog.success ? 'text-green-500' : 'text-red-500'}>
-                    {selectedLog.responseStatus}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Webhook</p>
-                  <p className="text-sm">{selectedLog.webhookName}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Method</p>
-                  <p className="text-sm">{selectedLog.requestMethod}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Time</p>
-                  <p className="text-sm">{new Date(selectedLog.timestamp).toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium mb-1">Request Headers</p>
-                <div className="bg-muted p-2 rounded-md">
-                  <ScrollArea className="h-[120px]">
-                    <pre className="text-xs">
-                      {JSON.stringify(selectedLog.requestHeaders, null, 2)}
-                    </pre>
-                  </ScrollArea>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium mb-1">Request Body</p>
-                <div className="bg-muted p-2 rounded-md">
-                  <ScrollArea className="h-[120px]">
-                    <pre className="text-xs">
-                      {selectedLog.requestBody || 'No request body'}
-                    </pre>
-                  </ScrollArea>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium mb-1">Response Headers</p>
-                <div className="bg-muted p-2 rounded-md">
-                  <ScrollArea className="h-[80px]">
-                    <pre className="text-xs">
-                      {JSON.stringify(selectedLog.responseHeaders, null, 2)}
-                    </pre>
-                  </ScrollArea>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm font-medium mb-1">Response Body</p>
-                <div className="bg-muted p-2 rounded-md">
-                  <ScrollArea className="h-[80px]">
-                    <pre className="text-xs">
-                      {selectedLog.responseBody || 'No response body'}
-                    </pre>
-                  </ScrollArea>
-                </div>
-              </div>
-
-              {selectedLog.error && (
-                <div>
-                  <p className="text-sm font-medium mb-1 text-red-500">Error</p>
-                  <div className="bg-red-50 dark:bg-red-950/20 p-2 rounded-md">
-                    <ScrollArea className="h-[80px]">
-                      <pre className="text-xs text-red-500">{selectedLog.error}</pre>
-                    </ScrollArea>
-                  </div>
-                </div>
+              
+              {expandedLog === log.id && (
+                <TableRow className="bg-muted/30">
+                  <TableCell colSpan={6} className="p-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Request</h4>
+                          <div className="space-y-2">
+                            <div>
+                              <h5 className="text-xs font-medium text-muted-foreground">Headers</h5>
+                              <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-auto max-h-32">
+                                {JSON.stringify(log.requestHeaders, null, 2) || "No headers"}
+                              </pre>
+                            </div>
+                            
+                            {log.requestBody && (
+                              <div>
+                                <h5 className="text-xs font-medium text-muted-foreground">Body</h5>
+                                <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-auto max-h-32">
+                                  {formatBody(log.requestBody) || "No body"}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium mb-2">Response</h4>
+                          <div className="space-y-2">
+                            <div>
+                              <h5 className="text-xs font-medium text-muted-foreground">Headers</h5>
+                              <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-auto max-h-32">
+                                {JSON.stringify(log.responseHeaders, null, 2) || "No headers"}
+                              </pre>
+                            </div>
+                            
+                            <div>
+                              <h5 className="text-xs font-medium text-muted-foreground">Body</h5>
+                              <pre className="text-xs bg-muted p-2 rounded-md mt-1 overflow-auto max-h-64">
+                                {formatBody(log.responseBody) || "No body"}
+                              </pre>
+                            </div>
+                            
+                            {log.error && (
+                              <div>
+                                <h5 className="text-xs font-medium text-destructive">Error</h5>
+                                <pre className="text-xs bg-destructive/10 text-destructive p-2 rounded-md mt-1 overflow-auto max-h-32">
+                                  {log.error}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        <span>Duration: {log.duration}ms</span>
+                        <span className="mx-2">•</span>
+                        <span>Timestamp: {new Date(log.timestamp).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
               )}
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+            </React.Fragment>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 };

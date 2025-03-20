@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { WebhookProvider, useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { WebhookList } from './WebhookList';
 import { WebhookLogsTable } from './WebhookLogsTable';
 import { WebhookModal } from './WebhookModal';
 import { WebhookTestPanel } from './WebhookTestPanel';
+import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -95,11 +95,9 @@ const WebhooksTabs: React.FC = () => {
 
 const WebhooksPage: React.FC = () => {
   return (
-    <WebhookProvider>
-      <div className="animate-in fade-in duration-300">
-        <WebhooksTabs />
-      </div>
-    </WebhookProvider>
+    <div className="animate-in fade-in duration-300">
+      <WebhooksTabs />
+    </div>
   );
 };
 

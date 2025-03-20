@@ -1,8 +1,8 @@
+
 import { useState } from 'react';
-import { Webhook, WebhookLogEntry, IncomingWebhook } from '@/types/webhook';
-import { v4 as uuidv4 } from 'uuid';
+import { Webhook, WebhookLogEntry, WebhookTestResponse } from '@/types/webhook';
 import { toast } from 'sonner';
-import { ensureLogEntryFields } from './webhookUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useWebhookOperations = (
   webhooks: Webhook[],
@@ -11,297 +11,248 @@ export const useWebhookOperations = (
   setWebhookLogs: React.Dispatch<React.SetStateAction<WebhookLogEntry[]>>,
   selectedWebhook: Webhook | null,
   setSelectedWebhook: React.Dispatch<React.SetStateAction<Webhook | null>>,
-  setIsWebhookModalOpen: React.Dispatch<React.SetStateAction<boolean>>,
-  setEditingWebhook: React.Dispatch<React.SetStateAction<Webhook | null>>,
-  setTestResponse: React.Dispatch<React.SetStateAction<any>>,
+  setTestResponse: React.Dispatch<React.SetStateAction<WebhookLogEntry | null>>,
   setIsTestLoading: React.Dispatch<React.SetStateAction<boolean>>
 ) => {
-  const handleEditWebhook = (webhook: Webhook) => {
-    setEditingWebhook(webhook);
-    setSelectedWebhook(webhook);
-    setIsWebhookModalOpen(true);
-  };
-
-  const handleDeleteWebhook = (webhookId: string) => {
-    setWebhooks((prevWebhooks) => prevWebhooks.filter((webhook) => webhook.id !== webhookId));
-    setWebhookLogs((prevLogs) => prevLogs.filter((log) => log.webhookId !== webhookId));
-    setSelectedWebhook(null);
-    toast.success('Webhook deleted');
-  };
-
-  const createWebhook = (webhookData: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newWebhook: Webhook = {
-      id: `webhook-${uuidv4()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      lastExecutedAt: null,
-      lastExecutionStatus: null,
-      ...webhookData
-    };
-
-    setWebhooks((prevWebhooks) => [newWebhook, ...prevWebhooks]);
-    setSelectedWebhook(newWebhook);
-    toast.success(`Webhook "${newWebhook.name}" created`);
-  };
-
-  const updateWebhook = (updatedWebhook: Webhook) => {
-    if (!selectedWebhook) {
-      console.warn('No webhook selected to update.');
-      return;
-    }
-
-    // Update the webhook
-    setWebhooks((prevWebhooks) =>
-      prevWebhooks.map((webhook) =>
-        webhook.id === updatedWebhook.id
-          ? {
-              ...updatedWebhook,
-              updatedAt: new Date().toISOString(),
-              lastExecutedAt: updatedWebhook.lastExecutedAt,
-              lastExecutionStatus: updatedWebhook.lastExecutionStatus as 'success' | 'error' | null
-            }
-          : webhook
-      )
-    );
-
-    // If this is the selected webhook, update it
-    if (selectedWebhook && selectedWebhook.id === updatedWebhook.id) {
-      setSelectedWebhook({
-        ...updatedWebhook,
-        updatedAt: new Date().toISOString(),
-        lastExecutedAt: updatedWebhook.lastExecutedAt,
-        lastExecutionStatus: updatedWebhook.lastExecutionStatus as 'success' | 'error' | null
-      });
-    }
-
-    toast.success(`Webhook "${updatedWebhook.name}" updated`);
-  };
-
-  const handleExecuteWebhook = async (webhook: Webhook) => {
-    // Create a pending log entry
-    const timestamp = new Date().toISOString();
-    const newLogEntry: WebhookLogEntry = {
-      id: `log-${uuidv4()}`,
-      webhookId: webhook.id,
-      webhookName: webhook.name,
-      timestamp: timestamp,
-      requestUrl: webhook.url,
-      requestMethod: webhook.method,
-      requestHeaders: webhook.headers.reduce((acc, header) => {
-        if (header.enabled) {
-          acc[header.key] = header.value;
-        }
-        return acc;
-      }, {} as Record<string, string>),
-      requestTime: timestamp,
-      responseTime: null,
-      responseStatus: 0,
-      responseHeaders: {},
-      duration: 0,
-      success: false,
-      method: webhook.method,
-      url: webhook.url,
-      requestBody: webhook.body?.content || '{}'
-    };
-
-    // Add the log entry to the list
-    setWebhookLogs((prevLogs) => [ensureLogEntryFields(newLogEntry), ...prevLogs]);
-
+  // Execute a webhook and return the result
+  const executeWebhook = async (webhook: Webhook, isTest: boolean = false): Promise<WebhookTestResponse | null> => {
+    setIsTestLoading(true);
+    
     try {
-      // Simulate API call
+      // Clear any previous test response if this is a test run
+      if (isTest) {
+        setTestResponse(null);
+      }
+      
+      // Validate webhook data
+      if (!webhook.url) {
+        toast.error('Webhook URL is required');
+        setIsTestLoading(false);
+        return null;
+      }
+      
       const startTime = Date.now();
-      await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 2000));
       
-      // Randomly succeed or fail
-      const success = Math.random() > 0.3;
-      const responseTime = new Date().toISOString();
-      const duration = Date.now() - startTime;
-      
-      if (!success) {
-        throw new Error('Request failed with status: 500');
+      // Prepare request URL with params
+      let url = webhook.url;
+      if (webhook.urlParams && webhook.urlParams.length > 0) {
+        const enabledParams = webhook.urlParams.filter(param => param.enabled);
+        if (enabledParams.length > 0) {
+          const queryParams = new URLSearchParams();
+          enabledParams.forEach(param => {
+            queryParams.append(param.key, param.value);
+          });
+          
+          // Check if URL already has query parameters
+          url += url.includes('?') ? '&' : '?';
+          url += queryParams.toString();
+        }
       }
       
-      // Update the log entry with success response
-      const updatedLogEntry: WebhookLogEntry = {
-        ...newLogEntry,
-        responseTime: responseTime,
-        responseStatus: 200,
-        responseHeaders: {
-          'Content-Type': 'application/json',
-          'Server': 'nginx/1.18.0',
-          'Date': new Date().toISOString()
-        },
-        responseBody: JSON.stringify({ 
-          success: true, 
-          message: 'Webhook executed successfully',
-          data: { id: Math.floor(Math.random() * 1000) }
-        }),
-        duration: duration,
-        success: true,
-        body: JSON.stringify({ 
-          success: true, 
-          message: 'Webhook executed successfully',
-          data: { id: Math.floor(Math.random() * 1000) }
-        })
+      // Prepare headers
+      let headers: Record<string, string> = {};
+      if (webhook.headers && webhook.headers.length > 0) {
+        webhook.headers
+          .filter(header => header.enabled)
+          .forEach(header => {
+            headers[header.key] = header.value;
+          });
+      }
+      
+      // Prepare body based on content type
+      let body: string | undefined;
+      let contentTypeHeader = '';
+      
+      if (webhook.method !== 'GET' && webhook.body) {
+        body = webhook.body.content;
+        
+        if (webhook.body.contentType === 'json') {
+          contentTypeHeader = 'application/json';
+        } else if (webhook.body.contentType === 'form') {
+          contentTypeHeader = 'application/x-www-form-urlencoded';
+        } else {
+          contentTypeHeader = 'text/plain';
+        }
+        
+        if (contentTypeHeader && !headers['Content-Type']) {
+          headers['Content-Type'] = contentTypeHeader;
+        }
+      }
+      
+      // In a real implementation, we would call the Supabase function here
+      // For this demo, we'll simulate a response after a short delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simulate random success/failure
+      const success = Math.random() > 0.2; // 80% success rate
+      const statusCode = success ? 200 : (Math.random() > 0.5 ? 400 : 500);
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // Create simulated response
+      const responseBody = success
+        ? JSON.stringify({ success: true, message: "Operation completed successfully", data: { id: Math.floor(Math.random() * 1000) } }, null, 2)
+        : JSON.stringify({ 
+            success: false, 
+            error: statusCode === 400 ? "Bad Request" : "Internal Server Error",
+            message: statusCode === 400 
+              ? "The request was invalid" 
+              : "An error occurred while processing the request"
+          }, null, 2);
+      
+      const responseHeaders = {
+        'Content-Type': 'application/json',
+        'X-Request-ID': `req-${Date.now()}`,
+        'Date': new Date().toISOString()
       };
       
-      // Update the log entries
-      setWebhookLogs((prevLogs) =>
-        prevLogs.map((log) =>
-          log.id === newLogEntry.id ? ensureLogEntryFields(updatedLogEntry) : log
-        )
-      );
+      // Create log entry
+      const logEntry: WebhookLogEntry = {
+        id: uuidv4(),
+        webhookId: webhook.id,
+        webhookName: webhook.name,
+        timestamp: new Date().toISOString(),
+        requestUrl: url,
+        requestMethod: webhook.method,
+        requestHeaders: headers,
+        requestBody: body,
+        responseStatus: statusCode,
+        responseHeaders: responseHeaders,
+        responseBody: responseBody,
+        duration,
+        success: success,
+        error: !success ? (statusCode === 400 ? "Bad Request" : "Internal Server Error") : undefined
+      };
       
-      // Update the webhook's last executed status
-      setWebhooks((prevWebhooks) =>
-        prevWebhooks.map((w) =>
-          w.id === webhook.id
-            ? {
-                ...w,
-                lastExecutedAt: timestamp,
-                lastExecutionStatus: 'success' as const
-              }
-            : w
-        )
-      );
-      
-      // Update selected webhook if needed
-      if (selectedWebhook && selectedWebhook.id === webhook.id) {
-        setSelectedWebhook({
-          ...selectedWebhook,
-          lastExecutedAt: timestamp,
-          lastExecutionStatus: 'success' as const
-        });
+      // For test mode, update the test response
+      if (isTest) {
+        setTestResponse(logEntry);
+      } else {
+        // For normal execution, add to logs and update webhook status
+        setWebhookLogs(prev => [logEntry, ...prev]);
+        
+        // Update webhook's last execution status
+        setWebhooks(prev => 
+          prev.map(w => 
+            w.id === webhook.id 
+              ? { 
+                  ...w, 
+                  lastExecutedAt: new Date().toISOString(), 
+                  lastExecutionStatus: success ? 'success' : 'error' 
+                } 
+              : w
+          )
+        );
+        
+        // Update selected webhook if it's the one being executed
+        if (selectedWebhook && selectedWebhook.id === webhook.id) {
+          setSelectedWebhook({
+            ...selectedWebhook,
+            lastExecutedAt: new Date().toISOString(),
+            lastExecutionStatus: success ? 'success' : 'error'
+          });
+        }
+        
+        if (success) {
+          toast.success(`Webhook executed: ${statusCode} OK`);
+        } else {
+          toast.error(`Webhook execution failed: ${statusCode} ${logEntry.error}`);
+        }
       }
       
-      // Return the response for the test panel
-      return updatedLogEntry;
+      setIsTestLoading(false);
+      return {
+        status: statusCode,
+        headers: responseHeaders,
+        body: responseBody,
+        duration,
+        error: !success ? (statusCode === 400 ? "Bad Request" : "Internal Server Error") : undefined
+      };
     } catch (error) {
-      // Handle error
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      const responseTime = new Date().toISOString();
-      const duration = Date.now() - new Date(timestamp).getTime();
+      console.error('Failed to execute webhook:', error);
       
-      // Update the log entry with error details
-      const updatedLogEntry: WebhookLogEntry = {
-        ...newLogEntry,
-        responseTime: responseTime,
-        responseStatus: 500,
-        responseHeaders: {
-          'Content-Type': 'application/json',
-          'Server': 'nginx/1.18.0',
-          'Date': new Date().toISOString()
-        },
-        responseBody: JSON.stringify({ 
-          success: false, 
-          error: errorMessage
-        }),
-        duration: duration,
+      // Create error log entry
+      const errorLogEntry: WebhookLogEntry = {
+        id: uuidv4(),
+        webhookId: webhook.id,
+        webhookName: webhook.name,
+        timestamp: new Date().toISOString(),
+        requestUrl: webhook.url,
+        requestMethod: webhook.method,
+        requestHeaders: {},
+        responseStatus: 0,
+        responseHeaders: {},
+        duration: 0,
         success: false,
-        error: errorMessage,
-        body: JSON.stringify({ 
-          success: false, 
-          error: errorMessage
-        })
+        error: error instanceof Error ? error.message : 'Network error'
       };
       
-      // Update the log entries
-      setWebhookLogs((prevLogs) =>
-        prevLogs.map((log) =>
-          log.id === newLogEntry.id ? ensureLogEntryFields(updatedLogEntry) : log
-        )
-      );
-      
-      // Update the webhook's last executed status
-      setWebhooks((prevWebhooks) =>
-        prevWebhooks.map((w) =>
-          w.id === webhook.id
-            ? {
-                ...w,
-                lastExecutedAt: timestamp,
-                lastExecutionStatus: 'error' as const
-              }
-            : w
-        )
-      );
-      
-      // Update selected webhook if needed
-      if (selectedWebhook && selectedWebhook.id === webhook.id) {
-        setSelectedWebhook({
-          ...selectedWebhook,
-          lastExecutedAt: timestamp,
-          lastExecutionStatus: 'error' as const
-        });
+      // For test mode, update the test response
+      if (isTest) {
+        setTestResponse(errorLogEntry);
+      } else {
+        // For normal execution, add to logs and update webhook status
+        setWebhookLogs(prev => [errorLogEntry, ...prev]);
+        
+        // Update webhook's last execution status
+        setWebhooks(prev => 
+          prev.map(w => 
+            w.id === webhook.id 
+              ? { 
+                  ...w, 
+                  lastExecutedAt: new Date().toISOString(), 
+                  lastExecutionStatus: 'error' 
+                } 
+              : w
+          )
+        );
+        
+        // Update selected webhook if it's the one being executed
+        if (selectedWebhook && selectedWebhook.id === webhook.id) {
+          setSelectedWebhook({
+            ...selectedWebhook,
+            lastExecutedAt: new Date().toISOString(),
+            lastExecutionStatus: 'error'
+          });
+        }
+        
+        toast.error(`Failed to execute webhook: ${error instanceof Error ? error.message : 'Network error'}`);
       }
       
-      // Return the error response for the test panel
-      return updatedLogEntry;
+      setIsTestLoading(false);
+      return {
+        status: 0,
+        headers: {},
+        body: JSON.stringify({ 
+          success: false, 
+          error: 'Network Error',
+          message: 'Failed to connect to the server'
+        }, null, 2),
+        duration: 0,
+        error: error instanceof Error ? error.message : 'Network error'
+      };
     }
   };
-
-  return {
-    createWebhook,
-    updateWebhook,
-    handleEditWebhook,
-    handleDeleteWebhook,
-    handleExecuteWebhook,
+  
+  const clearTestResponse = () => {
+    setTestResponse(null);
   };
+  
+  const sendTestRequest = (webhook: Webhook) => {
+    return executeWebhook(webhook, true);
+  };
+  
+  return { executeWebhook, clearTestResponse, sendTestRequest };
 };
 
-export const useIncomingWebhookOperations = (
-  incomingWebhooks: IncomingWebhook[],
-  setIncomingWebhooks: React.Dispatch<React.SetStateAction<IncomingWebhook[]>>,
-  selectedIncomingWebhook: IncomingWebhook | null,
-  setSelectedIncomingWebhook: React.Dispatch<React.SetStateAction<IncomingWebhook | null>>,
-  setIsIncomingWebhookModalOpen: React.Dispatch<React.SetStateAction<boolean>>,
-  setEditingIncomingWebhook: React.Dispatch<React.SetStateAction<IncomingWebhook | null>>
-) => {
-  const handleEditIncomingWebhook = (webhook: IncomingWebhook) => {
-    setEditingIncomingWebhook(webhook);
-    setSelectedIncomingWebhook(webhook);
-    setIsIncomingWebhookModalOpen(true);
-  };
-
-  const handleDeleteIncomingWebhook = (webhookId: string) => {
-    setIncomingWebhooks((prevWebhooks) => prevWebhooks.filter((webhook) => webhook.id !== webhookId));
-    setSelectedIncomingWebhook(null);
-    toast.success('Incoming Webhook deleted');
-  };
-
-  const createIncomingWebhook = (webhookData: Omit<IncomingWebhook, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newWebhook: IncomingWebhook = {
-      id: `incoming-webhook-${uuidv4()}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      lastCalledAt: null,
-      ...webhookData
-    };
-
-    setIncomingWebhooks((prevWebhooks) => [newWebhook, ...prevWebhooks]);
-    setSelectedIncomingWebhook(newWebhook);
-    toast.success(`Incoming Webhook "${newWebhook.name}" created`);
-  };
-
-  const updateIncomingWebhook = (updatedWebhook: IncomingWebhook) => {
-    setIncomingWebhooks((prevWebhooks) =>
-      prevWebhooks.map((webhook) =>
-        webhook.id === updatedWebhook.id
-          ? { ...updatedWebhook, updatedAt: new Date().toISOString() }
-          : webhook
-      )
-    );
-
-    if (selectedIncomingWebhook && selectedIncomingWebhook.id === updatedWebhook.id) {
-      setSelectedIncomingWebhook({ ...updatedWebhook, updatedAt: new Date().toISOString() });
-    }
-
-    toast.success(`Incoming Webhook "${updatedWebhook.name}" updated`);
-  };
-
+export const ensureLogEntryFields = (logEntry: WebhookLogEntry): WebhookLogEntry => {
   return {
-    createIncomingWebhook,
-    updateIncomingWebhook,
-    handleEditIncomingWebhook,
-    handleDeleteIncomingWebhook,
+    ...logEntry,
+    // Add any missing fields with defaults
+    requestTime: logEntry.requestTime || logEntry.timestamp,
+    responseTime: logEntry.responseTime || null,
+    method: logEntry.requestMethod,
+    url: logEntry.requestUrl,
+    body: logEntry.requestBody
   };
 };
