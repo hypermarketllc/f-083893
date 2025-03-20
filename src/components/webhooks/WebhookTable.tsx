@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { Webhook, WebhookTag, WebhookFilters } from '@/types/webhook';
@@ -41,7 +40,6 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
     tags: []
   });
 
-  // Mock tags for demo
   const mockTags: WebhookTag[] = [
     { id: 'tag-1', name: 'Production', color: '#69db7c' },
     { id: 'tag-2', name: 'Development', color: '#4dabf7' },
@@ -49,7 +47,6 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
     { id: 'tag-4', name: 'Important', color: '#ff6b6b' },
   ];
 
-  // Apply filters to webhooks
   React.useEffect(() => {
     let result = [...webhooks];
     
@@ -71,9 +68,7 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
     }
     
     if (filters.tags && filters.tags.length > 0) {
-      // Simulate tag filtering
       result = result.filter(webhook => {
-        // Get mock tags for this webhook
         const webhookTags = getWebhookTags(webhook);
         return filters.tags!.some(tagId => webhookTags.map(t => t.id).includes(tagId));
       });
@@ -110,7 +105,6 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
     executeWebhook(webhook);
   };
 
-  // Simulate webhook tags
   const getWebhookTags = (webhook: Webhook): WebhookTag[] => {
     if (webhook.tags) return webhook.tags;
     
@@ -169,7 +163,7 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
                     <WebhookMethodBadge method={webhook.method} />
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <WebhookScheduleInfo webhook={webhook} />
+                    <WebhookScheduleInfo schedule={webhook.schedule} />
                   </TableCell>
                   {!compact && (
                     <TableCell className="hidden lg:table-cell">
