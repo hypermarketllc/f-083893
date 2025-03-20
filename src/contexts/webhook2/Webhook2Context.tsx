@@ -8,6 +8,7 @@ import { useWebhookOperations } from './hooks/useWebhookOperations';
 import { Webhook2ContextType } from './types';
 import { mockIncomingWebhooks, mockIncomingWebhookLogs } from './data';
 import { supabase } from '@/integrations/supabase/client';
+import { mapDbWebhookToWebhook, mapDbLogToWebhookLog, mapWebhookToDbWebhook } from '@/utils/mappers';
 
 const Webhook2Context = createContext<Webhook2ContextType | undefined>(undefined);
 
@@ -83,8 +84,21 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         throw new Error(`Error fetching webhook logs: ${logError.message}`);
       }
       
-      setWebhooks(webhookData || []);
-      setWebhookLogs(logData || []);
+      // Convert DB format to frontend models
+      const mappedWebhooks = webhookData?.map(dbWebhook => mapDbWebhookToWebhook(dbWebhook)) || [];
+      setWebhooks(mappedWebhooks);
+      
+      // Create a map of webhook IDs to names for the logs
+      const webhookNames = new Map<string, string>();
+      mappedWebhooks.forEach(webhook => {
+        webhookNames.set(webhook.id, webhook.name);
+      });
+      
+      // Convert DB logs to frontend models
+      const mappedLogs = logData?.map(log => 
+        mapDbLogToWebhookLog(log, webhookNames.get(log.webhook_id))
+      ) || [];
+      setWebhookLogs(mappedLogs);
       
       // Still using mock data for incoming webhooks for now
       setIncomingWebhooks(mockIncomingWebhooks);
@@ -127,7 +141,17 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         throw new Error(`Error refreshing webhook logs: ${error.message}`);
       }
       
-      setWebhookLogs(data || []);
+      // Create a map of webhook IDs to names
+      const webhookNames = new Map<string, string>();
+      webhooks.forEach(webhook => {
+        webhookNames.set(webhook.id, webhook.name);
+      });
+      
+      // Convert DB logs to frontend models
+      const mappedLogs = data?.map(log => 
+        mapDbLogToWebhookLog(log, webhookNames.get(log.webhook_id))
+      ) || [];
+      setWebhookLogs(mappedLogs);
     } catch (err) {
       console.error('Error refreshing webhook logs:', err);
       toast.error('Failed to refresh webhook logs');
@@ -160,9 +184,9 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
           description: webhookData.description,
           url: webhookData.url,
           method: webhookData.method,
-          headers: webhookData.headers,
-          params: webhookData.params,
-          body: webhookData.body,
+          headers: webhookData.headers as any,
+          params: webhookData.params as any,
+          body: webhookData.body as any,
           enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
           tags: webhookData.tags || [],
           user_id: user.id
@@ -174,7 +198,7 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         throw new Error(`Error creating webhook: ${error.message}`);
       }
       
-      const newWebhook = data as Webhook;
+      const newWebhook = mapDbWebhookToWebhook(data);
       setWebhooks(prev => [newWebhook, ...prev]);
       toast.success('Webhook created successfully');
       return newWebhook;
@@ -202,21 +226,12 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         return null;
       }
       
+      // Convert the webhook to DB format
+      const dbWebhook = mapWebhookToDbWebhook(webhook);
+      
       const { data, error } = await supabase
         .from('webhooks')
-        .update({
-          name: webhook.name,
-          description: webhook.description,
-          url: webhook.url,
-          method: webhook.method,
-          headers: webhook.headers,
-          params: webhook.params,
-          body: webhook.body,
-          enabled: webhook.enabled,
-          tags: webhook.tags,
-          last_executed_at: webhook.lastExecutedAt,
-          last_execution_status: webhook.lastExecutionStatus
-        })
+        .update(dbWebhook)
         .eq('id', webhook.id)
         .select()
         .single();
@@ -225,7 +240,7 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         throw new Error(`Error updating webhook: ${error.message}`);
       }
       
-      const updatedWebhook = data as Webhook;
+      const updatedWebhook = mapDbWebhookToWebhook(data);
       
       setWebhooks(prev => 
         prev.map(w => w.id === webhook.id ? updatedWebhook : w)

@@ -2,16 +2,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/auth';
 import { supabase } from '@/integrations/supabase/client';
-
-export interface ThemeSettings {
-  theme: 'light' | 'dark' | 'system';
-  accentColor: string;
-  fontScale: number;
-}
+import { UserSettings, mapDbSettingsToUserSettings, mapUserSettingsToDbSettings } from '@/types/userSettings';
 
 export const useThemeSettings = () => {
   const { user } = useAuth();
-  const [settings, setSettings] = useState<ThemeSettings>({
+  const [settings, setSettings] = useState<UserSettings>({
     theme: 'system',
     accentColor: '#7C3AED',
     fontScale: 1.0
@@ -26,7 +21,7 @@ export const useThemeSettings = () => {
       const storedAccentColor = localStorage.getItem('accent-color');
       const storedFontScale = localStorage.getItem('font-scale');
       
-      const newSettings: ThemeSettings = {
+      const newSettings: UserSettings = {
         theme: storedTheme || 'system',
         accentColor: storedAccentColor || '#7C3AED',
         fontScale: storedFontScale ? parseFloat(storedFontScale) : 1.0
@@ -45,8 +40,9 @@ export const useThemeSettings = () => {
       if (!user) return;
       
       try {
+        // Using any type since we need to access user_settings which isn't in the generated types
         const { data, error } = await supabase
-          .from('user_settings')
+          .from('user_settings' as any)
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
@@ -57,14 +53,9 @@ export const useThemeSettings = () => {
         }
         
         if (data) {
-          const newSettings: ThemeSettings = {
-            theme: data.theme || 'system',
-            accentColor: data.accent_color || '#7C3AED',
-            fontScale: data.font_scale || 1.0
-          };
-          
-          setSettings(newSettings);
-          applySettings(newSettings);
+          const userSettings = mapDbSettingsToUserSettings(data);
+          setSettings(userSettings);
+          applySettings(userSettings);
         }
       } catch (error) {
         console.error('Failed to load user settings:', error);
@@ -75,7 +66,7 @@ export const useThemeSettings = () => {
   }, [user]);
 
   // Apply theme settings to document
-  const applySettings = (settingsToApply: ThemeSettings) => {
+  const applySettings = (settingsToApply: UserSettings) => {
     // Apply theme
     const htmlElement = document.documentElement;
     if (settingsToApply.theme === 'system') {
@@ -93,7 +84,7 @@ export const useThemeSettings = () => {
   };
 
   // Update a specific setting
-  const updateSetting = <K extends keyof ThemeSettings>(key: K, value: ThemeSettings[K]) => {
+  const updateSetting = <K extends keyof UserSettings>(key: K, value: UserSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     setIsChanged(true);
     
@@ -115,7 +106,7 @@ export const useThemeSettings = () => {
       if (user) {
         // Check if user settings exist
         const { data, error: checkError } = await supabase
-          .from('user_settings')
+          .from('user_settings' as any)
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
@@ -125,15 +116,14 @@ export const useThemeSettings = () => {
           throw checkError;
         }
         
+        // Map settings to DB format
+        const dbSettings = mapUserSettingsToDbSettings(settings);
+        
         if (data) {
           // Update existing settings
           const { error } = await supabase
-            .from('user_settings')
-            .update({
-              theme: settings.theme,
-              accent_color: settings.accentColor,
-              font_scale: settings.fontScale
-            })
+            .from('user_settings' as any)
+            .update(dbSettings)
             .eq('user_id', user.id);
           
           if (error) {
@@ -143,12 +133,10 @@ export const useThemeSettings = () => {
         } else {
           // Insert new settings
           const { error } = await supabase
-            .from('user_settings')
+            .from('user_settings' as any)
             .insert({
               user_id: user.id,
-              theme: settings.theme,
-              accent_color: settings.accentColor,
-              font_scale: settings.fontScale
+              ...dbSettings
             });
           
           if (error) {

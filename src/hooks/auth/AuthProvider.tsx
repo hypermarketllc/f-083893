@@ -8,6 +8,7 @@ import { AuthContext } from './AuthContext';
 import { UserProfile, AuthContextType } from './types';
 import { handleAuthError } from './authErrorHandler';
 import { storeUserSettings, getUserSettings, updateUserSetting } from '@/utils/storage';
+import { mapDbSettingsToUserSettings } from '@/types/userSettings';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -37,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         // Load user settings from Supabase if available
         const { data: userSettings, error } = await supabase
-          .from('user_settings')
+          .from('user_settings' as any)
           .select('*')
           .eq('user_id', id)
           .maybeSingle();
@@ -279,7 +280,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           // Check if user settings exist
           const { data: existingSettings, error: checkError } = await supabase
-            .from('user_settings')
+            .from('user_settings' as any)
             .select('*')
             .eq('user_id', user.id)
             .maybeSingle();
@@ -291,7 +292,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (existingSettings) {
             // Update existing settings
             const { error } = await supabase
-              .from('user_settings')
+              .from('user_settings' as any)
               .update({ accent_color: userData.accentColor })
               .eq('user_id', user.id);
             
@@ -301,7 +302,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } else {
             // Create new settings
             const { error } = await supabase
-              .from('user_settings')
+              .from('user_settings' as any)
               .insert({ user_id: user.id, accent_color: userData.accentColor });
             
             if (error) {
