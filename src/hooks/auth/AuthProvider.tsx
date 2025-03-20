@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AuthContext } from './AuthContext';
 import { UserProfile, AuthContextType } from './types';
 import { handleAuthError } from './authErrorHandler';
+import { storeUserSettings, getUserSettings, updateUserSetting } from '@/utils/storage';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -22,15 +23,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     if (currentSession?.user) {
       const { id, email } = currentSession.user;
-      setUser({
+      const userData: UserProfile = {
         id,
         email,
         firstName: currentSession.user.user_metadata?.first_name,
         lastName: currentSession.user.user_metadata?.last_name,
         company: currentSession.user.user_metadata?.company,
         role: currentSession.user.user_metadata?.role,
+        title: currentSession.user.user_metadata?.title,
         avatarUrl: currentSession.user.user_metadata?.avatar_url
-      });
+      };
+      
+      // Load user settings from localStorage
+      const settings = getUserSettings(id);
+      if (settings.accentColor) {
+        userData.accentColor = settings.accentColor;
+        // Apply accent color
+        document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+      }
+      
+      setUser(userData);
       console.log(`User authenticated: ${email}`);
     } else {
       setUser(null);
@@ -231,12 +243,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      // Handle accent color separately
+      if (userData.accentColor) {
+        // Save accent color to localStorage
+        updateUserSetting(user.id, 'accentColor', userData.accentColor);
+        
+        // Apply accent color
+        document.documentElement.style.setProperty('--accent-color', userData.accentColor);
+        
+        // Remove from supabase update data
+        const { accentColor, ...restData } = userData;
+        userData = restData;
+      }
+
+      // Update supabase user data
       const { error } = await supabase.auth.updateUser({
         data: {
           first_name: userData.firstName,
           last_name: userData.lastName,
           company: userData.company,
           role: userData.role,
+          title: userData.title,
           avatar_url: userData.avatarUrl
         }
       });
@@ -247,7 +274,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Update local user state
-      setUser(prev => prev ? { ...prev, ...userData } : null);
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return { ...prevUser, ...userData };
+      });
 
       toast({
         title: "Profile updated",

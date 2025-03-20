@@ -10,6 +10,8 @@ export type UserProfile = {
   lastName?: string;
   company?: string;
   role?: string;
+  title?: string;
+  accentColor?: string;
 };
 
 export type AuthContextType = {
@@ -21,5 +23,5 @@ export type AuthContextType = {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
-  updateProfile?: (data: Partial<UserProfile>) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
 };

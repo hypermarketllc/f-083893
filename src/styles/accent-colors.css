@@ -1,0 +1,76 @@
+
+:root {
+  --accent-color: hsl(var(--primary));
+}
+
+.accent-blue {
+  --accent-color: rgb(59, 130, 246);
+  --accent-foreground: white;
+}
+
+.accent-green {
+  --accent-color: rgb(34, 197, 94);
+  --accent-foreground: white;
+}
+
+.accent-purple {
+  --accent-color: rgb(168, 85, 247);
+  --accent-foreground: white;
+}
+
+.accent-red {
+  --accent-color: rgb(239, 68, 68);
+  --accent-foreground: white;
+}
+
+.accent-orange {
+  --accent-color: rgb(249, 115, 22);
+  --accent-foreground: white;
+}
+
+.accent-pink {
+  --accent-color: rgb(236, 72, 153);
+  --accent-foreground: white;
+}
+
+.accent-teal {
+  --accent-color: rgb(20, 184, 166);
+  --accent-foreground: white;
+}
+
+.accent-yellow {
+  --accent-color: rgb(234, 179, 8);
+  --accent-foreground: black;
+}
+
+.accent-indigo {
+  --accent-color: rgb(99, 102, 241);
+  --accent-foreground: white;
+}
+
+/* Override styles for primary based on accent-color */
+.with-accent-color [data-accent-color="true"] {
+  background-color: var(--accent-color);
+  color: var(--accent-foreground, white);
+  border-color: var(--accent-color);
+}
+
+.with-accent-color [data-accent-border="true"] {
+  border-color: var(--accent-color);
+}
+
+.with-accent-color [data-accent-text="true"] {
+  color: var(--accent-color);
+}
+
+/* Add accent color to the active page in the sidebar */
+.with-accent-color [data-active="true"] {
+  color: var(--accent-color);
+  background-color: color-mix(in srgb, var(--accent-color) 15%, transparent);
+}
+
+/* Override button hover state */
+.with-accent-color [data-accent-color="true"]:hover {
+  background-color: color-mix(in srgb, var(--accent-color) 80%, black);
+  border-color: color-mix(in srgb, var(--accent-color) 80%, black);
+}

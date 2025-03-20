@@ -31,6 +31,12 @@ export interface WebhookSchedule {
   dayOfMonth?: number; // day of month for 'monthly'
 }
 
+export interface WebhookTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
 export interface Webhook {
   id: string;
   name: string;
@@ -46,6 +52,7 @@ export interface Webhook {
   updatedAt: string;
   lastExecutedAt: string | null;
   lastExecutionStatus: 'success' | 'error' | null;
+  tags?: WebhookTag[];
 }
 
 export interface WebhookLogEntry {
@@ -65,8 +72,8 @@ export interface WebhookLogEntry {
   success: boolean;
   error?: string;
   // Time fields
-  requestTime?: string;
-  responseTime?: string;
+  requestTime: string;
+  responseTime: string | null;
   // Additional properties used in components
   url?: string;
   method?: HttpMethod;
@@ -89,6 +96,7 @@ export interface IncomingWebhook {
   enabled: boolean;
   lastCalledAt: string | null;
   secretKey?: string;
+  tags?: WebhookTag[];
 }
 
 export interface IncomingWebhookLogEntry {

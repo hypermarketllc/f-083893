@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { HttpMethod } from '@/types/webhook';
+import { HttpMethod, WebhookTag } from '@/types/webhook';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import TagsManager from '../tags/TagsManager';
+import WebhookToggle from '../WebhookToggle';
 
 interface WebhookGeneralTabProps {
   webhookName: string;
@@ -18,6 +19,10 @@ interface WebhookGeneralTabProps {
   setWebhookMethod: (method: HttpMethod) => void;
   webhookEnabled: boolean;
   setWebhookEnabled: (enabled: boolean) => void;
+  webhookTags?: string[];
+  setWebhookTags?: (tags: string[]) => void;
+  availableTags?: WebhookTag[];
+  onTagCreate?: (tag: Omit<WebhookTag, 'id'>) => void;
 }
 
 export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
@@ -30,10 +35,29 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
   webhookMethod,
   setWebhookMethod,
   webhookEnabled,
-  setWebhookEnabled
+  setWebhookEnabled,
+  webhookTags = [],
+  setWebhookTags = () => {},
+  availableTags = [],
+  onTagCreate
 }) => {
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let url = e.target.value;
+    
+    // Basic URL validation/formatting
+    if (url && !url.match(/^https?:\/\//)) {
+      if (url.startsWith('www.')) {
+        url = 'https://' + url;
+      } else if (!url.includes('://')) {
+        url = 'https://' + url;
+      }
+    }
+    
+    setWebhookUrl(url);
+  };
+
   return (
-    <div className="space-y-4 py-4">
+    <div className="space-y-4 py-4 animate-in fade-in-50 duration-300">
       <div className="space-y-2">
         <Label htmlFor="webhook-name">Name</Label>
         <Input
@@ -53,6 +77,16 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
           onChange={(e) => setWebhookDescription(e.target.value)}
           placeholder="Enter webhook description"
           className="transition-all focus-visible:ring-primary/70 min-h-[80px]"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <TagsManager
+          tags={availableTags}
+          selectedTags={webhookTags}
+          onTagsChange={setWebhookTags}
+          onTagCreate={onTagCreate}
         />
       </div>
 
@@ -81,7 +115,7 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
           <Input
             id="webhook-url"
             value={webhookUrl}
-            onChange={(e) => setWebhookUrl(e.target.value)}
+            onChange={handleUrlChange}
             placeholder="https://example.com/api/endpoint"
             className="transition-all focus-visible:ring-primary/70"
           />
@@ -92,13 +126,10 @@ export const WebhookGeneralTab: React.FC<WebhookGeneralTabProps> = ({
       </div>
 
       <div className="pt-2 flex items-center space-x-2">
-        <Switch
-          id="webhook-enabled"
-          checked={webhookEnabled}
-          onCheckedChange={setWebhookEnabled}
-          className="data-[state=checked]:bg-primary"
+        <WebhookToggle 
+          enabled={webhookEnabled}
+          onChange={setWebhookEnabled}
         />
-        <Label htmlFor="webhook-enabled">Enabled</Label>
       </div>
     </div>
   );
