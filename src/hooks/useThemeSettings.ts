@@ -40,7 +40,7 @@ export const useThemeSettings = () => {
       if (!user) return;
       
       try {
-        // Using any type since we need to access user_settings which isn't in the generated types
+        // Using type assertion since 'user_settings' isn't in the generated types
         const { data, error } = await supabase
           .from('user_settings' as any)
           .select('*')

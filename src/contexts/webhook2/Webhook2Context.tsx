@@ -8,7 +8,7 @@ import { useWebhookOperations } from './hooks/useWebhookOperations';
 import { Webhook2ContextType } from './types';
 import { mockIncomingWebhooks, mockIncomingWebhookLogs } from './data';
 import { supabase } from '@/integrations/supabase/client';
-import { mapDbWebhookToWebhook, mapDbLogToWebhookLog, mapWebhookToDbWebhook } from '@/utils/mappers';
+import { mapDbWebhookToWebhook, mapDbLogToWebhookLog, mapWebhookToDbWebhook, toJson } from '@/utils/mappers';
 
 const Webhook2Context = createContext<Webhook2ContextType | undefined>(undefined);
 
@@ -184,11 +184,11 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
           description: webhookData.description,
           url: webhookData.url,
           method: webhookData.method,
-          headers: webhookData.headers as any,
-          params: webhookData.params as any,
-          body: webhookData.body as any,
+          headers: toJson(webhookData.headers),
+          params: toJson(webhookData.params),
+          body: toJson(webhookData.body),
           enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
-          tags: webhookData.tags || [],
+          tags: toJson(webhookData.tags || []),
           user_id: user.id
         })
         .select()

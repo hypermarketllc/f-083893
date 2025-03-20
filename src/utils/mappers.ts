@@ -11,6 +11,16 @@ import {
   ExecutionStatus 
 } from "@/types/webhook2";
 
+// Helper function to safely convert any type to Json
+export const toJson = <T>(value: T): Json => {
+  return value as unknown as Json;
+};
+
+// Helper function to safely convert Json to a typed value
+export const fromJson = <T>(json: Json | null): T => {
+  return (json ?? null) as unknown as T;
+};
+
 // Helper function to convert snake_case database fields to camelCase models
 export const mapDbWebhookToWebhook = (dbWebhook: any): Webhook => {
   return {
@@ -19,15 +29,15 @@ export const mapDbWebhookToWebhook = (dbWebhook: any): Webhook => {
     description: dbWebhook.description || '',
     url: dbWebhook.url,
     method: dbWebhook.method as HttpMethod,
-    headers: Array.isArray(dbWebhook.headers) ? dbWebhook.headers : [],
-    params: Array.isArray(dbWebhook.params) ? dbWebhook.params : [],
-    body: dbWebhook.body as WebhookBody,
+    headers: fromJson<WebhookHeader[]>(dbWebhook.headers) || [],
+    params: fromJson<WebhookParam[]>(dbWebhook.params) || [],
+    body: fromJson<WebhookBody>(dbWebhook.body),
     enabled: dbWebhook.enabled,
     createdAt: dbWebhook.created_at,
     updatedAt: dbWebhook.updated_at,
     lastExecutedAt: dbWebhook.last_executed_at,
     lastExecutionStatus: dbWebhook.last_execution_status as ExecutionStatus,
-    tags: Array.isArray(dbWebhook.tags) ? dbWebhook.tags : [],
+    tags: fromJson<WebhookTag[]>(dbWebhook.tags) || [],
     userId: dbWebhook.user_id,
   };
 };
@@ -40,11 +50,11 @@ export const mapWebhookToDbWebhook = (webhook: Webhook): any => {
     description: webhook.description,
     url: webhook.url,
     method: webhook.method,
-    headers: webhook.headers as Json,
-    params: webhook.params as Json,
-    body: webhook.body as Json,
+    headers: toJson<WebhookHeader[]>(webhook.headers),
+    params: toJson<WebhookParam[]>(webhook.params),
+    body: toJson<WebhookBody>(webhook.body),
     enabled: webhook.enabled,
-    tags: webhook.tags as Json,
+    tags: toJson<WebhookTag[]>(webhook.tags),
     last_executed_at: webhook.lastExecutedAt,
     last_execution_status: webhook.lastExecutionStatus,
     user_id: webhook.userId
@@ -60,10 +70,10 @@ export const mapDbLogToWebhookLog = (dbLog: any, webhookName?: string): WebhookL
     timestamp: dbLog.timestamp,
     requestUrl: dbLog.request_url,
     requestMethod: dbLog.request_method as HttpMethod,
-    requestHeaders: dbLog.request_headers || {},
+    requestHeaders: fromJson<Record<string, string>>(dbLog.request_headers) || {},
     requestBody: dbLog.request_body,
     responseStatus: dbLog.response_status,
-    responseHeaders: dbLog.response_headers || {},
+    responseHeaders: fromJson<Record<string, string>>(dbLog.response_headers) || {},
     responseBody: dbLog.response_body,
     duration: dbLog.duration,
     success: dbLog.success,
