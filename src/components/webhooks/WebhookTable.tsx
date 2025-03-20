@@ -1,41 +1,37 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { Webhook, WebhookTag } from '@/types/webhook';
-import { WebhookFilterBar, WebhookFilters } from './filters/WebhookFilterBar';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { WebhookFilterBar } from './filters/WebhookFilterBar';
+import { WebhookMethodBadge } from './WebhookMethodBadge';
+import { WebhookScheduleInfo } from './WebhookScheduleInfo';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import WebhookScheduleInfo from './WebhookScheduleInfo';
-import WebhookMethodBadge from './WebhookMethodBadge';
-import WebhookEmptyState from './WebhookEmptyState';
-import WebhookActions from './WebhookActions';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Pencil, Trash2, Play, CheckCheck, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
+import { EmptyLogs } from './EmptyLogs';
 import WebhookToggle from './WebhookToggle';
 import ActivityIndicator from './ActivityIndicator';
-import TagsManager from './tags/TagsManager';
-import { Clock, ExternalLink } from 'lucide-react';
-import { format } from 'date-fns';
 
 interface WebhookTableProps {
   compact?: boolean;
 }
 
-export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) => {
+export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
   const { 
     webhooks, 
-    selectedWebhook, 
+    handleEditWebhook, 
+    handleDeleteWebhook, 
     setSelectedWebhook,
-    isTestMode,
+    selectedWebhook,
+    executeWebhook,
+    setIsTestMode,
     updateWebhook
   } = useWebhookContext();
-
-  const [filteredWebhooks, setFilteredWebhooks] = useState<Webhook[]>(webhooks);
-  const [filters, setFilters] = useState<WebhookFilters>({
+  
+  const [filteredWebhooks, setFilteredWebhooks] = useState(webhooks);
+  const [filters, setFilters] = useState({
     search: '',
     method: null,
     status: null,
@@ -44,7 +40,7 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) =
     tags: []
   });
 
-  // Mock tags for demo - in a real app these would come from the API
+  // Mock tags for demo
   const mockTags: WebhookTag[] = [
     { id: 'tag-1', name: 'Production', color: '#69db7c' },
     { id: 'tag-2', name: 'Development', color: '#4dabf7' },
@@ -53,7 +49,7 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) =
   ];
 
   // Apply filters to webhooks
-  useEffect(() => {
+  React.useEffect(() => {
     let result = [...webhooks];
     
     if (filters.search) {
@@ -73,35 +69,33 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) =
       result = result.filter(webhook => webhook.lastExecutionStatus === filters.status);
     }
     
-    if (filters.dateFrom || filters.dateTo) {
-      result = result.filter(webhook => {
-        if (!webhook.lastExecutedAt) return false;
-        
-        const executionDate = new Date(webhook.lastExecutedAt);
-        if (filters.dateFrom && executionDate < filters.dateFrom) return false;
-        if (filters.dateTo) {
-          // Add 1 day to include the end date in the range
-          const endDate = new Date(filters.dateTo);
-          endDate.setDate(endDate.getDate() + 1);
-          if (executionDate > endDate) return false;
-        }
-        
-        return true;
-      });
-    }
-    
     if (filters.tags && filters.tags.length > 0) {
-      // In a real app, this would filter by actual webhook tags
-      // For now, we'll just simulate it with our mock tags
+      // Simulate tag filtering
       result = result.filter(webhook => {
-        // Simulate that webhooks have tags
-        const webhookTags = webhook.tags || []; 
-        return filters.tags!.some(tagId => webhookTags.some(tag => tag.id === tagId));
+        // Get mock tags for this webhook
+        const webhookTags = getWebhookTags(webhook);
+        return filters.tags!.some(tagId => webhookTags.map(t => t.id).includes(tagId));
       });
     }
     
     setFilteredWebhooks(result);
   }, [webhooks, filters]);
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+    
+    try {
+      const date = new Date(dateString);
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (e) {
+      return dateString;
+    }
+  };
+
+  const handleRowClick = (webhook: Webhook) => {
+    setSelectedWebhook(webhook);
+    setIsTestMode(true);
+  };
 
   const handleToggleWebhook = (webhook: Webhook, enabled: boolean) => {
     updateWebhook({
@@ -110,6 +104,33 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) =
     });
   };
 
+  const handleExecute = (e: React.SyntheticEvent, webhook: Webhook) => {
+    e.stopPropagation();
+    executeWebhook(webhook);
+  };
+
+  // Simulate webhook tags
+  const getWebhookTags = (webhook: Webhook): WebhookTag[] => {
+    if (webhook.tags) return webhook.tags;
+    
+    const mockWebhookTags = [];
+    if (webhook.id === 'webhook-1') {
+      mockWebhookTags.push(mockTags[0], mockTags[3]);
+    } else if (webhook.id === 'webhook-2') {
+      mockWebhookTags.push(mockTags[2]);
+    } else if (webhook.id === 'webhook-3') {
+      mockWebhookTags.push(mockTags[1]);
+    }
+    
+    return mockWebhookTags;
+  };
+
+  if (webhooks.length === 0) {
+    return (
+      <EmptyLogs message="No webhooks found" />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <WebhookFilterBar 
@@ -117,139 +138,128 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact = false }) =
         tags={mockTags}
       />
       
-      {filteredWebhooks.map((webhook) => (
-        <WebhookCard 
-          key={webhook.id}
-          webhook={webhook}
-          selectedWebhook={selectedWebhook}
-          setSelectedWebhook={setSelectedWebhook}
-          isTestMode={isTestMode}
-          compact={compact}
-          onToggle={(enabled) => handleToggleWebhook(webhook, enabled)}
-          tags={mockTags}
-        />
-      ))}
-      
-      {filteredWebhooks.length === 0 && webhooks.length > 0 && (
-        <Card className="p-8 bg-muted/30 border-dashed">
-          <div className="text-center text-muted-foreground">
-            <h3 className="text-lg font-medium mb-2">No webhooks match your filters</h3>
-            <p>Try adjusting your search criteria or clear filters</p>
-          </div>
-        </Card>
-      )}
-      
-      {webhooks.length === 0 && <WebhookEmptyState />}
+      <div className={`border rounded-md ${compact ? 'overflow-hidden' : ''}`}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="hidden md:table-cell">Method</TableHead>
+              <TableHead className="hidden lg:table-cell">Schedule</TableHead>
+              {!compact && <TableHead className="hidden lg:table-cell">Last Executed</TableHead>}
+              <TableHead className="hidden md:table-cell">Tags</TableHead>
+              <TableHead className="w-[100px]">Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredWebhooks.map((webhook) => {
+              const webhookTags = getWebhookTags(webhook);
+              
+              return (
+                <TableRow 
+                  key={webhook.id}
+                  onClick={() => handleRowClick(webhook)}
+                  className={`cursor-pointer transition-all duration-200 hover:bg-muted ${selectedWebhook?.id === webhook.id ? 'bg-muted/50' : ''}`}
+                >
+                  <TableCell className="font-medium">
+                    {webhook.name}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <WebhookMethodBadge method={webhook.method} />
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    <WebhookScheduleInfo webhook={webhook} />
+                  </TableCell>
+                  {!compact && (
+                    <TableCell className="hidden lg:table-cell">
+                      <ActivityIndicator 
+                        timestamp={webhook.lastExecutedAt} 
+                        status={webhook.lastExecutionStatus}
+                      />
+                    </TableCell>
+                  )}
+                  <TableCell className="hidden md:table-cell">
+                    {webhookTags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {webhookTags.slice(0, 2).map(tag => (
+                          <Badge
+                            key={tag.id}
+                            variant="outline"
+                            className="text-xs py-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div 
+                              className="w-1.5 h-1.5 rounded-full mr-1" 
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            {tag.name}
+                          </Badge>
+                        ))}
+                        {webhookTags.length > 2 && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs py-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            +{webhookTags.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No tags</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <WebhookToggle
+                      enabled={webhook.enabled}
+                      onChange={(enabled) => {
+                        handleToggleWebhook(webhook, enabled);
+                      }}
+                      small
+                      showLabel={false}
+                      className="ml-2"
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExecute(e, webhook);
+                        }}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditWebhook(webhook);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteWebhook(webhook.id);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
-
-interface WebhookCardProps {
-  webhook: Webhook;
-  selectedWebhook: Webhook | null;
-  setSelectedWebhook: (webhook: Webhook) => void;
-  isTestMode: boolean;
-  compact?: boolean;
-  onToggle: (enabled: boolean) => void;
-  tags: WebhookTag[];
-}
-
-const WebhookCard: React.FC<WebhookCardProps> = ({ 
-  webhook, 
-  selectedWebhook, 
-  setSelectedWebhook, 
-  isTestMode,
-  compact = false,
-  onToggle,
-  tags
-}) => {
-  const isSelected = selectedWebhook?.id === webhook.id;
-
-  // Simulate webhook tags for display purposes
-  const getRandomTags = () => {
-    if (webhook.tags) return webhook.tags;
-    
-    // Simulate that this webhook has some tags
-    const mockWebhookTags = [];
-    if (webhook.id === 'webhook-1') {
-      mockWebhookTags.push(tags[0], tags[3]);
-    } else if (webhook.id === 'webhook-2') {
-      mockWebhookTags.push(tags[2]);
-    } else if (webhook.id === 'webhook-3') {
-      mockWebhookTags.push(tags[1]);
-    }
-    
-    return mockWebhookTags;
-  };
-  
-  const webhookTags = getRandomTags();
-  
-  return (
-    <Card 
-      className={`${isSelected ? 'border-primary' : ''} transition-all hover:border-primary cursor-pointer group animate-in fade-in-50 duration-300`}
-      onClick={() => setSelectedWebhook(webhook)}
-    >
-      <CardHeader className={`${compact ? 'py-3' : ''} flex flex-row items-start justify-between`}>
-        <div className="flex items-start space-x-2">
-          <WebhookMethodBadge method={webhook.method} />
-          <div>
-            <CardTitle className={`${compact ? 'text-base' : ''} flex items-center gap-2`}>
-              {webhook.name}
-              <ActivityIndicator 
-                timestamp={webhook.lastExecutedAt} 
-                status={webhook.lastExecutionStatus}
-                showLabel={false}
-                className="hidden group-hover:flex"
-              />
-            </CardTitle>
-            <CardDescription className={`${compact ? 'text-xs' : ''} truncate max-w-xs md:max-w-md flex items-center gap-1`}>
-              <span>{webhook.url}</span>
-              <ExternalLink className="h-3 w-3 opacity-50" />
-            </CardDescription>
-          </div>
-        </div>
-        <WebhookToggle 
-          enabled={webhook.enabled} 
-          onChange={onToggle}
-          small={compact}
-          showLabel={!compact}
-        />
-      </CardHeader>
-      
-      {(!compact || isSelected) && (
-        <CardContent>
-          {webhook.description && (
-            <p className="text-sm text-muted-foreground mb-3">{webhook.description}</p>
-          )}
-          
-          {webhookTags.length > 0 && (
-            <div className="mb-3">
-              <TagsManager 
-                tags={tags}
-                selectedTags={webhookTags.map(tag => tag.id)} 
-                onTagsChange={() => {}}
-                readOnly
-              />
-            </div>
-          )}
-          
-          <div className="flex flex-wrap gap-3 mt-2 text-sm text-muted-foreground">
-            <WebhookScheduleInfo schedule={webhook.schedule} />
-            <span className="flex items-center">
-              <Clock className="h-4 w-4 mr-1" /> 
-              Updated {format(new Date(webhook.updatedAt), 'MMM d, yyyy')}
-            </span>
-            <ActivityIndicator 
-              timestamp={webhook.lastExecutedAt} 
-              status={webhook.lastExecutionStatus}
-            />
-          </div>
-          
-          {isSelected && <WebhookActions webhook={webhook} isTestMode={isTestMode} />}
-        </CardContent>
-      )}
-    </Card>
-  );
-};
-
-export default WebhookTable;

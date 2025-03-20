@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
-import { Webhook, HttpMethod, WebhookHeader, WebhookUrlParam, WebhookBody } from '@/types/webhook';
-import { Button } from '@/components/ui/button';
+import { Webhook, WebhookBody, WebhookHeader, WebhookUrlParam, HttpMethod } from '@/types/webhook';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WebhookGeneralTab } from './modal/WebhookGeneralTab';
 import { WebhookHeadersTab } from './modal/WebhookHeadersTab';
@@ -18,17 +18,33 @@ import { WebhookParamsTab } from './modal/WebhookParamsTab';
 import { WebhookBodyTab } from './modal/WebhookBodyTab';
 import { v4 as uuidv4 } from 'uuid';
 
+// Update the component interfaces to match the actual implementation
+interface WebhookHeadersTabProps {
+  headers: WebhookHeader[];
+  onChange: (headers: WebhookHeader[]) => void;
+}
+
+interface WebhookParamsTabProps {
+  params: WebhookUrlParam[];
+  onChange: (params: WebhookUrlParam[]) => void;
+}
+
+interface WebhookBodyTabProps {
+  body: WebhookBody;
+  onChange: (body: WebhookBody) => void;
+}
+
 export const WebhookModal: React.FC = () => {
-  const {
-    selectedWebhook,
-    isWebhookModalOpen,
-    setIsWebhookModalOpen,
+  const { 
+    isWebhookModalOpen, 
+    setIsWebhookModalOpen, 
+    selectedWebhook, 
+    setSelectedWebhook,
     createWebhook,
-    updateWebhook,
-    setSelectedWebhook
+    updateWebhook
   } = useWebhookContext();
 
-  // State for form values
+  const [activeTab, setActiveTab] = useState('general');
   const [webhookName, setWebhookName] = useState('');
   const [webhookDescription, setWebhookDescription] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -40,10 +56,7 @@ export const WebhookModal: React.FC = () => {
     content: '{}'
   });
   const [webhookEnabled, setWebhookEnabled] = useState(true);
-  const [webhookTags, setWebhookTags] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState('general');
 
-  // Update form values when the selected webhook changes
   useEffect(() => {
     if (selectedWebhook) {
       setWebhookName(selectedWebhook.name);
@@ -54,7 +67,6 @@ export const WebhookModal: React.FC = () => {
       setWebhookParams(selectedWebhook.urlParams);
       setWebhookBody(selectedWebhook.body || { contentType: 'json', content: '{}' });
       setWebhookEnabled(selectedWebhook.enabled);
-      setWebhookTags(selectedWebhook.tags?.map(tag => tag.id) || []);
     } else {
       resetForm();
     }
@@ -63,15 +75,12 @@ export const WebhookModal: React.FC = () => {
   const resetForm = () => {
     setWebhookName('');
     setWebhookDescription('');
-    setWebhookUrl('https://');
+    setWebhookUrl('');
     setWebhookMethod('GET');
-    setWebhookHeaders([
-      { id: uuidv4(), key: 'Content-Type', value: 'application/json', enabled: true }
-    ]);
+    setWebhookHeaders([]);
     setWebhookParams([]);
     setWebhookBody({ contentType: 'json', content: '{}' });
-    setWebhookEnabled(false);
-    setWebhookTags([]);
+    setWebhookEnabled(true);
     setActiveTab('general');
   };
 
@@ -82,7 +91,6 @@ export const WebhookModal: React.FC = () => {
   };
 
   const handleSubmit = () => {
-    // Create the webhook data object
     const webhookData = {
       name: webhookName,
       description: webhookDescription,
@@ -93,10 +101,9 @@ export const WebhookModal: React.FC = () => {
       body: webhookBody,
       enabled: webhookEnabled,
       lastExecutedAt: null,
-      lastExecutionStatus: null as 'success' | 'error' | null
+      lastExecutionStatus: null
     };
 
-    // Update or create the webhook
     if (selectedWebhook) {
       updateWebhook({
         ...selectedWebhook,
@@ -106,73 +113,72 @@ export const WebhookModal: React.FC = () => {
       createWebhook(webhookData);
     }
 
-    // Close the modal
     handleClose();
   };
 
   return (
     <Dialog open={isWebhookModalOpen} onOpenChange={setIsWebhookModalOpen}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {selectedWebhook ? 'Edit Webhook' : 'Create Webhook'}
           </DialogTitle>
           <DialogDescription>
-            Configure your webhook settings in the tabs below.
+            Configure your webhook to send data to external APIs
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="py-4">
+          <TabsList className="grid grid-cols-4 mb-4">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="headers">Headers</TabsTrigger>
             <TabsTrigger value="params">Params</TabsTrigger>
             <TabsTrigger value="body">Body</TabsTrigger>
           </TabsList>
-          <div className="py-4">
-            <TabsContent value="general" className="mt-0">
-              <WebhookGeneralTab
-                webhookName={webhookName}
-                setWebhookName={setWebhookName}
-                webhookDescription={webhookDescription}
-                setWebhookDescription={setWebhookDescription}
-                webhookUrl={webhookUrl}
-                setWebhookUrl={setWebhookUrl}
-                webhookMethod={webhookMethod}
-                setWebhookMethod={setWebhookMethod}
-                webhookEnabled={webhookEnabled}
-                setWebhookEnabled={setWebhookEnabled}
-                webhookTags={webhookTags}
-                setWebhookTags={setWebhookTags}
-              />
-            </TabsContent>
-            <TabsContent value="headers" className="mt-0">
-              <WebhookHeadersTab
-                webhookHeaders={webhookHeaders}
-                setWebhookHeaders={setWebhookHeaders}
-              />
-            </TabsContent>
-            <TabsContent value="params" className="mt-0">
-              <WebhookParamsTab
-                webhookParams={webhookParams}
-                setWebhookParams={setWebhookParams}
-              />
-            </TabsContent>
-            <TabsContent value="body" className="mt-0">
-              <WebhookBodyTab
-                webhookBody={webhookBody}
-                setWebhookBody={setWebhookBody}
-              />
-            </TabsContent>
-          </div>
+
+          <TabsContent value="general">
+            <WebhookGeneralTab
+              name={webhookName}
+              description={webhookDescription}
+              url={webhookUrl}
+              method={webhookMethod}
+              enabled={webhookEnabled}
+              onNameChange={setWebhookName}
+              onDescriptionChange={setWebhookDescription}
+              onUrlChange={setWebhookUrl}
+              onMethodChange={setWebhookMethod}
+              onEnabledChange={setWebhookEnabled}
+            />
+          </TabsContent>
+
+          <TabsContent value="headers">
+            <WebhookHeadersTab
+              headers={webhookHeaders}
+              onChange={setWebhookHeaders}
+            />
+          </TabsContent>
+
+          <TabsContent value="params">
+            <WebhookParamsTab
+              params={webhookParams}
+              onChange={setWebhookParams}
+            />
+          </TabsContent>
+
+          <TabsContent value="body">
+            <WebhookBodyTab
+              body={webhookBody}
+              onChange={setWebhookBody}
+            />
+          </TabsContent>
         </Tabs>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose}>
+          <Button variant="outline" onClick={handleClose} type="button">
             Cancel
           </Button>
-          <Button type="submit" onClick={handleSubmit}>
-            {selectedWebhook ? 'Update Webhook' : 'Create Webhook'}
+          <Button onClick={handleSubmit} type="button">
+            {selectedWebhook ? 'Update' : 'Create'} Webhook
           </Button>
         </DialogFooter>
       </DialogContent>

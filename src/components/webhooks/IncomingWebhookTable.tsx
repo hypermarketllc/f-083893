@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { IncomingWebhook, WebhookTag } from '@/types/webhook';
@@ -11,7 +10,7 @@ import { toast } from 'sonner';
 import { EmptyLogs } from './EmptyLogs';
 import WebhookToggle from './WebhookToggle';
 import ActivityIndicator from './ActivityIndicator';
-import { WebhookFilterBar, WebhookFilters } from './filters/WebhookFilterBar';
+import { WebhookFilterBar } from './filters/WebhookFilterBar';
 import TagsManager from './tags/TagsManager';
 
 interface IncomingWebhookTableProps {
@@ -30,7 +29,7 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
   
   const [copied, setCopied] = React.useState<string | null>(null);
   const [filteredWebhooks, setFilteredWebhooks] = useState(incomingWebhooks);
-  const [filters, setFilters] = useState<WebhookFilters>({
+  const [filters, setFilters] = useState({
     search: '',
     method: null,
     status: null,
@@ -39,7 +38,6 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
     tags: []
   });
 
-  // Mock tags for demo
   const mockTags: WebhookTag[] = [
     { id: 'tag-1', name: 'Production', color: '#69db7c' },
     { id: 'tag-2', name: 'Development', color: '#4dabf7' },
@@ -47,7 +45,6 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
     { id: 'tag-4', name: 'Important', color: '#ff6b6b' },
   ];
 
-  // Apply filters to webhooks
   React.useEffect(() => {
     let result = [...incomingWebhooks];
     
@@ -61,9 +58,7 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
     }
     
     if (filters.tags && filters.tags.length > 0) {
-      // Simulate tag filtering
       result = result.filter(webhook => {
-        // Get mock tags for this webhook
         const webhookTags = getWebhookTags(webhook);
         return filters.tags!.some(tagId => webhookTags.map(t => t.id).includes(tagId));
       });
@@ -107,7 +102,6 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
     });
   };
 
-  // Simulate webhook tags
   const getWebhookTags = (webhook: IncomingWebhook): WebhookTag[] => {
     if (webhook.tags) return webhook.tags;
     

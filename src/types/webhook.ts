@@ -133,7 +133,7 @@ export interface IncomingWebhookLogEntry {
 // Define types for filtering webhooks
 export interface WebhookFilters {
   search: string;
-  method: HttpMethod | null;
+  method: string | null;
   status: 'success' | 'error' | null;
   dateFrom: Date | null;
   dateTo: Date | null;
@@ -143,5 +143,5 @@ export interface WebhookFilters {
 // DateRange type for date filtering
 export interface DateRange {
   from: Date;
-  to?: Date;
+  to: Date | undefined;
 }

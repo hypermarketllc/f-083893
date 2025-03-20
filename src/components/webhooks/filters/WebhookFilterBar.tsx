@@ -1,205 +1,232 @@
 import React, { useState } from 'react';
-import { DateRange } from 'react-day-picker';
-import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
 import { 
-  ArrowDown, 
-  ArrowUp, 
-  Calendar as CalendarIcon, 
-  ChevronDown, 
-  ChevronUp, 
+  Check, 
+  ChevronsUpDown, 
   Filter, 
-  FilterX,
-  GripVertical,
-  GripVerticalLine
+  Save, 
+  Tags, 
+  Trash2, 
+  X,
+  Calendar as CalendarIcon,
+  GripVertical
 } from 'lucide-react';
+import { WebhookTag } from '@/types/webhook';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { DateRange } from 'react-day-picker';
 
-interface WebhookFilterBarProps {
-  onSearch: (query: string) => void;
-  onStatusFilter: (status: 'success' | 'error' | undefined) => void;
-  onDateFilter: (dateRange: { from: Date; to: Date } | undefined) => void;
-  onSort: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
-  sortOptions?: { label: string; value: string }[];
+export interface WebhookFilters {
+  search: string;
+  method: string | null;
+  status: 'success' | 'error' | null;
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  tags: string[];
 }
 
-export const WebhookFilterBar: React.FC<WebhookFilterBarProps> = ({ 
-  onSearch,
-  onStatusFilter,
-  onDateFilter,
-  onSort,
-  sortOptions = []
+export interface WebhookFilterBarProps {
+  onFilterChange: (filters: WebhookFilters) => void;
+  tags?: WebhookTag[];
+  showMethodFilter?: boolean;
+  showStatusFilter?: boolean;
+  showDateFilter?: boolean;
+  showTagFilter?: boolean;
+}
+
+export const WebhookFilterBar: React.FC<WebhookFilterBarProps> = ({
+  onFilterChange,
+  tags = [],
+  showMethodFilter = true,
+  showStatusFilter = true,
+  showDateFilter = true,
+  showTagFilter = true
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'success' | 'error' | undefined>(undefined);
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [sortBy, setSortBy] = useState(sortOptions.length > 0 ? sortOptions[0].value : '');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [search, setSearch] = useState('');
+  const [method, setMethod] = useState<string | null>(null);
+  const [status, setStatus] = useState<'success' | 'error' | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    onSearch(query);
+    setSearch(e.target.value);
   };
 
-  const handleStatusFilterChange = (status: 'success' | 'error' | undefined) => {
-    setStatusFilter(status);
-    onStatusFilter(status);
+  const handleMethodChange = (value: string | null) => {
+    setMethod(value);
   };
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-  if (range && range.from) {
-    setStartDate(range.from);
-    // Ensure to is defined
-    setEndDate(range.to || range.from);
-    
-    // Apply the filter
-    if (range.from && range.to) {
-      onDateFilter({ from: range.from, to: range.to });
-    } else if (range.from) {
-      // If no end date, use the same date as end date
-      onDateFilter({ from: range.from, to: range.from });
-    }
-  } else {
-    // Clear the filter
-    setStartDate(undefined);
-    setEndDate(undefined);
-    onDateFilter(undefined);
-  }
-};
-
-  const handleSortChange = (value: string) => {
-    setSortBy(value);
-    onSort(value, sortOrder);
+  const handleStatusChange = (value: 'success' | 'error' | null) => {
+    setStatus(value);
   };
 
-  const handleSortOrderChange = () => {
-    const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    setSortOrder(newSortOrder);
-    onSort(sortBy, newSortOrder);
+  const handleDateChange = (newDateRange: DateRange | undefined) => {
+    setDateRange(newDateRange);
+  };
+
+  const handleTagToggle = (tagId: string) => {
+    setSelectedTags((prevTags) =>
+      prevTags.includes(tagId) ? prevTags.filter((id) => id !== tagId) : [...prevTags, tagId]
+    );
+  };
+
+  const applyFilters = () => {
+    const filters = {
+      search: search,
+      method: method,
+      status: status,
+      dateFrom: dateRange?.from || null,
+      dateTo: dateRange?.to || null,
+      tags: selectedTags,
+    };
+    onFilterChange(filters);
+    setIsPopoverOpen(false);
   };
 
   const clearFilters = () => {
-    setSearchQuery('');
-    setStatusFilter(undefined);
-    setStartDate(undefined);
-    setEndDate(undefined);
-    onSearch('');
-    onStatusFilter(undefined);
-    onDateFilter(undefined);
+    setSearch('');
+    setMethod(null);
+    setStatus(null);
+    setDateRange(undefined);
+    setSelectedTags([]);
+    onFilterChange({
+      search: '',
+      method: null,
+      status: null,
+      dateFrom: null,
+      dateTo: null,
+      tags: [],
+    });
+    setIsPopoverOpen(false);
   };
 
+  const hasFilters = search || method || status || dateRange?.from || selectedTags.length > 0;
+
   return (
-    <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4 p-4 bg-secondary rounded-md">
-      {/* Search Input */}
-      <div className="relative w-full md:w-1/3">
-        <Input
-          type="search"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="shadow-sm"
-        />
-      </div>
+    <div className="flex items-center justify-between space-x-2">
+      <Input
+        placeholder="Search..."
+        value={search}
+        onChange={handleSearchChange}
+        className="max-w-md"
+      />
+      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Filter className="mr-2 h-4 w-4" />
+            Filters
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 md:w-96 p-4 space-y-4" align="end">
+          <ScrollArea className="max-h-80">
+            {showMethodFilter && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Method</h4>
+                <Select value={method || undefined} onValueChange={handleMethodChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GET">GET</SelectItem>
+                    <SelectItem value="POST">POST</SelectItem>
+                    <SelectItem value="PUT">PUT</SelectItem>
+                    <SelectItem value="DELETE">DELETE</SelectItem>
+                    <SelectItem value="PATCH">PATCH</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-      {/* Filters and Sorting */}
-      <div className="flex items-center space-x-2">
-        {/* Status Filter */}
-        <Select value={statusFilter || ''} onValueChange={(value) => handleStatusFilterChange(value === '' ? undefined : value as 'success' | 'error')}>
-          <SelectTrigger className="w-[180px] shadow-sm">
-            <SelectValue placeholder="Filter by Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Statuses</SelectItem>
-            <SelectItem value="success">Success</SelectItem>
-            <SelectItem value="error">Error</SelectItem>
-          </SelectContent>
-        </Select>
+            {showStatusFilter && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Status</h4>
+                <Select value={status || undefined} onValueChange={handleStatusChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="success">Success</SelectItem>
+                    <SelectItem value="error">Error</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-        {/* Date Range Picker */}
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant={'outline'}
-              className={
-                'justify-start text-left font-normal shadow-sm' +
-                (startDate ? ' text-foreground' : ' text-muted-foreground')
-              }
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {startDate ? (
-                endDate ? (
-                  `${startDate?.toLocaleDateString()} - ${endDate?.toLocaleDateString()}`
-                ) : (
-                  startDate?.toLocaleDateString()
-                )
-              ) : (
-                <span>Pick a date range</span>
-              )}
+            {showDateFilter && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Date Range</h4>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={
+                        "w-full justify-start text-left font-normal" +
+                        (dateRange?.from ? "pl-3.5" : "text-muted-foreground")
+                      }
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
+                      {dateRange?.from ? (
+                        dateRange.to ? (
+                          `${dateRange.from?.toLocaleDateString()} - ${dateRange.to?.toLocaleDateString()}`
+                        ) : (
+                          dateRange.from?.toLocaleDateString()
+                        )
+                      ) : (
+                        <span>Pick a date range</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <Calendar
+                      mode="range"
+                      defaultMonth={dateRange?.from}
+                      selected={dateRange}
+                      onSelect={handleDateChange}
+                      numberOfMonths={2}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {showTagFilter && tags.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium">Tags</h4>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Button
+                      key={tag.id}
+                      variant={selectedTags.includes(tag.id) ? 'default' : 'outline'}
+                      size="sm"
+                      className="rounded-full"
+                      onClick={() => handleTagToggle(tag.id)}
+                    >
+                      <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: tag.color }} />
+                      {tag.name}
+                      {selectedTags.includes(tag.id) && <Check className="ml-2 h-4 w-4" />}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+          <Separator />
+          <div className="flex justify-between">
+            <Button variant="ghost" size="sm" onClick={clearFilters} disabled={!hasFilters}>
+              Clear
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="center" side="bottom">
-            <Calendar
-              mode="range"
-              defaultMonth={startDate}
-              selected={{
-                from: startDate,
-                to: endDate,
-              }}
-              onSelect={handleDateRangeChange}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
-
-        {/* Sort By */}
-        {sortOptions.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <Select value={sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-[180px] shadow-sm">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleSortOrderChange}
-              className="shadow-sm"
-            >
-              {sortOrder === 'asc' ? (
-                <ArrowUp className="h-4 w-4" />
-              ) : (
-                <ArrowDown className="h-4 w-4" />
-              )}
+            <Button size="sm" onClick={applyFilters}>
+              Apply
             </Button>
           </div>
-        )}
-
-        {/* Clear Filters Button */}
-        {(searchQuery || statusFilter || startDate || endDate) && (
-          <Button
-            variant="ghost"
-            onClick={clearFilters}
-            className="shadow-sm"
-          >
-            <FilterX className="h-4 w-4 mr-2" />
-            Clear Filters
-          </Button>
-        )}
-      </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 };

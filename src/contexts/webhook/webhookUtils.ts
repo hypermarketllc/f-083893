@@ -24,7 +24,8 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
       // Add missing properties
       requestTime: new Date().toISOString(),
       responseTime: null,
-      body: '{}'
+      body: '{}',
+      requestBody: '{}'
     };
   }
 
