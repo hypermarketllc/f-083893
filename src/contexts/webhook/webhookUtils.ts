@@ -1,3 +1,4 @@
+
 import { WebhookLogEntry, IncomingWebhookLogEntry } from '@/types/webhook';
 
 /**
@@ -44,7 +45,6 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
     duration: log.duration || 0,
     success: log.success !== undefined ? log.success : false,
     error: log.error || undefined,
-    // Add missing properties
     requestTime: log.requestTime || log.timestamp || new Date().toISOString(),
     responseTime: log.responseTime || null,
     body: log.responseBody || '{}'

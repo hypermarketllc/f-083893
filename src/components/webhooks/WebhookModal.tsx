@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { Webhook, HttpMethod, WebhookHeader, WebhookUrlParam, WebhookBody } from '@/types/webhook';
@@ -92,7 +93,7 @@ export const WebhookModal: React.FC = () => {
       body: webhookBody,
       enabled: webhookEnabled,
       lastExecutedAt: null,
-      lastExecutionStatus: null
+      lastExecutionStatus: null as 'success' | 'error' | null
     };
 
     // Update or create the webhook

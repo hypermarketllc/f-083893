@@ -129,3 +129,19 @@ export interface IncomingWebhookLogEntry {
   payload?: string; // Alias for requestBody
   response?: string; // Alias for responseBody
 }
+
+// Define types for filtering webhooks
+export interface WebhookFilters {
+  search: string;
+  method: HttpMethod | null;
+  status: 'success' | 'error' | null;
+  dateFrom: Date | null;
+  dateTo: Date | null;
+  tags: string[];
+}
+
+// DateRange type for date filtering
+export interface DateRange {
+  from: Date;
+  to?: Date;
+}

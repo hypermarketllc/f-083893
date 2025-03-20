@@ -1,20 +1,24 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
-import { Moon, Sun, Palette } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Moon, Sun, Palette, Save } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/auth';
 
 export default function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
+  const { user, updateProfile } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [fontScale, setFontScale] = useState([1]);
   const [accentColor, setAccentColor] = useState("#7C3AED");
+  const [isChanged, setIsChanged] = useState(false);
   
   // Ensure theme is only accessed after mounting to prevent hydration mismatch
   useEffect(() => {
@@ -47,8 +51,7 @@ export default function AppearanceSettings() {
   const handleFontScaleChange = (value: number[]) => {
     setFontScale(value);
     document.documentElement.style.fontSize = `${value[0] * 100}%`;
-    localStorage.setItem('font-scale', value[0].toString());
-    toast.success(`Font size updated`);
+    setIsChanged(true);
   };
 
   const applyAccentColor = useCallback((color: string) => {
@@ -69,9 +72,30 @@ export default function AppearanceSettings() {
 
   const handleAccentColorChange = (color: string) => {
     setAccentColor(color);
-    localStorage.setItem('accent-color', color);
     applyAccentColor(color);
-    toast.success(`Accent color updated`);
+    setIsChanged(true);
+  };
+
+  const saveSettings = async () => {
+    // Save font scale to local storage
+    localStorage.setItem('font-scale', fontScale[0].toString());
+    
+    // Save accent color to local storage
+    localStorage.setItem('accent-color', accentColor);
+    
+    // Save to user profile if logged in
+    if (user && updateProfile) {
+      try {
+        await updateProfile({
+          accentColor
+        });
+      } catch (error) {
+        console.error('Error saving settings to profile:', error);
+      }
+    }
+    
+    toast.success('Settings saved successfully');
+    setIsChanged(false);
   };
 
   return (
@@ -146,6 +170,17 @@ export default function AppearanceSettings() {
           </p>
         </div>
       </CardContent>
+      
+      <CardFooter className="flex justify-end">
+        <Button 
+          onClick={saveSettings} 
+          disabled={!isChanged}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          Save Changes
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

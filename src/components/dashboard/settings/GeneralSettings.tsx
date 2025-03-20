@@ -7,9 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import ProfileImageUpload from './ProfileImageUpload';
+import { Save } from 'lucide-react';
 
 export const GeneralSettings: React.FC = () => {
   const { user, updateProfile } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [isChanged, setIsChanged] = useState(false);
   
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -29,12 +32,14 @@ export const GeneralSettings: React.FC = () => {
         company: user.company || '',
         role: user.role || ''
       });
+      setIsChanged(false);
     }
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setIsChanged(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,6 +49,8 @@ export const GeneralSettings: React.FC = () => {
       toast.error('Profile update functionality is not available');
       return;
     }
+    
+    setLoading(true);
 
     try {
       await updateProfile({
@@ -54,9 +61,12 @@ export const GeneralSettings: React.FC = () => {
       });
       
       toast.success('Profile updated successfully');
+      setIsChanged(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast.error('Failed to update profile');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,9 +162,11 @@ export const GeneralSettings: React.FC = () => {
           <Button 
             type="submit" 
             onClick={handleSubmit}
-            className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-sm transition-all"
+            disabled={loading || !isChanged}
+            className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-sm transition-all"
           >
-            Save Changes
+            <Save className="h-4 w-4" />
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </CardFooter>
       </Card>
