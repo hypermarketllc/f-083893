@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleAuthStateChange = (currentSession: Session | null) => {
+  const handleAuthStateChange = async (currentSession: Session | null) => {
     console.log("Auth state updated, session:", currentSession ? "exists" : "null");
     
     setSession(currentSession);
@@ -34,12 +34,52 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         avatarUrl: currentSession.user.user_metadata?.avatar_url
       };
       
-      // Load user settings from localStorage
-      const settings = getUserSettings(id);
-      if (settings.accentColor) {
-        userData.accentColor = settings.accentColor;
-        // Apply accent color
-        document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+      try {
+        // Load user settings from Supabase if available
+        const { data: userSettings, error } = await supabase
+          .from('user_settings')
+          .select('*')
+          .eq('user_id', id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Error fetching user settings:", error);
+        } else if (userSettings) {
+          // Apply settings from the database
+          if (userSettings.accent_color) {
+            userData.accentColor = userSettings.accent_color;
+            document.documentElement.style.setProperty('--accent-color', userSettings.accent_color);
+          }
+          
+          // Apply theme
+          if (userSettings.theme) {
+            const htmlElement = document.documentElement;
+            htmlElement.setAttribute('data-theme', userSettings.theme);
+            localStorage.setItem('theme', userSettings.theme);
+          }
+          
+          // Apply font scale
+          if (userSettings.font_scale) {
+            document.documentElement.style.fontSize = `${userSettings.font_scale * 100}%`;
+            localStorage.setItem('font-scale', userSettings.font_scale.toString());
+          }
+        } else {
+          // Fallback to localStorage settings
+          const settings = getUserSettings(id);
+          if (settings.accentColor) {
+            userData.accentColor = settings.accentColor;
+            document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+          }
+        }
+      } catch (error) {
+        console.error("Error processing user settings:", error);
+        
+        // Fallback to localStorage settings
+        const settings = getUserSettings(id);
+        if (settings.accentColor) {
+          userData.accentColor = settings.accentColor;
+          document.documentElement.style.setProperty('--accent-color', settings.accentColor);
+        }
       }
       
       setUser(userData);
@@ -81,22 +121,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
-      // Use the appropriate auth options based on "Remember Me" setting
-      const options = rememberMe 
-        ? { 
-            shouldCreateUser: false,
-            storeSession: true, // Explicitly store the session
-            redirectTo: window.location.origin + '/dashboard'
-          }
-        : {
-            shouldCreateUser: false,
-            storeSession: false, // Don't persist the session
-            redirectTo: window.location.origin + '/dashboard'
-          };
-      
+      // Disable email verification for faster debugging
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
-        password 
+        password
       });
       
       if (error) {
@@ -121,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, metadata?: { first_name?: string; last_name?: string }) => {
     try {
+      // Disable email verification for faster debugging
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -135,18 +164,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      if (data.user && !data.session) {
-        toast({
-          title: "Account created",
-          description: "Please check your email for a confirmation link.",
-        });
-      } else {
-        navigate('/dashboard');
-        toast({
-          title: "Account created",
-          description: "Your account has been created and you're now signed in.",
-        });
-      }
+      navigate('/dashboard');
+      toast({
+        title: "Account created",
+        description: "Your account has been created successfully.",
+      });
     } catch (error) {
       console.error("Unexpected error during sign up:", error);
       toast({
@@ -243,34 +265,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Handle accent color separately
+      // Prepare data for Supabase user update
+      let metadataUpdate = {};
+      if (userData.firstName !== undefined) metadataUpdate = { ...metadataUpdate, first_name: userData.firstName };
+      if (userData.lastName !== undefined) metadataUpdate = { ...metadataUpdate, last_name: userData.lastName };
+      if (userData.company !== undefined) metadataUpdate = { ...metadataUpdate, company: userData.company };
+      if (userData.role !== undefined) metadataUpdate = { ...metadataUpdate, role: userData.role };
+      if (userData.title !== undefined) metadataUpdate = { ...metadataUpdate, title: userData.title };
+      if (userData.avatarUrl !== undefined) metadataUpdate = { ...metadataUpdate, avatar_url: userData.avatarUrl };
+
+      // Update user settings in Supabase if we have accent color
       if (userData.accentColor) {
-        // Save accent color to localStorage
-        updateUserSetting(user.id, 'accentColor', userData.accentColor);
-        
-        // Apply accent color
-        document.documentElement.style.setProperty('--accent-color', userData.accentColor);
-        
-        // Remove from supabase update data
-        const { accentColor, ...restData } = userData;
-        userData = restData;
+        try {
+          // Check if user settings exist
+          const { data: existingSettings, error: checkError } = await supabase
+            .from('user_settings')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (checkError) {
+            console.error("Error checking user settings:", checkError);
+          }
+          
+          if (existingSettings) {
+            // Update existing settings
+            const { error } = await supabase
+              .from('user_settings')
+              .update({ accent_color: userData.accentColor })
+              .eq('user_id', user.id);
+            
+            if (error) {
+              console.error("Error updating user settings:", error);
+            }
+          } else {
+            // Create new settings
+            const { error } = await supabase
+              .from('user_settings')
+              .insert({ user_id: user.id, accent_color: userData.accentColor });
+            
+            if (error) {
+              console.error("Error creating user settings:", error);
+            }
+          }
+          
+          // Apply accent color
+          document.documentElement.style.setProperty('--accent-color', userData.accentColor);
+          
+          // Also save to localStorage as backup
+          updateUserSetting(user.id, 'accentColor', userData.accentColor);
+        } catch (error) {
+          console.error("Error saving accent color:", error);
+        }
       }
 
-      // Update supabase user data
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-          company: userData.company,
-          role: userData.role,
-          title: userData.title,
-          avatar_url: userData.avatarUrl
-        }
-      });
+      // Update Supabase user data if we have metadata changes
+      if (Object.keys(metadataUpdate).length > 0) {
+        const { error } = await supabase.auth.updateUser({
+          data: metadataUpdate
+        });
 
-      if (error) {
-        handleAuthError(error, "Profile update", toast);
-        return;
+        if (error) {
+          handleAuthError(error, "Profile update", toast);
+          return;
+        }
       }
 
       // Update local user state

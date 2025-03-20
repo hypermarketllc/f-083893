@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Webhook, WebhookLogEntry, WebhookTestResponse, WebhookFilters, IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook2';
 import { v4 as uuidv4 } from 'uuid';
@@ -5,12 +6,13 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/auth';
 import { useWebhookOperations } from './hooks/useWebhookOperations';
 import { Webhook2ContextType } from './types';
-import { mockWebhooks, mockWebhookLogs, mockIncomingWebhooks, mockIncomingWebhookLogs } from './data';
+import { mockIncomingWebhooks, mockIncomingWebhookLogs } from './data';
+import { supabase } from '@/integrations/supabase/client';
 
 const Webhook2Context = createContext<Webhook2ContextType | undefined>(undefined);
 
 export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
   const [webhookLogs, setWebhookLogs] = useState<WebhookLogEntry[]>([]);
   const [incomingWebhooks, setIncomingWebhooks] = useState<IncomingWebhook[]>([]);
@@ -50,35 +52,97 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsTestLoading
   });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setIsLoading(true);
-        setWebhooks(mockWebhooks);
-        setWebhookLogs(mockWebhookLogs);
-        setIncomingWebhooks(mockIncomingWebhooks);
-        setIncomingWebhookLogs(mockIncomingWebhookLogs);
-      } catch (err) {
-        console.error('Error loading webhook data:', err);
-        setError(err instanceof Error ? err : new Error('Failed to load webhook data'));
-      } finally {
+  // Fetch webhooks from Supabase
+  const fetchWebhooks = async () => {
+    try {
+      setIsLoading(true);
+      
+      if (!session) {
+        setWebhooks([]);
+        setWebhookLogs([]);
         setIsLoading(false);
+        return;
       }
-    };
-    
-    loadData();
-  }, []);
-
-  const refreshWebhooks = () => {
-    setWebhooks([...mockWebhooks]);
+      
+      const { data: webhookData, error: webhookError } = await supabase
+        .from('webhooks')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (webhookError) {
+        throw new Error(`Error fetching webhooks: ${webhookError.message}`);
+      }
+      
+      const { data: logData, error: logError } = await supabase
+        .from('webhook_logs')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(100);
+      
+      if (logError) {
+        throw new Error(`Error fetching webhook logs: ${logError.message}`);
+      }
+      
+      setWebhooks(webhookData || []);
+      setWebhookLogs(logData || []);
+      
+      // Still using mock data for incoming webhooks for now
+      setIncomingWebhooks(mockIncomingWebhooks);
+      setIncomingWebhookLogs(mockIncomingWebhookLogs);
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error loading webhook data:', err);
+      setError(err instanceof Error ? err : new Error('Failed to load webhook data'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const refreshWebhookLogs = () => {
-    setWebhookLogs([...mockWebhookLogs]);
+  useEffect(() => {
+    fetchWebhooks();
+  }, [session]);
+
+  const refreshWebhooks = () => {
+    fetchWebhooks();
+  };
+
+  const refreshWebhookLogs = async () => {
+    try {
+      setIsLoading(true);
+      
+      if (!session) {
+        setWebhookLogs([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('webhook_logs')
+        .select('*')
+        .order('timestamp', { ascending: false })
+        .limit(100);
+      
+      if (error) {
+        throw new Error(`Error refreshing webhook logs: ${error.message}`);
+      }
+      
+      setWebhookLogs(data || []);
+    } catch (err) {
+      console.error('Error refreshing webhook logs:', err);
+      toast.error('Failed to refresh webhook logs');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const createWebhook = async (webhookData: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>): Promise<Webhook | null> => {
     try {
+      if (!user) {
+        toast.error('You must be logged in to create webhooks');
+        return null;
+      }
+      
       if (!webhookData.name) {
         toast.error('Webhook name is required');
         return null;
@@ -89,25 +153,28 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         return null;
       }
       
-      const newWebhook: Webhook = {
-        id: `webhook-${uuidv4()}`,
-        name: webhookData.name,
-        description: webhookData.description,
-        url: webhookData.url,
-        method: webhookData.method,
-        headers: webhookData.headers,
-        params: webhookData.params,
-        body: webhookData.body,
-        enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        lastExecutedAt: null,
-        lastExecutionStatus: null,
-        schedule: webhookData.schedule,
-        tags: webhookData.tags,
-        userId: user?.id
-      };
+      const { data, error } = await supabase
+        .from('webhooks')
+        .insert({
+          name: webhookData.name,
+          description: webhookData.description,
+          url: webhookData.url,
+          method: webhookData.method,
+          headers: webhookData.headers,
+          params: webhookData.params,
+          body: webhookData.body,
+          enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
+          tags: webhookData.tags || [],
+          user_id: user.id
+        })
+        .select()
+        .single();
       
+      if (error) {
+        throw new Error(`Error creating webhook: ${error.message}`);
+      }
+      
+      const newWebhook = data as Webhook;
       setWebhooks(prev => [newWebhook, ...prev]);
       toast.success('Webhook created successfully');
       return newWebhook;
@@ -120,6 +187,11 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const updateWebhook = async (webhook: Webhook): Promise<Webhook | null> => {
     try {
+      if (!user) {
+        toast.error('You must be logged in to update webhooks');
+        return null;
+      }
+      
       if (!webhook.name) {
         toast.error('Webhook name is required');
         return null;
@@ -130,10 +202,30 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         return null;
       }
       
-      const updatedWebhook = {
-        ...webhook,
-        updatedAt: new Date().toISOString()
-      };
+      const { data, error } = await supabase
+        .from('webhooks')
+        .update({
+          name: webhook.name,
+          description: webhook.description,
+          url: webhook.url,
+          method: webhook.method,
+          headers: webhook.headers,
+          params: webhook.params,
+          body: webhook.body,
+          enabled: webhook.enabled,
+          tags: webhook.tags,
+          last_executed_at: webhook.lastExecutedAt,
+          last_execution_status: webhook.lastExecutionStatus
+        })
+        .eq('id', webhook.id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(`Error updating webhook: ${error.message}`);
+      }
+      
+      const updatedWebhook = data as Webhook;
       
       setWebhooks(prev => 
         prev.map(w => w.id === webhook.id ? updatedWebhook : w)
@@ -154,6 +246,20 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const deleteWebhook = async (id: string): Promise<void> => {
     try {
+      if (!user) {
+        toast.error('You must be logged in to delete webhooks');
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('webhooks')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        throw new Error(`Error deleting webhook: ${error.message}`);
+      }
+      
       setWebhooks(prev => prev.filter(w => w.id !== id));
       
       if (selectedWebhook && selectedWebhook.id === id) {

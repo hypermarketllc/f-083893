@@ -4,6 +4,7 @@ import { Webhook, WebhookLogEntry, WebhookTestResponse } from '@/types/webhook2'
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { UseWebhookOperationsParams } from '../types';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useWebhookOperations = ({
   webhooks,
@@ -129,7 +130,46 @@ export const useWebhookOperations = ({
       if (isTest) {
         setTestResponse(logEntry);
       } else {
-        // For normal execution, add to logs and update webhook status
+        try {
+          // Save log to Supabase
+          const { error: logError } = await supabase
+            .from('webhook_logs')
+            .insert({
+              webhook_id: webhook.id,
+              timestamp: new Date().toISOString(),
+              request_url: url,
+              request_method: webhook.method,
+              request_headers: headers,
+              request_body: body,
+              response_status: statusCode,
+              response_headers: responseHeaders,
+              response_body: responseBody,
+              duration,
+              success: success,
+              error: !success ? (statusCode === 400 ? "Bad Request" : "Internal Server Error") : null
+            });
+          
+          if (logError) {
+            console.error('Error saving webhook log:', logError);
+          }
+          
+          // Update webhook's last execution status in Supabase
+          const { error: webhookError } = await supabase
+            .from('webhooks')
+            .update({
+              last_executed_at: new Date().toISOString(),
+              last_execution_status: success ? 'success' : 'error'
+            })
+            .eq('id', webhook.id);
+          
+          if (webhookError) {
+            console.error('Error updating webhook status:', webhookError);
+          }
+        } catch (error) {
+          console.error('Error recording webhook execution:', error);
+        }
+        
+        // Add to UI logs and update webhook status
         setWebhookLogs(prev => [logEntry, ...prev]);
         
         // Update webhook's last execution status
@@ -192,6 +232,42 @@ export const useWebhookOperations = ({
       if (isTest) {
         setTestResponse(errorLogEntry);
       } else {
+        try {
+          // Save error log to Supabase
+          const { error: logError } = await supabase
+            .from('webhook_logs')
+            .insert({
+              webhook_id: webhook.id,
+              timestamp: new Date().toISOString(),
+              request_url: webhook.url,
+              request_method: webhook.method,
+              request_headers: {},
+              response_status: 0,
+              duration: 0,
+              success: false,
+              error: error instanceof Error ? error.message : 'Network error'
+            });
+          
+          if (logError) {
+            console.error('Error saving webhook error log:', logError);
+          }
+          
+          // Update webhook's last execution status in Supabase
+          const { error: webhookError } = await supabase
+            .from('webhooks')
+            .update({
+              last_executed_at: new Date().toISOString(),
+              last_execution_status: 'error'
+            })
+            .eq('id', webhook.id);
+          
+          if (webhookError) {
+            console.error('Error updating webhook error status:', webhookError);
+          }
+        } catch (dbError) {
+          console.error('Error recording webhook execution error:', dbError);
+        }
+        
         // For normal execution, add to logs and update webhook status
         setWebhookLogs(prev => [errorLogEntry, ...prev]);
         
