@@ -1,193 +1,138 @@
 
 import React, { useState } from 'react';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
+import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
+import { WebhookList } from './WebhookList';
+import { IncomingWebhookTable } from './IncomingWebhookTable';
+import { WebhookLogsTable } from './WebhookLogsTable';
+import { IncomingWebhookLogsTable } from './IncomingWebhookLogsTable';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { WebhookProvider, useWebhookContext } from '@/contexts/webhook/WebhookContext';
-import { WebhookTable } from '@/components/webhooks/WebhookTable';
-import { WebhookLogsTable } from '@/components/webhooks/WebhookLogsTable';
-import { WebhookModal } from '@/components/webhooks/WebhookModal';
-import { WebhookTestPanel } from '@/components/webhooks/WebhookTestPanel';
-import { IncomingWebhookTable } from '@/components/webhooks/IncomingWebhookTable';
-import { IncomingWebhookLogsTable } from '@/components/webhooks/IncomingWebhookLogsTable';
-import { IncomingWebhookModal } from '@/components/webhooks/IncomingWebhookModal';
-import { 
-  Plus, 
-  Search, 
-  FilterX,
-  Webhook,
-  History,
-  ExternalLink,
-  Download,
-  X,
-  WebhookIcon
-} from 'lucide-react';
+import { Plus, RefreshCw, Search, X } from 'lucide-react';
 
 interface WebhooksSidebarProps {
-  onClose: () => void;
-  visible: boolean;
+  className?: string;
 }
 
-const WebhooksTabs: React.FC = () => {
-  const { 
-    searchQuery,
-    setSearchQuery,
-    selectedWebhook,
+const WebhooksSidebar: React.FC<WebhooksSidebarProps> = ({ className }) => {
+  const {
     setIsWebhookModalOpen,
-    isTestMode,
-    setIsIncomingWebhookModalOpen
+    setIsIncomingWebhookModalOpen,
+    searchQuery,
+    setSearchQuery
   } = useWebhookContext();
   
-  const [activeTab, setActiveTab] = useState('webhooks');
-  const [activeSubTab, setActiveSubTab] = useState('outgoing');
-
-  const handleCreateWebhook = () => {
-    setIsWebhookModalOpen(true);
-  };
+  const [activeTab, setActiveTab] = useState('outgoing');
+  const [activeSection, setActiveSection] = useState<'webhooks' | 'logs'>('webhooks');
   
-  const handleCreateIncomingWebhook = () => {
-    setIsIncomingWebhookModalOpen(true);
-  };
-
   return (
-    <div className="h-full flex flex-col">
-      <div className="border-b py-3 px-4 flex justify-between items-center bg-card">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <WebhookIcon className="h-5 w-5 text-primary" />
-          Webhooks
-        </h2>
-        <div className="flex items-center space-x-2">
-          {activeSubTab === 'outgoing' ? (
-            <Button size="sm" onClick={handleCreateWebhook}>
-              <Plus className="h-4 w-4 mr-1" />
-              New
-            </Button>
-          ) : (
-            <Button size="sm" onClick={handleCreateIncomingWebhook}>
-              <Plus className="h-4 w-4 mr-1" />
-              New
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-auto p-3">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="w-full grid grid-cols-2">
-            <TabsTrigger value="webhooks">
-              <Webhook className="h-4 w-4 mr-2" />
-              Webhooks
-            </TabsTrigger>
-            <TabsTrigger value="logs">
-              <History className="h-4 w-4 mr-2" />
-              Logs
-            </TabsTrigger>
+    <div className={`space-y-4 p-4 ${className}`}>
+      <Tabs 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <TabsList>
+            <TabsTrigger value="outgoing">Outgoing</TabsTrigger>
+            <TabsTrigger value="incoming">Incoming</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="webhooks" className="space-y-4">
-            <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-              <TabsList className="w-full grid grid-cols-2">
-                <TabsTrigger value="outgoing">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Outgoing
-                </TabsTrigger>
-                <TabsTrigger value="incoming">
-                  <Download className="h-4 w-4 mr-2" />
-                  Incoming
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="outgoing" className="space-y-4 mt-4">
-                <WebhookTable compact />
-                
-                {selectedWebhook && isTestMode && (
-                  <WebhookTestPanel webhook={selectedWebhook} />
-                )}
-              </TabsContent>
-
-              <TabsContent value="incoming" className="space-y-4 mt-4">
-                <IncomingWebhookTable compact />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="logs">
-            <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
-              <div className="flex flex-col space-y-3 mb-4">
-                <TabsList className="w-full grid grid-cols-2">
-                  <TabsTrigger value="outgoing">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Outgoing
-                  </TabsTrigger>
-                  <TabsTrigger value="incoming">
-                    <Download className="h-4 w-4 mr-2" />
-                    Incoming
-                  </TabsTrigger>
-                </TabsList>
-
-                <div className="flex items-center space-x-2">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search logs..."
-                      className="pl-8 w-full"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  {searchQuery && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => setSearchQuery('')}
-                    >
-                      <FilterX className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <TabsContent value="outgoing" className="space-y-4">
-                <WebhookLogsTable compact />
-              </TabsContent>
-
-              <TabsContent value="incoming" className="space-y-4">
-                <IncomingWebhookLogsTable compact />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* Modals */}
-      <WebhookModal />
-      <IncomingWebhookModal />
-    </div>
-  );
-};
-
-const WebhooksSidebar: React.FC<WebhooksSidebarProps> = ({ onClose, visible }) => {
-  return (
-    <WebhookProvider>
-      <div className="h-full flex flex-col">
-        <div className="md:hidden absolute top-2 right-2 z-10">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={onClose}
-            className="bg-background/80 backdrop-blur-sm"
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (activeTab === 'outgoing') {
+                setIsWebhookModalOpen(true);
+              } else {
+                setIsIncomingWebhookModalOpen(true);
+              }
+            }}
           >
-            <X className="h-4 w-4" />
+            <Plus className="h-4 w-4 mr-1" />
+            {activeTab === 'outgoing' ? 'New Webhook' : 'New Endpoint'}
           </Button>
         </div>
-        <WebhooksTabs />
-      </div>
-    </WebhookProvider>
+        
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search webhooks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1.5 h-6 w-6"
+                onClick={() => setSearchQuery('')}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+          
+          {activeTab === 'outgoing' && (
+            <>
+              <div className="flex space-x-2">
+                <Button
+                  variant={activeSection === 'webhooks' ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setActiveSection('webhooks')}
+                >
+                  Webhooks
+                </Button>
+                <Button
+                  variant={activeSection === 'logs' ? "default" : "outline"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setActiveSection('logs')}
+                >
+                  Logs
+                </Button>
+              </div>
+              
+              {activeSection === 'webhooks' ? (
+                <WebhookList />
+              ) : (
+                <WebhookLogsTable />
+              )}
+            </>
+          )}
+          
+          <TabsContent value="incoming" className="space-y-4 mt-0">
+            <div className="flex space-x-2">
+              <Button
+                variant={activeSection === 'webhooks' ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={() => setActiveSection('webhooks')}
+              >
+                Endpoints
+              </Button>
+              <Button
+                variant={activeSection === 'logs' ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={() => setActiveSection('logs')}
+              >
+                Logs
+              </Button>
+            </div>
+            
+            {activeSection === 'webhooks' ? (
+              <IncomingWebhookTable />
+            ) : (
+              <IncomingWebhookLogsTable />
+            )}
+          </TabsContent>
+        </div>
+      </Tabs>
+    </div>
   );
 };
 

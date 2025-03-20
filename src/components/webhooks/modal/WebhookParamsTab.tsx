@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { WebhookUrlParam } from '@/types/webhook';
+import { WebhookParam } from '@/types/webhook';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Trash2 } from 'lucide-react';
 
 interface WebhookParamsTabProps {
-  webhookUrlParams: WebhookUrlParam[];
+  webhookUrlParams: WebhookParam[];
   addUrlParam: () => void;
   updateUrlParam: (id: string, field: 'key' | 'value' | 'enabled', value: string | boolean) => void;
   removeUrlParam: (id: string) => void;

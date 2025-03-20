@@ -68,6 +68,14 @@ export interface WebhookLogEntry {
   duration: number;
   success: boolean;
   error?: string;
+  // Add missing properties
+  requestTime: string;
+  responseTime: string | null;
+  url?: string;
+  method?: HttpMethod;
+  requestQuery?: Record<string, string>;
+  ipAddress?: string;
+  body?: string;
 }
 
 export interface WebhookTestResponse {
@@ -83,6 +91,8 @@ export interface WebhookFilters {
   method: HttpMethod | null;
   status: 'success' | 'error' | null;
   tags: string[];
+  dateFrom?: string | null;
+  dateTo?: string | null;
 }
 
 export interface IncomingWebhook {
@@ -112,4 +122,12 @@ export interface IncomingWebhookLogEntry {
   sourceIp: string;
   contentType: string;
   error?: string;
+  // Add missing properties
+  responseStatus?: number;
+  endpointPath?: string;
+  responseBody?: string;
+  method?: string;
+  requestQuery?: Record<string, string>;
+  queryParams?: Record<string, string>;
+  ipAddress?: string;
 }

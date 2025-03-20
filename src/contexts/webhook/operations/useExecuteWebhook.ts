@@ -29,8 +29,8 @@ export function useExecuteWebhook(
       
       // Prepare the URL with any parameters
       let fullUrl = webhook.url;
-      if (webhook.urlParams && webhook.urlParams.length > 0) {
-        const queryParams = webhook.urlParams
+      if (webhook.params && webhook.params.length > 0) {
+        const queryParams = webhook.params
           .filter(param => param.enabled)
           .reduce((acc, param, index) => {
             return `${acc}${index === 0 ? '?' : '&'}${encodeURIComponent(param.key)}=${encodeURIComponent(param.value)}`;
@@ -92,7 +92,13 @@ export function useExecuteWebhook(
             : undefined,
           requestTime: new Date().toISOString(),
           responseTime: new Date(Date.now() + duration).toISOString(),
-          body: responseBody // Adding this for compatibility
+          body: responseBody, // Adding this for compatibility
+          requestQuery: webhook.params
+            .filter(param => param.enabled)
+            .reduce((acc, param) => {
+              acc[param.key] = param.value;
+              return acc;
+            }, {} as Record<string, string>)
         };
         
         // Add to logs

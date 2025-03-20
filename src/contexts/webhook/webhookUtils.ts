@@ -48,7 +48,8 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
     error: log.error || undefined,
     requestTime: log.requestTime || log.timestamp || new Date().toISOString(),
     responseTime: log.responseTime || null,
-    body: log.responseBody || '{}'
+    body: log.responseBody || '{}',
+    requestQuery: log.requestQuery || {}
   };
 };
 
@@ -68,6 +69,8 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
       requestMethod: 'GET',
       isParsed: false,
       success: false,
+      sourceIp: 'unknown',
+      contentType: 'application/json',
       error: 'No log data available',
       // Additional properties needed for UI
       responseStatus: 404,
@@ -87,7 +90,7 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
     requestHeaders: log.requestHeaders || {},
     requestMethod: log.requestMethod || log.method || 'GET',
     requestBody: log.requestBody || '{}',
-    requestQuery: log.requestQuery || log.queryParams || undefined,
+    requestQuery: log.requestQuery || log.queryParams || {},
     parsedData: log.parsedData || undefined,
     isParsed: log.isParsed !== undefined ? log.isParsed : false,
     success: log.success !== undefined ? log.success : false,

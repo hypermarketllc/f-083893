@@ -31,12 +31,10 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
   } = useWebhookContext();
   
   const [filteredWebhooks, setFilteredWebhooks] = useState(webhooks);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<WebhookFilters>({
     search: '',
     method: null,
     status: null,
-    dateFrom: null,
-    dateTo: null,
     tags: []
   });
 
@@ -70,12 +68,16 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
     if (filters.tags && filters.tags.length > 0) {
       result = result.filter(webhook => {
         const webhookTags = getWebhookTags(webhook);
-        return filters.tags!.some(tagId => webhookTags.map(t => t.id).includes(tagId));
+        return filters.tags.some(tagId => webhookTags.map(t => t.id).includes(tagId));
       });
     }
     
     setFilteredWebhooks(result);
   }, [webhooks, filters]);
+
+  const handleFilterChange = (newFilters: Partial<WebhookFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never';
@@ -129,7 +131,7 @@ export const WebhookTable: React.FC<WebhookTableProps> = ({ compact }) => {
   return (
     <div className="space-y-4">
       <WebhookFilterBar 
-        onFilterChange={setFilters}
+        onFilterChange={handleFilterChange}
         tags={mockTags}
       />
       

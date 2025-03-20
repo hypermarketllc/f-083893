@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
-import { IncomingWebhook, WebhookTag } from '@/types/webhook';
+import { IncomingWebhook, WebhookTag, WebhookFilters } from '@/types/webhook';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -28,12 +28,10 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
   
   const [copied, setCopied] = React.useState<string | null>(null);
   const [filteredWebhooks, setFilteredWebhooks] = useState(incomingWebhooks);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<WebhookFilters>({
     search: '',
     method: null,
     status: null,
-    dateFrom: null,
-    dateTo: null,
     tags: []
   });
 
@@ -59,12 +57,16 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
     if (filters.tags && filters.tags.length > 0) {
       result = result.filter(webhook => {
         const webhookTags = getWebhookTags(webhook);
-        return filters.tags!.some(tagId => webhookTags.map(t => t.id).includes(tagId));
+        return filters.tags.some(tagId => webhookTags.map(t => t.id).includes(tagId));
       });
     }
     
     setFilteredWebhooks(result);
   }, [incomingWebhooks, filters]);
+
+  const handleFilterChange = (newFilters: Partial<WebhookFilters>) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
 
   const baseUrl = window.location.origin;
 
@@ -125,7 +127,7 @@ export const IncomingWebhookTable: React.FC<IncomingWebhookTableProps> = ({ comp
   return (
     <div className="space-y-4">
       <WebhookFilterBar 
-        onFilterChange={setFilters}
+        onFilterChange={handleFilterChange}
         tags={mockTags}
         showMethodFilter={false}
         showStatusFilter={false}
