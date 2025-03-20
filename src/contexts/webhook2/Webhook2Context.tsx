@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { Webhook2ContextType } from './types';
 import { useWebhookState } from './hooks/useWebhookState';
 import { useWebhookOperations } from './hooks/useWebhookOperations';
@@ -63,7 +63,8 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     handleDeleteWebhook,
     handleEditIncomingWebhook,
     handleDeleteIncomingWebhook,
-    fetchWebhooks
+    fetchWebhooks,
+    isCreating // Add this from the updated hook
   } = useWebhookCrud({
     webhooks,
     setWebhooks,
@@ -89,13 +90,13 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     setError
   });
   
-  // Load webhooks on component mount
-  React.useEffect(() => {
+  // Load webhooks on component mount - now works with or without authentication
+  useEffect(() => {
     fetchWebhooks();
-  }, [session]);
+  }, [user]); // Changed from session to user for better reactivity
 
   // Load webhook logs on component mount
-  React.useEffect(() => {
+  useEffect(() => {
     if (webhooks.length > 0) {
       refreshWebhookLogs();
     }
@@ -140,7 +141,8 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         handleDeleteIncomingWebhook,
         clearTestResponse,
         refreshWebhooks: fetchWebhooks,
-        refreshWebhookLogs
+        refreshWebhookLogs,
+        isCreating // Expose this to the context
       }}
     >
       {children}

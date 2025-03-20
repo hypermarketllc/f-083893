@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Webhook, WebhookLogEntry, IncomingWebhook, WebhookTag } from '@/types/webhook2';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,13 +37,11 @@ export const useWebhookCrud = ({
   setIsTestMode
 }: WebhookCrudHookProps) => {
   const { user } = useAuth();
+  const [isCreating, setIsCreating] = useState(false);
 
   const createWebhook = async (webhookData: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>): Promise<Webhook | null> => {
     try {
-      if (!user) {
-        toast.error('You must be logged in to create webhooks');
-        return null;
-      }
+      setIsCreating(true);
       
       if (!webhookData.name) {
         toast.error('Webhook name is required');
@@ -54,6 +51,23 @@ export const useWebhookCrud = ({
       if (!webhookData.url) {
         toast.error('Webhook URL is required');
         return null;
+      }
+      
+      // If user is not logged in, create a mock webhook
+      if (!user) {
+        const newId = `webhook-${uuidv4()}`;
+        const now = new Date().toISOString();
+        
+        const newWebhook: Webhook = {
+          id: newId,
+          ...webhookData,
+          createdAt: now,
+          updatedAt: now
+        };
+        
+        setWebhooks(prev => [newWebhook, ...prev]);
+        toast.success('Webhook created successfully (offline mode)');
+        return newWebhook;
       }
       
       const { data, error } = await supabase
@@ -68,13 +82,15 @@ export const useWebhookCrud = ({
           body: toJson(webhookData.body),
           enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
           tags: toJson(webhookData.tags || []),
-          user_id: user.id
+          user_id: user?.id || 'anonymous'
         })
         .select()
         .single();
       
       if (error) {
-        throw new Error(`Error creating webhook: ${error.message}`);
+        console.error('Error creating webhook:', error);
+        toast.error(`Failed to create webhook: ${error.message}`);
+        return null;
       }
       
       const newWebhook = mapDbWebhookToWebhook(data);
@@ -83,18 +99,15 @@ export const useWebhookCrud = ({
       return newWebhook;
     } catch (err) {
       console.error('Error creating webhook:', err);
-      toast.error('Failed to create webhook');
+      toast.error('Failed to create webhook. Please try again.');
       return null;
+    } finally {
+      setIsCreating(false);
     }
   };
 
   const updateWebhook = async (webhook: Webhook): Promise<Webhook | null> => {
     try {
-      if (!user) {
-        toast.error('You must be logged in to update webhooks');
-        return null;
-      }
-      
       if (!webhook.name) {
         toast.error('Webhook name is required');
         return null;
@@ -103,6 +116,25 @@ export const useWebhookCrud = ({
       if (!webhook.url) {
         toast.error('Webhook URL is required');
         return null;
+      }
+      
+      // If user is not logged in, update locally only
+      if (!user) {
+        const updatedWebhook = {
+          ...webhook,
+          updatedAt: new Date().toISOString()
+        };
+        
+        setWebhooks(prev => 
+          prev.map(w => w.id === webhook.id ? updatedWebhook : w)
+        );
+        
+        if (selectedWebhook && selectedWebhook.id === webhook.id) {
+          setSelectedWebhook(updatedWebhook);
+        }
+        
+        toast.success('Webhook updated successfully (offline mode)');
+        return updatedWebhook;
       }
       
       // Convert the webhook to DB format
@@ -116,7 +148,9 @@ export const useWebhookCrud = ({
         .single();
       
       if (error) {
-        throw new Error(`Error updating webhook: ${error.message}`);
+        console.error('Error updating webhook:', error);
+        toast.error(`Failed to update webhook: ${error.message}`);
+        return null;
       }
       
       const updatedWebhook = mapDbWebhookToWebhook(data);
@@ -133,15 +167,23 @@ export const useWebhookCrud = ({
       return updatedWebhook;
     } catch (err) {
       console.error('Error updating webhook:', err);
-      toast.error('Failed to update webhook');
+      toast.error('Failed to update webhook. Please try again.');
       return null;
     }
   };
 
   const deleteWebhook = async (id: string): Promise<void> => {
     try {
+      // If user is not logged in, delete locally only
       if (!user) {
-        toast.error('You must be logged in to delete webhooks');
+        setWebhooks(prev => prev.filter(w => w.id !== id));
+        
+        if (selectedWebhook && selectedWebhook.id === id) {
+          setSelectedWebhook(null);
+          setIsTestMode(false);
+        }
+        
+        toast.success('Webhook deleted successfully (offline mode)');
         return;
       }
       
@@ -151,7 +193,9 @@ export const useWebhookCrud = ({
         .eq('id', id);
       
       if (error) {
-        throw new Error(`Error deleting webhook: ${error.message}`);
+        console.error('Error deleting webhook:', error);
+        toast.error(`Failed to delete webhook: ${error.message}`);
+        return;
       }
       
       setWebhooks(prev => prev.filter(w => w.id !== id));
@@ -164,7 +208,7 @@ export const useWebhookCrud = ({
       toast.success('Webhook deleted successfully');
     } catch (err) {
       console.error('Error deleting webhook:', err);
-      toast.error('Failed to delete webhook');
+      toast.error('Failed to delete webhook. Please try again.');
     }
   };
 
@@ -274,13 +318,33 @@ export const useWebhookCrud = ({
     }
   };
 
-  // Function to fetch webhooks from Supabase
   const fetchWebhooks = async () => {
     try {
       setIsLoading(true);
       
+      // If user is not logged in, use mock data or return empty array
       if (!user) {
-        setWebhooks([]);
+        // For testing purposes, create some mock webhooks if none exist
+        if (webhooks.length === 0) {
+          const mockWebhooks: Webhook[] = [
+            {
+              id: `webhook-${uuidv4()}`,
+              name: 'Example GET Webhook',
+              description: 'This is a sample webhook for demonstration',
+              url: 'https://httpbin.org/get',
+              method: 'GET',
+              headers: [],
+              params: [],
+              body: { type: 'none', content: '' },
+              enabled: true,
+              tags: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          ];
+          setWebhooks(mockWebhooks);
+        }
+        setIsLoading(false);
         return;
       }
       
@@ -290,7 +354,10 @@ export const useWebhookCrud = ({
         .order('created_at', { ascending: false });
       
       if (webhookError) {
-        throw new Error(`Error fetching webhooks: ${webhookError.message}`);
+        console.error('Error fetching webhooks:', webhookError);
+        toast.error(`Error loading webhooks: ${webhookError.message}`);
+        setIsLoading(false);
+        return;
       }
       
       // Convert DB format to frontend models
@@ -299,7 +366,7 @@ export const useWebhookCrud = ({
       
     } catch (err) {
       console.error('Error loading webhook data:', err);
-      toast.error('Failed to load webhooks');
+      toast.error('Failed to load webhooks. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -309,6 +376,7 @@ export const useWebhookCrud = ({
     createWebhook,
     updateWebhook,
     deleteWebhook,
+    isCreating,
     createIncomingWebhook,
     updateIncomingWebhook,
     deleteIncomingWebhook,
