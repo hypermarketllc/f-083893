@@ -1,7 +1,7 @@
 
 import React from 'react';
+import { CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { CheckCircle, XCircle, Clock } from 'lucide-react';
 
 interface ActivityIndicatorProps {
   timestamp: string | null;
@@ -10,38 +10,30 @@ interface ActivityIndicatorProps {
 
 const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({ timestamp, status }) => {
   if (!timestamp) {
-    return (
-      <div className="flex items-center text-muted-foreground text-xs">
-        <Clock className="h-3 w-3 mr-1" />
-        Never
-      </div>
-    );
+    return <span className="text-xs text-muted-foreground">Never executed</span>;
   }
-
-  const formattedTime = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-
-  if (status === 'success') {
+  
+  try {
+    const date = new Date(timestamp);
+    const timeAgo = formatDistanceToNow(date, { addSuffix: true });
+    
     return (
-      <div className="flex items-center text-green-600 text-xs">
-        <CheckCircle className="h-3 w-3 mr-1" />
-        {formattedTime}
+      <div className="flex items-center text-xs">
+        {status === 'success' ? (
+          <CheckCircle2 className="h-3 w-3 mr-1 text-green-500" />
+        ) : status === 'error' ? (
+          <XCircle className="h-3 w-3 mr-1 text-red-500" />
+        ) : (
+          <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
+        )}
+        <span>
+          {timeAgo}
+        </span>
       </div>
     );
-  } else if (status === 'error') {
-    return (
-      <div className="flex items-center text-red-600 text-xs">
-        <XCircle className="h-3 w-3 mr-1" />
-        {formattedTime}
-      </div>
-    );
+  } catch (e) {
+    return <span className="text-xs text-muted-foreground">Invalid date</span>;
   }
-
-  return (
-    <div className="flex items-center text-muted-foreground text-xs">
-      <Clock className="h-3 w-3 mr-1" />
-      {formattedTime}
-    </div>
-  );
 };
 
 export default ActivityIndicator;

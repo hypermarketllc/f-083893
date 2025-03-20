@@ -14,7 +14,7 @@ export const mockWebhooks: Webhook[] = [
       { id: 'header-1', key: 'Content-Type', value: 'application/json', enabled: true },
       { id: 'header-2', key: 'Authorization', value: 'Bearer token123', enabled: true }
     ],
-    urlParams: [],
+    params: [],
     body: {
       contentType: 'json',
       content: '{\n  "repository": "{{repository}}",\n  "issue": "{{issue}}"\n}'
@@ -34,7 +34,7 @@ export const mockWebhooks: Webhook[] = [
     headers: [
       { id: 'header-3', key: 'Content-Type', value: 'application/json', enabled: true }
     ],
-    urlParams: [],
+    params: [],
     body: {
       contentType: 'json',
       content: '{\n  "text": "{{message}}",\n  "channel": "#general"\n}'
@@ -55,7 +55,7 @@ export const mockWebhooks: Webhook[] = [
       { id: 'header-4', key: 'Content-Type', value: 'application/json', enabled: true },
       { id: 'header-5', key: 'Authorization', value: 'Basic abc123', enabled: true }
     ],
-    urlParams: [
+    params: [
       { id: 'param-1', key: 'issueId', value: '{{issueId}}', enabled: true }
     ],
     body: {
@@ -90,9 +90,7 @@ export const mockWebhookLogs: WebhookLogEntry[] = [
     },
     responseBody: '{\n  "success": true,\n  "id": "1234"\n}',
     duration: 237,
-    success: true,
-    requestTime: subMinutes(new Date(), 15).toISOString(),
-    responseTime: subMinutes(new Date(), 15).toISOString()
+    success: true
   },
   {
     id: 'log-2',
@@ -111,9 +109,7 @@ export const mockWebhookLogs: WebhookLogEntry[] = [
     },
     responseBody: 'ok',
     duration: 413,
-    success: true,
-    requestTime: subHours(new Date(), 2).toISOString(),
-    responseTime: subHours(new Date(), 2).toISOString()
+    success: true
   },
   {
     id: 'log-3',
@@ -134,9 +130,7 @@ export const mockWebhookLogs: WebhookLogEntry[] = [
     responseBody: '{\n  "error": "Unauthorized",\n  "message": "Invalid credentials"\n}',
     duration: 298,
     success: false,
-    error: 'Unauthorized: Invalid credentials',
-    requestTime: subDays(new Date(), 1).toISOString(),
-    responseTime: subDays(new Date(), 1).toISOString()
+    error: 'Unauthorized: Invalid credentials'
   }
 ];
 

@@ -1,5 +1,6 @@
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+export type ExecutionStatus = 'success' | 'error' | null;
 
 export interface WebhookHeader {
   id: string;
@@ -41,15 +42,15 @@ export interface Webhook {
   method: HttpMethod;
   headers: WebhookHeader[];
   params: WebhookParam[];
-  urlParams?: WebhookParam[];
   body?: WebhookBody;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
   lastExecutedAt: string | null;
-  lastExecutionStatus: 'success' | 'error' | null;
+  lastExecutionStatus: ExecutionStatus;
   tags?: WebhookTag[];
   schedule?: WebhookSchedule;
+  userId?: string;
 }
 
 export interface WebhookLogEntry {
@@ -67,13 +68,6 @@ export interface WebhookLogEntry {
   duration: number;
   success: boolean;
   error?: string;
-  
-  // For backwards compatibility with existing code
-  method?: HttpMethod;
-  url?: string;
-  body?: string;
-  requestTime?: string;
-  responseTime?: string;
 }
 
 export interface WebhookTestResponse {

@@ -35,8 +35,8 @@ export const useWebhookOperations = (
       
       // Prepare request URL with params
       let url = webhook.url;
-      if (webhook.urlParams && webhook.urlParams.length > 0) {
-        const enabledParams = webhook.urlParams.filter(param => param.enabled);
+      if (webhook.params && webhook.params.length > 0) {
+        const enabledParams = webhook.params.filter(param => param.enabled);
         if (enabledParams.length > 0) {
           const queryParams = new URLSearchParams();
           enabledParams.forEach(param => {
@@ -243,16 +243,4 @@ export const useWebhookOperations = (
   };
   
   return { executeWebhook, clearTestResponse, sendTestRequest };
-};
-
-export const ensureLogEntryFields = (logEntry: WebhookLogEntry): WebhookLogEntry => {
-  return {
-    ...logEntry,
-    // Add any missing fields with defaults
-    requestTime: logEntry.requestTime || logEntry.timestamp,
-    responseTime: logEntry.responseTime || null,
-    method: logEntry.requestMethod,
-    url: logEntry.requestUrl,
-    body: logEntry.requestBody
-  };
 };

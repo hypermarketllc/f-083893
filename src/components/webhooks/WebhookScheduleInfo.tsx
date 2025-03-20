@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { WebhookSchedule } from '@/types/webhook';
-import { Badge } from '@/components/ui/badge';
-import { Clock, CalendarDays, Repeat } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 interface WebhookScheduleInfoProps {
   schedule?: WebhookSchedule;
@@ -10,38 +9,38 @@ interface WebhookScheduleInfoProps {
 
 const WebhookScheduleInfo: React.FC<WebhookScheduleInfoProps> = ({ schedule }) => {
   if (!schedule) {
-    return (
-      <span className="text-xs text-muted-foreground">No schedule</span>
-    );
+    return <span className="text-xs text-muted-foreground">Manual</span>;
   }
 
-  let content;
-  let icon;
-
+  let scheduleText = '';
+  
   switch (schedule.type) {
     case 'daily':
-      content = `Daily at ${schedule.time || '00:00'}`;
-      icon = <Clock className="h-3 w-3 mr-1" />;
+      scheduleText = `Daily at ${schedule.time || '00:00'}`;
       break;
     case 'weekly':
-      const days = schedule.days ? schedule.days.join(', ') : 'weekdays';
-      content = `Weekly on ${days}`;
-      icon = <CalendarDays className="h-3 w-3 mr-1" />;
+      if (schedule.days && schedule.days.length > 0) {
+        scheduleText = `Weekly on ${schedule.days.join(', ')}`;
+      } else {
+        scheduleText = 'Weekly';
+      }
       break;
     case 'interval':
-      content = `Every ${schedule.interval || 30} minutes`;
-      icon = <Repeat className="h-3 w-3 mr-1" />;
+      if (schedule.interval) {
+        scheduleText = `Every ${schedule.interval} min`;
+      } else {
+        scheduleText = 'At intervals';
+      }
       break;
     default:
-      content = 'Custom schedule';
-      icon = <Clock className="h-3 w-3 mr-1" />;
+      scheduleText = 'Custom schedule';
   }
-
+  
   return (
-    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-normal">
-      {icon}
-      {content}
-    </Badge>
+    <div className="flex items-center text-xs">
+      <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
+      <span>{scheduleText}</span>
+    </div>
   );
 };
 

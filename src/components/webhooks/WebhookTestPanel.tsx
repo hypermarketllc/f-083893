@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
 import { Webhook } from '@/types/webhook';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
   const { 
     isTestMode, 
     setIsTestMode, 
-    executeWebhook, 
+    sendTestRequest, 
     testResponse, 
     clearTestResponse,
     isTestLoading
@@ -37,7 +37,7 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
       return;
     }
     
-    await executeWebhook(webhook, true);
+    await sendTestRequest(webhook);
   };
 
   // Format the response body for better display

@@ -1,45 +1,52 @@
 
-import { Webhook, WebhookHeader, WebhookUrlParam, WebhookBody, WebhookSchedule, WebhookLogEntry, IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook';
+import { Webhook, WebhookHeader, WebhookParam, WebhookBody, WebhookSchedule, WebhookLogEntry, IncomingWebhook, IncomingWebhookLogEntry, WebhookTestResponse } from '@/types/webhook';
 
 export interface WebhookContextType {
+  // State
   webhooks: Webhook[];
+  isLoading: boolean;
+  error: Error | null;
+  webhookLogs: WebhookLogEntry[];
+  incomingWebhooks: IncomingWebhook[];
+  incomingWebhookLogs: IncomingWebhookLogEntry[];
+  
+  // Modal Controls
   isWebhookModalOpen: boolean;
   setIsWebhookModalOpen: (isOpen: boolean) => void;
-  selectedWebhook: Webhook | null;
-  setSelectedWebhook: (webhook: Webhook | null) => void;
-  editingWebhook: Webhook | null;
-  setEditingWebhook: (webhook: Webhook | null) => void;
-  isTestMode: boolean;
-  setIsTestMode: (isTest: boolean) => void;
-  testResponse: any;
-  setTestResponse: (response: any) => void;
-  isTestLoading: boolean;
-  setIsTestLoading: (isLoading: boolean) => void;
-  webhookLogs: WebhookLogEntry[];
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  createWebhook: (webhook: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateWebhook: (webhook: Webhook) => void;
-  handleEditWebhook: (webhook: Webhook) => void;
-  handleDeleteWebhook: (id: string) => void;
-  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<{
-    status: number;
-    headers: Record<string, string>;
-    body: string;
-    duration: number;
-  }>;
-  clearTestResponse: () => void;
-  sendTestRequest: (webhook: Webhook) => void;
-  incomingWebhooks: IncomingWebhook[];
   isIncomingWebhookModalOpen: boolean;
   setIsIncomingWebhookModalOpen: (isOpen: boolean) => void;
+  
+  // Selected Items
+  selectedWebhook: Webhook | null;
+  setSelectedWebhook: (webhook: Webhook | null) => void;
   selectedIncomingWebhook: IncomingWebhook | null;
   setSelectedIncomingWebhook: (webhook: IncomingWebhook | null) => void;
-  editingIncomingWebhook: IncomingWebhook | null;
-  setEditingIncomingWebhook: (webhook: IncomingWebhook | null) => void;
-  incomingWebhookLogs: IncomingWebhookLogEntry[];
-  createIncomingWebhook: (webhook: Omit<IncomingWebhook, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateIncomingWebhook: (webhook: IncomingWebhook) => void;
+  
+  // Test Mode
+  isTestMode: boolean;
+  setIsTestMode: (isTest: boolean) => void;
+  isTestLoading: boolean;
+  testResponse: WebhookLogEntry | null;
+  
+  // Search & Filtering
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  
+  // CRUD Operations
+  createWebhook: (webhook: Omit<Webhook, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Webhook | null>;
+  updateWebhook: (webhook: Webhook) => Promise<Webhook | null>;
+  deleteWebhook: (id: string) => Promise<void>;
+  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<WebhookTestResponse | null>;
+  
+  createIncomingWebhook: (webhook: Omit<IncomingWebhook, 'id' | 'createdAt' | 'updatedAt'>) => Promise<IncomingWebhook | null>;
+  updateIncomingWebhook: (webhook: IncomingWebhook) => Promise<IncomingWebhook | null>;
+  deleteIncomingWebhook: (id: string) => Promise<void>;
+  
+  // UI Operations
+  handleEditWebhook: (webhook: Webhook) => void;
+  handleDeleteWebhook: (id: string) => void;
   handleEditIncomingWebhook: (webhook: IncomingWebhook) => void;
   handleDeleteIncomingWebhook: (id: string) => void;
+  clearTestResponse: () => void;
+  sendTestRequest: (webhook: Webhook) => Promise<WebhookTestResponse | null>;
 }
