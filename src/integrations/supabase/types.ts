@@ -99,6 +99,122 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_logs: {
+        Row: {
+          duration: number
+          error: string | null
+          id: string
+          request_body: string | null
+          request_headers: Json | null
+          request_method: Database["public"]["Enums"]["http_method"]
+          request_url: string
+          response_body: string | null
+          response_headers: Json | null
+          response_status: number | null
+          success: boolean
+          timestamp: string
+          webhook_id: string
+        }
+        Insert: {
+          duration: number
+          error?: string | null
+          id?: string
+          request_body?: string | null
+          request_headers?: Json | null
+          request_method: Database["public"]["Enums"]["http_method"]
+          request_url: string
+          response_body?: string | null
+          response_headers?: Json | null
+          response_status?: number | null
+          success: boolean
+          timestamp?: string
+          webhook_id: string
+        }
+        Update: {
+          duration?: number
+          error?: string | null
+          id?: string
+          request_body?: string | null
+          request_headers?: Json | null
+          request_method?: Database["public"]["Enums"]["http_method"]
+          request_url?: string
+          response_body?: string | null
+          response_headers?: Json | null
+          response_status?: number | null
+          success?: boolean
+          timestamp?: string
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhooks: {
+        Row: {
+          body: Json | null
+          created_at: string
+          description: string | null
+          enabled: boolean
+          headers: Json | null
+          id: string
+          last_executed_at: string | null
+          last_execution_status:
+            | Database["public"]["Enums"]["webhook_status"]
+            | null
+          method: Database["public"]["Enums"]["http_method"]
+          name: string
+          params: Json | null
+          tags: Json | null
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          body?: Json | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          headers?: Json | null
+          id?: string
+          last_executed_at?: string | null
+          last_execution_status?:
+            | Database["public"]["Enums"]["webhook_status"]
+            | null
+          method?: Database["public"]["Enums"]["http_method"]
+          name: string
+          params?: Json | null
+          tags?: Json | null
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          body?: Json | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          headers?: Json | null
+          id?: string
+          last_executed_at?: string | null
+          last_execution_status?:
+            | Database["public"]["Enums"]["webhook_status"]
+            | null
+          method?: Database["public"]["Enums"]["http_method"]
+          name?: string
+          params?: Json | null
+          tags?: Json | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       workspace_members: {
         Row: {
           created_at: string | null
@@ -181,7 +297,9 @@ export type Database = {
       }
     }
     Enums: {
+      http_method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
       user_role: "super_admin" | "admin" | "manager" | "member"
+      webhook_status: "success" | "error"
     }
     CompositeTypes: {
       [_ in never]: never

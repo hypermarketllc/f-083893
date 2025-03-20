@@ -1,321 +1,673 @@
-
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { WebhookContextType } from './types';
-import { 
-  mockWebhooks, 
-  mockWebhookLogs, 
-  mockIncomingWebhooks, 
-  mockIncomingWebhookLogs 
-} from './data';
-import { 
-  useWebhookOperations, 
-  useIncomingWebhookOperations 
-} from './useWebhookOperations';
-import { useWebhookSearch } from './hooks/useWebhookSearch';
-import { useWebhookUIState } from './hooks/useWebhookUIState';
-import { useExecuteWebhook } from './operations/useExecuteWebhook';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Webhook, WebhookLogEntry, WebhookTag, HttpMethod, IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook';
+import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/auth';
+
+interface WebhookContextType {
+  // Webhooks
+  webhooks: Webhook[];
+  webhookLogs: WebhookLogEntry[];
+  incomingWebhooks: IncomingWebhook[];
+  incomingWebhookLogs: IncomingWebhookLogEntry[];
+  isLoading: boolean;
+  error: Error | null;
+  selectedWebhook: Webhook | null;
+  setSelectedWebhook: (webhook: Webhook | null) => void;
+  selectedIncomingWebhook: IncomingWebhook | null;
+  setSelectedIncomingWebhook: (webhook: IncomingWebhook | null) => void;
+  
+  // Modal controls
+  isWebhookModalOpen: boolean;
+  setIsWebhookModalOpen: (isOpen: boolean) => void;
+  isIncomingWebhookModalOpen: boolean;
+  setIsIncomingWebhookModalOpen: (isOpen: boolean) => void;
+  
+  // Test mode
+  isTestMode: boolean;
+  setIsTestMode: (isTestMode: boolean) => void;
+  testResponse: WebhookLogEntry | null;
+  
+  // Search
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  
+  // CRUD operations
+  createWebhook: (webhook: Partial<Webhook>) => Promise<void>;
+  updateWebhook: (webhook: Webhook) => Promise<void>;
+  deleteWebhook: (id: string) => Promise<void>;
+  executeWebhook: (webhook: Webhook, isTest?: boolean) => Promise<void>;
+  
+  createIncomingWebhook: (webhook: Partial<IncomingWebhook>) => Promise<void>;
+  updateIncomingWebhook: (webhook: IncomingWebhook) => Promise<void>;
+  deleteIncomingWebhook: (id: string) => Promise<void>;
+  
+  // UI Operations
+  handleEditWebhook: (webhook: Webhook) => void;
+  handleDeleteWebhook: (id: string) => void;
+  handleEditIncomingWebhook: (webhook: IncomingWebhook) => void;
+  handleDeleteIncomingWebhook: (id: string) => void;
+  clearTestResponse: () => void;
+}
 
 const WebhookContext = createContext<WebhookContextType | undefined>(undefined);
 
-export const useWebhookContext = () => {
-  const context = useContext(WebhookContext);
-  if (!context) {
-    throw new Error('useWebhookContext must be used within a WebhookProvider');
-  }
-  return context;
-};
+export const WebhookProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [webhookLogs, setWebhookLogs] = useState<WebhookLogEntry[]>([]);
+  const [incomingWebhooks, setIncomingWebhooks] = useState<IncomingWebhook[]>([]);
+  const [incomingWebhookLogs, setIncomingWebhookLogs] = useState<IncomingWebhookLogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
+  const [selectedIncomingWebhook, setSelectedIncomingWebhook] = useState<IncomingWebhook | null>(null);
+  const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false);
+  const [isIncomingWebhookModalOpen, setIsIncomingWebhookModalOpen] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
+  const [testResponse, setTestResponse] = useState<WebhookLogEntry | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-interface WebhookProviderProps {
-  children: ReactNode;
-}
-
-export const WebhookProvider: React.FC<WebhookProviderProps> = ({ children }) => {
-  // Load saved webhooks from localStorage or use mocks
-  const loadSavedWebhooks = () => {
-    try {
-      const saved = localStorage.getItem('webhooks');
-      return saved ? JSON.parse(saved) : mockWebhooks;
-    } catch (error) {
-      console.error('Error loading webhooks:', error);
-      return mockWebhooks;
-    }
-  };
-  
-  const loadSavedWebhookLogs = () => {
-    try {
-      const saved = localStorage.getItem('webhookLogs');
-      return saved ? JSON.parse(saved) : mockWebhookLogs;
-    } catch (error) {
-      console.error('Error loading webhook logs:', error);
-      return mockWebhookLogs;
-    }
-  };
-  
-  const loadSavedIncomingWebhooks = () => {
-    try {
-      const saved = localStorage.getItem('incomingWebhooks');
-      return saved ? JSON.parse(saved) : mockIncomingWebhooks;
-    } catch (error) {
-      console.error('Error loading incoming webhooks:', error);
-      return mockIncomingWebhooks;
-    }
-  };
-  
-  const loadSavedIncomingWebhookLogs = () => {
-    try {
-      const saved = localStorage.getItem('incomingWebhookLogs');
-      return saved ? JSON.parse(saved) : mockIncomingWebhookLogs;
-    } catch (error) {
-      console.error('Error loading incoming webhook logs:', error);
-      return mockIncomingWebhookLogs;
-    }
-  };
-  
-  // State for outgoing webhooks and logs
-  const [webhooks, setWebhooks] = useState(loadSavedWebhooks());
-  const [webhookLogs, setWebhookLogs] = useState(loadSavedWebhookLogs());
-  
-  // State for incoming webhooks and logs
-  const [incomingWebhooks, setIncomingWebhooks] = useState(loadSavedIncomingWebhooks());
-  const [incomingWebhookLogs, setIncomingWebhookLogs] = useState(loadSavedIncomingWebhookLogs());
-  
-  // Save webhooks to localStorage when they change
+  // Mock data for development
   useEffect(() => {
-    try {
-      localStorage.setItem('webhooks', JSON.stringify(webhooks));
-    } catch (error) {
-      console.error('Error saving webhooks:', error);
-    }
-  }, [webhooks]);
-  
-  // Save webhook logs to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('webhookLogs', JSON.stringify(webhookLogs));
-    } catch (error) {
-      console.error('Error saving webhook logs:', error);
-    }
-  }, [webhookLogs]);
-  
-  // Save incoming webhooks to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('incomingWebhooks', JSON.stringify(incomingWebhooks));
-    } catch (error) {
-      console.error('Error saving incoming webhooks:', error);
-    }
-  }, [incomingWebhooks]);
-  
-  // Save incoming webhook logs to localStorage when they change
-  useEffect(() => {
-    try {
-      localStorage.setItem('incomingWebhookLogs', JSON.stringify(incomingWebhookLogs));
-    } catch (error) {
-      console.error('Error saving incoming webhook logs:', error);
-    }
-  }, [incomingWebhookLogs]);
-  
-  // UI state from custom hook
-  const {
-    isWebhookModalOpen,
-    setIsWebhookModalOpen,
-    isIncomingWebhookModalOpen,
-    setIsIncomingWebhookModalOpen,
-    selectedWebhook,
-    setSelectedWebhook,
-    selectedIncomingWebhook,
-    setSelectedIncomingWebhook,
-    editingWebhook,
-    setEditingWebhook,
-    editingIncomingWebhook,
-    setEditingIncomingWebhook,
-    isTestMode,
-    setIsTestMode,
-    testResponse,
-    setTestResponse,
-    isTestLoading,
-    setIsTestLoading,
-    searchQuery,
-    setSearchQuery
-  } = useWebhookUIState();
+    // Mock webhooks
+    const mockWebhooks: Webhook[] = [
+      {
+        id: 'webhook-1',
+        name: 'GitHub Notification',
+        description: 'Send notifications to GitHub when events occur',
+        url: 'https://api.github.com/repos/user/repo/dispatches',
+        method: 'POST',
+        headers: [
+          { id: 'header-1', key: 'Authorization', value: 'Bearer ghp_123456789', enabled: true },
+          { id: 'header-2', key: 'Content-Type', value: 'application/json', enabled: true }
+        ],
+        urlParams: [],
+        body: {
+          contentType: 'json',
+          content: JSON.stringify({ event_type: 'build', client_payload: { status: 'success' } }, null, 2)
+        },
+        enabled: true,
+        createdAt: '2023-06-15T10:30:00Z',
+        updatedAt: '2023-06-15T10:30:00Z',
+        lastExecutedAt: '2023-06-16T14:25:00Z',
+        lastExecutionStatus: 'success',
+        schedule: {
+          type: 'daily',
+          time: '09:00'
+        }
+      },
+      {
+        id: 'webhook-2',
+        name: 'Slack Alert',
+        description: 'Send alerts to Slack channel',
+        url: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
+        method: 'POST',
+        headers: [
+          { id: 'header-3', key: 'Content-Type', value: 'application/json', enabled: true }
+        ],
+        urlParams: [],
+        body: {
+          contentType: 'json',
+          content: JSON.stringify({ text: 'Alert: System notification' }, null, 2)
+        },
+        enabled: false,
+        createdAt: '2023-06-10T08:15:00Z',
+        updatedAt: '2023-06-10T08:15:00Z',
+        lastExecutedAt: '2023-06-12T11:45:00Z',
+        lastExecutionStatus: 'error',
+        schedule: {
+          type: 'weekly',
+          days: ['Monday', 'Wednesday', 'Friday']
+        }
+      },
+      {
+        id: 'webhook-3',
+        name: 'API Status Check',
+        description: 'Check if the API is up and running',
+        url: 'https://api.example.com/status',
+        method: 'GET',
+        headers: [],
+        urlParams: [
+          { id: 'param-1', key: 'format', value: 'json', enabled: true }
+        ],
+        enabled: true,
+        createdAt: '2023-06-05T16:20:00Z',
+        updatedAt: '2023-06-05T16:20:00Z',
+        lastExecutedAt: '2023-06-17T09:10:00Z',
+        lastExecutionStatus: 'success',
+        schedule: {
+          type: 'interval',
+          interval: 30
+        }
+      }
+    ];
 
-  // Search functionality
-  const { filteredWebhookLogs, filteredIncomingWebhookLogs } = useWebhookSearch(
-    webhookLogs,
-    incomingWebhookLogs,
-    searchQuery
-  );
-
-  // Webhook operations
-  const {
-    createWebhook,
-    updateWebhook,
-    handleEditWebhook,
-    handleDeleteWebhook
-  } = useWebhookOperations(
-    webhooks,
-    setWebhooks,
-    webhookLogs,
-    setWebhookLogs,
-    selectedWebhook,
-    setSelectedWebhook,
-    setIsWebhookModalOpen,
-    setEditingWebhook,
-    setTestResponse,
-    setIsTestLoading
-  );
-
-  // Execute webhook hook
-  const {
-    executeWebhook,
-    clearTestResponse,
-    sendTestRequest
-  } = useExecuteWebhook(
-    webhookLogs,
-    setWebhookLogs,
-    setTestResponse,
-    setIsTestLoading
-  );
-
-  // Incoming webhook operations
-  const {
-    createIncomingWebhook,
-    updateIncomingWebhook,
-    handleEditIncomingWebhook,
-    handleDeleteIncomingWebhook
-  } = useIncomingWebhookOperations(
-    incomingWebhooks,
-    setIncomingWebhooks,
-    selectedIncomingWebhook,
-    setSelectedIncomingWebhook,
-    setIsIncomingWebhookModalOpen,
-    setEditingIncomingWebhook
-  );
-
-  // Simulate incoming webhooks receiving data
-  useEffect(() => {
-    const simulateIncomingRequests = () => {
-      // Only process active incoming webhooks
-      const activeIncomingWebhooks = incomingWebhooks.filter(webhook => webhook.enabled);
-      
-      if (activeIncomingWebhooks.length === 0) return;
-      
-      // Randomly select an active webhook to receive a request
-      const randomIndex = Math.floor(Math.random() * activeIncomingWebhooks.length);
-      const webhook = activeIncomingWebhooks[randomIndex];
-      
-      // Create a new log entry for this incoming webhook
-      const newLog = {
-        id: `incoming-log-${Date.now()}`,
-        webhookId: webhook.id,
-        webhookName: webhook.name,
-        timestamp: new Date().toISOString(),
+    // Mock webhook logs
+    const mockWebhookLogs: WebhookLogEntry[] = [
+      {
+        id: 'log-1',
+        webhookId: 'webhook-1',
+        webhookName: 'GitHub Notification',
+        timestamp: '2023-06-16T14:25:00Z',
+        requestUrl: 'https://api.github.com/repos/user/repo/dispatches',
+        requestMethod: 'POST',
         requestHeaders: {
+          'Authorization': 'Bearer ghp_123456789',
+          'Content-Type': 'application/json'
+        },
+        requestBody: JSON.stringify({ event_type: 'build', client_payload: { status: 'success' } }),
+        responseStatus: 204,
+        responseHeaders: {
+          'Server': 'GitHub.com',
+          'Date': 'Fri, 16 Jun 2023 14:25:01 GMT'
+        },
+        responseBody: '',
+        duration: 320,
+        success: true
+      },
+      {
+        id: 'log-2',
+        webhookId: 'webhook-2',
+        webhookName: 'Slack Alert',
+        timestamp: '2023-06-12T11:45:00Z',
+        requestUrl: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
+        requestMethod: 'POST',
+        requestHeaders: {
+          'Content-Type': 'application/json'
+        },
+        requestBody: JSON.stringify({ text: 'Alert: System notification' }),
+        responseStatus: 403,
+        responseHeaders: {
+          'Date': 'Mon, 12 Jun 2023 11:45:01 GMT',
+          'Server': 'Apache'
+        },
+        responseBody: JSON.stringify({ error: 'Invalid token' }),
+        duration: 450,
+        success: false,
+        error: 'Authentication failed'
+      },
+      {
+        id: 'log-3',
+        webhookId: 'webhook-3',
+        webhookName: 'API Status Check',
+        timestamp: '2023-06-17T09:10:00Z',
+        requestUrl: 'https://api.example.com/status?format=json',
+        requestMethod: 'GET',
+        requestHeaders: {},
+        responseStatus: 200,
+        responseHeaders: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0',
-          'X-Request-ID': `req-${Math.random().toString(36).substring(2, 10)}`
+          'Date': 'Sat, 17 Jun 2023 09:10:01 GMT'
+        },
+        responseBody: JSON.stringify({ status: 'healthy', uptime: '99.98%' }),
+        duration: 180,
+        success: true
+      }
+    ];
+
+    // Mock incoming webhooks
+    const mockIncomingWebhooks: IncomingWebhook[] = [
+      {
+        id: 'incoming-webhook-1',
+        name: 'GitHub Webhook',
+        description: 'Receive notifications from GitHub',
+        endpointPath: 'github-events',
+        createdAt: '2023-06-15T10:30:00Z',
+        updatedAt: '2023-06-15T10:30:00Z',
+        enabled: true,
+        lastCalledAt: '2023-06-16T14:25:00Z',
+        secretKey: 'secret123'
+      },
+      {
+        id: 'incoming-webhook-2',
+        name: 'Stripe Payment Webhook',
+        description: 'Receive payment notifications from Stripe',
+        endpointPath: 'stripe-payments',
+        createdAt: '2023-06-10T08:15:00Z',
+        updatedAt: '2023-06-10T08:15:00Z',
+        enabled: true,
+        lastCalledAt: '2023-06-12T11:45:00Z',
+        secretKey: 'whsec_abc123'
+      },
+      {
+        id: 'incoming-webhook-3',
+        name: 'Monitoring Alerts',
+        description: 'Receive alerts from monitoring system',
+        endpointPath: 'monitoring-alerts',
+        createdAt: '2023-06-05T16:20:00Z',
+        updatedAt: '2023-06-05T16:20:00Z',
+        enabled: false,
+        lastCalledAt: null
+      }
+    ];
+
+    // Mock incoming webhook logs
+    const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
+      {
+        id: 'incoming-log-1',
+        webhookId: 'incoming-webhook-1',
+        webhookName: 'GitHub Webhook',
+        timestamp: '2023-06-16T14:25:00Z',
+        requestHeaders: {
+          'User-Agent': 'GitHub-Hookshot/123456',
+          'Content-Type': 'application/json',
+          'X-GitHub-Event': 'push'
+        },
+        requestMethod: 'POST',
+        requestBody: JSON.stringify({ 
+          ref: 'refs/heads/main',
+          repository: { name: 'example-repo' },
+          commits: [{ id: 'abc123', message: 'Update README.md' }]
+        }),
+        isParsed: true,
+        parsedData: JSON.stringify({ event: 'push', repo: 'example-repo' }),
+        success: true,
+        sourceIp: '192.30.252.1',
+        contentType: 'application/json'
+      },
+      {
+        id: 'incoming-log-2',
+        webhookId: 'incoming-webhook-2',
+        webhookName: 'Stripe Payment Webhook',
+        timestamp: '2023-06-12T11:45:00Z',
+        requestHeaders: {
+          'User-Agent': 'Stripe/1.0',
+          'Content-Type': 'application/json',
+          'Stripe-Signature': 't=1623498301,v1=abc123'
         },
         requestMethod: 'POST',
         requestBody: JSON.stringify({
-          event: 'data_update',
-          timestamp: new Date().toISOString(),
-          data: {
-            id: Math.floor(Math.random() * 1000),
-            status: 'active',
-            value: Math.round(Math.random() * 100) / 10
-          }
+          id: 'evt_123456',
+          type: 'payment_intent.succeeded',
+          data: { object: { amount: 2000, currency: 'usd' } }
         }),
         isParsed: true,
-        parsedData: JSON.stringify({ 
-          event: 'data_update',
-          parsedValue: Math.round(Math.random() * 100) / 10
-        }),
+        parsedData: JSON.stringify({ event: 'payment_intent.succeeded', amount: 2000 }),
         success: true,
-        sourceIp: `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
+        sourceIp: '54.187.174.169',
         contentType: 'application/json'
+      },
+      {
+        id: 'incoming-log-3',
+        webhookId: 'incoming-webhook-1',
+        webhookName: 'GitHub Webhook',
+        timestamp: '2023-06-15T09:30:00Z',
+        requestHeaders: {
+          'User-Agent': 'GitHub-Hookshot/123456',
+          'Content-Type': 'application/json',
+          'X-GitHub-Event': 'issue'
+        },
+        requestMethod: 'POST',
+        requestBody: JSON.stringify({
+          action: 'opened',
+          issue: { number: 42, title: 'Bug report' }
+        }),
+        isParsed: false,
+        success: false,
+        sourceIp: '192.30.252.1',
+        contentType: 'application/json',
+        error: 'Invalid signature'
+      }
+    ];
+
+    setWebhooks(mockWebhooks);
+    setWebhookLogs(mockWebhookLogs);
+    setIncomingWebhooks(mockIncomingWebhooks);
+    setIncomingWebhookLogs(mockIncomingWebhookLogs);
+    setIsLoading(false);
+  }, []);
+
+  // CRUD operations for outgoing webhooks
+  const createWebhook = async (webhookData: Partial<Webhook>) => {
+    try {
+      const newWebhook: Webhook = {
+        id: uuidv4(),
+        name: webhookData.name || 'New Webhook',
+        description: webhookData.description || '',
+        url: webhookData.url || '',
+        method: webhookData.method || 'GET',
+        headers: webhookData.headers || [],
+        urlParams: webhookData.urlParams || [],
+        body: webhookData.body,
+        enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastExecutedAt: null,
+        lastExecutionStatus: null,
+        schedule: webhookData.schedule,
+        tags: webhookData.tags || []
       };
       
-      // Update the webhook's lastCalledAt field
-      const updatedWebhooks = incomingWebhooks.map(w => 
-        w.id === webhook.id 
-          ? { ...w, lastCalledAt: new Date().toISOString() }
-          : w
-      );
-      
-      // Add the new log
-      setIncomingWebhookLogs(prevLogs => [newLog, ...prevLogs]);
-      
-      // Update the webhooks
-      setIncomingWebhooks(updatedWebhooks);
-      
-      // Show a notification if it's a selected webhook
-      if (selectedIncomingWebhook?.id === webhook.id) {
-        toast.info(`Incoming webhook "${webhook.name}" received a request`, {
-          description: 'Check the logs for details'
-        });
-      }
-    };
-    
-    // Set interval to simulate incoming requests randomly every 20-60 seconds
-    const interval = setInterval(() => {
-      // 20% chance of receiving a request each interval
-      if (Math.random() < 0.2) {
-        simulateIncomingRequests();
-      }
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, [incomingWebhooks, selectedIncomingWebhook]);
+      setWebhooks(prev => [newWebhook, ...prev]);
+      toast.success('Webhook created successfully');
+    } catch (err) {
+      console.error('Error creating webhook:', err);
+      toast.error('Failed to create webhook');
+      throw err;
+    }
+  };
 
-  const value: WebhookContextType = {
-    // Outgoing webhooks
-    webhooks,
-    webhookLogs: filteredWebhookLogs,
-    isWebhookModalOpen,
-    setIsWebhookModalOpen,
-    selectedWebhook,
-    setSelectedWebhook,
-    editingWebhook,
-    setEditingWebhook,
-    isTestMode,
-    setIsTestMode,
-    testResponse,
-    setTestResponse,
-    isTestLoading,
-    setIsTestLoading,
-    
-    // Incoming webhooks
-    incomingWebhooks,
-    incomingWebhookLogs: filteredIncomingWebhookLogs,
-    isIncomingWebhookModalOpen,
-    setIsIncomingWebhookModalOpen,
-    selectedIncomingWebhook,
-    setSelectedIncomingWebhook,
-    editingIncomingWebhook,
-    setEditingIncomingWebhook,
-    
-    // Search
-    searchQuery,
-    setSearchQuery,
-    
-    // Operations
-    createWebhook,
-    updateWebhook,
-    handleEditWebhook,
-    handleDeleteWebhook,
-    executeWebhook,
-    clearTestResponse,
-    sendTestRequest,
-    createIncomingWebhook,
-    updateIncomingWebhook,
-    handleEditIncomingWebhook,
-    handleDeleteIncomingWebhook
+  const updateWebhook = async (webhook: Webhook) => {
+    try {
+      setWebhooks(prev => 
+        prev.map(w => w.id === webhook.id ? { ...webhook, updatedAt: new Date().toISOString() } : w)
+      );
+      toast.success('Webhook updated successfully');
+    } catch (err) {
+      console.error('Error updating webhook:', err);
+      toast.error('Failed to update webhook');
+      throw err;
+    }
+  };
+
+  const deleteWebhook = async (id: string) => {
+    try {
+      setWebhooks(prev => prev.filter(w => w.id !== id));
+      toast.success('Webhook deleted successfully');
+    } catch (err) {
+      console.error('Error deleting webhook:', err);
+      toast.error('Failed to delete webhook');
+      throw err;
+    }
+  };
+
+  const executeWebhook = async (webhook: Webhook, isTest = false) => {
+    try {
+      // Clear any previous test response if this is a test run
+      if (isTest) {
+        setTestResponse(null);
+      }
+      
+      const startTime = Date.now();
+      
+      // Prepare request URL with params
+      let url = webhook.url;
+      if (webhook.urlParams && webhook.urlParams.length > 0) {
+        const enabledParams = webhook.urlParams.filter(param => param.enabled);
+        if (enabledParams.length > 0) {
+          const queryParams = new URLSearchParams();
+          enabledParams.forEach(param => {
+            queryParams.append(param.key, param.value);
+          });
+          
+          // Check if URL already has query parameters
+          url += url.includes('?') ? '&' : '?';
+          url += queryParams.toString();
+        }
+      }
+      
+      // Prepare headers
+      let headers: Record<string, string> = {};
+      if (webhook.headers && webhook.headers.length > 0) {
+        webhook.headers
+          .filter(header => header.enabled)
+          .forEach(header => {
+            headers[header.key] = header.value;
+          });
+      }
+      
+      // Prepare body based on content type
+      let body: string | undefined;
+      let contentTypeHeader = '';
+      
+      if (webhook.method !== 'GET' && webhook.body) {
+        body = webhook.body.content;
+        
+        if (webhook.body.contentType === 'json') {
+          contentTypeHeader = 'application/json';
+        } else if (webhook.body.contentType === 'form') {
+          contentTypeHeader = 'application/x-www-form-urlencoded';
+        } else {
+          contentTypeHeader = 'text/plain';
+        }
+        
+        if (contentTypeHeader && !headers['Content-Type']) {
+          headers['Content-Type'] = contentTypeHeader;
+        }
+      }
+      
+      // Make HTTP request
+      const response = await fetch(url, {
+        method: webhook.method,
+        headers,
+        body,
+      });
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // Get response data
+      let responseText = '';
+      let responseData;
+      
+      try {
+        responseText = await response.text();
+        // Try to parse as JSON if it looks like JSON
+        if (responseText.trim().startsWith('{') || responseText.trim().startsWith('[')) {
+          try {
+            responseData = JSON.parse(responseText);
+            // Re-stringify with proper formatting
+            responseText = JSON.stringify(responseData, null, 2);
+          } catch {
+            // If it's not valid JSON, keep as text
+          }
+        }
+      } catch (err) {
+        console.error('Error reading response body:', err);
+      }
+      
+      // Get response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+      
+      // Create log entry
+      const logEntry: WebhookLogEntry = {
+        id: uuidv4(),
+        webhookId: webhook.id,
+        webhookName: webhook.name,
+        timestamp: new Date().toISOString(),
+        requestUrl: url,
+        requestMethod: webhook.method,
+        requestHeaders: headers,
+        requestBody: body,
+        responseStatus: response.status,
+        responseHeaders: responseHeaders,
+        responseBody: responseText,
+        duration,
+        success: response.ok
+      };
+      
+      // Record test response if in test mode
+      if (isTest) {
+        setTestResponse(logEntry);
+      } else {
+        // Add to logs
+        setWebhookLogs(prev => [logEntry, ...prev]);
+        
+        // Update webhook's last execution status
+        setWebhooks(prev => 
+          prev.map(w => 
+            w.id === webhook.id 
+              ? { 
+                  ...w, 
+                  lastExecutedAt: new Date().toISOString(), 
+                  lastExecutionStatus: response.ok ? 'success' : 'error' 
+                } 
+              : w
+          )
+        );
+        
+        toast.success(`Webhook executed: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error('Error executing webhook:', err);
+      
+      // Create error log entry
+      const errorLogEntry: WebhookLogEntry = {
+        id: uuidv4(),
+        webhookId: webhook.id,
+        webhookName: webhook.name,
+        timestamp: new Date().toISOString(),
+        requestUrl: webhook.url,
+        requestMethod: webhook.method,
+        requestHeaders: {},
+        responseStatus: 0,
+        responseHeaders: {},
+        duration: 0,
+        success: false,
+        error: err instanceof Error ? err.message : 'Network error'
+      };
+      
+      // Record error in test response if in test mode
+      if (isTest) {
+        setTestResponse(errorLogEntry);
+      } else {
+        // Add to logs
+        setWebhookLogs(prev => [errorLogEntry, ...prev]);
+        
+        // Update webhook's last execution status
+        setWebhooks(prev => 
+          prev.map(w => 
+            w.id === webhook.id 
+              ? { 
+                  ...w, 
+                  lastExecutedAt: new Date().toISOString(), 
+                  lastExecutionStatus: 'error' 
+                } 
+              : w
+          )
+        );
+        
+        toast.error(`Failed to execute webhook: ${err instanceof Error ? err.message : 'Network error'}`);
+      }
+    }
+  };
+
+  // CRUD operations for incoming webhooks
+  const createIncomingWebhook = async (webhookData: Partial<IncomingWebhook>) => {
+    try {
+      const newWebhook: IncomingWebhook = {
+        id: uuidv4(),
+        name: webhookData.name || 'New Incoming Webhook',
+        description: webhookData.description || '',
+        endpointPath: webhookData.endpointPath || '',
+        enabled: webhookData.enabled !== undefined ? webhookData.enabled : true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastCalledAt: null,
+        secretKey: uuidv4().slice(0, 8),
+        tags: webhookData.tags || []
+      };
+      
+      setIncomingWebhooks(prev => [newWebhook, ...prev]);
+      toast.success('Incoming webhook created successfully');
+    } catch (err) {
+      console.error('Error creating incoming webhook:', err);
+      toast.error('Failed to create incoming webhook');
+      throw err;
+    }
+  };
+
+  const updateIncomingWebhook = async (webhook: IncomingWebhook) => {
+    try {
+      setIncomingWebhooks(prev => 
+        prev.map(w => w.id === webhook.id ? { ...webhook, updatedAt: new Date().toISOString() } : w)
+      );
+      toast.success('Incoming webhook updated successfully');
+    } catch (err) {
+      console.error('Error updating incoming webhook:', err);
+      toast.error('Failed to update incoming webhook');
+      throw err;
+    }
+  };
+
+  const deleteIncomingWebhook = async (id: string) => {
+    try {
+      setIncomingWebhooks(prev => prev.filter(w => w.id !== id));
+      toast.success('Incoming webhook deleted successfully');
+    } catch (err) {
+      console.error('Error deleting incoming webhook:', err);
+      toast.error('Failed to delete incoming webhook');
+      throw err;
+    }
+  };
+
+  // UI Operations
+  const handleEditWebhook = (webhook: Webhook) => {
+    setSelectedWebhook(webhook);
+    setIsWebhookModalOpen(true);
+  };
+
+  const handleDeleteWebhook = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this webhook?')) {
+      deleteWebhook(id);
+    }
+  };
+
+  const handleEditIncomingWebhook = (webhook: IncomingWebhook) => {
+    setSelectedIncomingWebhook(webhook);
+    setIsIncomingWebhookModalOpen(true);
+  };
+
+  const handleDeleteIncomingWebhook = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this incoming webhook?')) {
+      deleteIncomingWebhook(id);
+    }
+  };
+
+  const clearTestResponse = () => {
+    setTestResponse(null);
   };
 
   return (
-    <WebhookContext.Provider value={value}>
+    <WebhookContext.Provider
+      value={{
+        webhooks,
+        webhookLogs,
+        incomingWebhooks,
+        incomingWebhookLogs,
+        isLoading,
+        error,
+        selectedWebhook,
+        setSelectedWebhook,
+        selectedIncomingWebhook,
+        setSelectedIncomingWebhook,
+        isWebhookModalOpen,
+        setIsWebhookModalOpen,
+        isIncomingWebhookModalOpen,
+        setIsIncomingWebhookModalOpen,
+        isTestMode,
+        setIsTestMode,
+        testResponse,
+        searchQuery,
+        setSearchQuery,
+        createWebhook,
+        updateWebhook,
+        deleteWebhook,
+        executeWebhook,
+        createIncomingWebhook,
+        updateIncomingWebhook,
+        deleteIncomingWebhook,
+        handleEditWebhook,
+        handleDeleteWebhook,
+        handleEditIncomingWebhook,
+        handleDeleteIncomingWebhook,
+        clearTestResponse
+      }}
+    >
       {children}
     </WebhookContext.Provider>
   );
+};
+
+export const useWebhookContext = () => {
+  const context = useContext(WebhookContext);
+  if (context === undefined) {
+    throw new Error('useWebhookContext must be used within a WebhookProvider');
+  }
+  return context;
 };

@@ -108,6 +108,15 @@ export const WebhookTestPanel: React.FC<WebhookTestPanelProps> = ({ webhook }) =
                       {testResponse.body || 'No response body'}
                     </pre>
                   </div>
+
+                  {testResponse.error && (
+                    <div>
+                      <h4 className="text-sm font-medium text-destructive">Error</h4>
+                      <pre className="text-xs bg-destructive/10 text-destructive p-2 rounded-md mt-1 overflow-auto max-h-32">
+                        {testResponse.error}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
