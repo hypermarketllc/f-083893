@@ -68,9 +68,9 @@ export interface WebhookLogEntry {
   duration: number;
   success: boolean;
   error?: string;
-  // Add missing properties
-  requestTime: string;
-  responseTime: string | null;
+  // Make these optional with ? to fix the errors
+  requestTime?: string;
+  responseTime?: string | null;
   url?: string;
   method?: HttpMethod;
   requestQuery?: Record<string, string>;
@@ -122,7 +122,7 @@ export interface IncomingWebhookLogEntry {
   sourceIp: string;
   contentType: string;
   error?: string;
-  // Add missing properties
+  // Make these optional with ? to fix the errors
   responseStatus?: number;
   endpointPath?: string;
   responseBody?: string;

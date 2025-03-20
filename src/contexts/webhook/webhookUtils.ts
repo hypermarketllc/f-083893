@@ -21,7 +21,7 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
       duration: 0,
       success: false,
       error: 'No log data available',
-      // Add missing properties
+      // Provide default values for optional fields
       requestTime: new Date().toISOString(),
       responseTime: null,
       body: '{}',
@@ -29,7 +29,7 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
     };
   }
 
-  // Ensure all required fields exist
+  // Ensure all required fields exist and provide defaults for optional fields
   return {
     ...log,
     id: log.id || 'placeholder-id',
@@ -46,6 +46,7 @@ export const ensureLogEntryFields = (log: WebhookLogEntry): WebhookLogEntry => {
     duration: log.duration || 0,
     success: log.success !== undefined ? log.success : false,
     error: log.error || undefined,
+    // Provide defaults for optional fields
     requestTime: log.requestTime || log.timestamp || new Date().toISOString(),
     responseTime: log.responseTime || null,
     body: log.responseBody || '{}',
@@ -72,7 +73,7 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
       sourceIp: 'unknown',
       contentType: 'application/json',
       error: 'No log data available',
-      // Additional properties needed for UI
+      // Default values for optional fields
       responseStatus: 404,
       endpointPath: '/webhook',
       requestBody: '{}',
@@ -80,7 +81,7 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
     };
   }
 
-  // Ensure all required fields exist
+  // Ensure all required fields exist and provide defaults for optional fields
   return {
     ...log,
     id: log.id || 'placeholder-id',
@@ -97,7 +98,7 @@ export const ensureIncomingLogEntryFields = (log: IncomingWebhookLogEntry): Inco
     sourceIp: log.sourceIp || log.ipAddress || 'Unknown',
     contentType: log.contentType || 'application/json',
     error: log.error || undefined,
-    // Additional properties needed for UI
+    // Default values for optional fields
     responseStatus: log.responseStatus || 200,
     endpointPath: log.endpointPath || '/webhook',
     responseBody: log.responseBody || '{}'
