@@ -16,6 +16,11 @@ export const useWebhookOperations = ({
   setTestResponse,
   setIsTestLoading
 }: UseWebhookOperationsParams) => {
+
+  const clearTestResponse = () => {
+    setTestResponse(null);
+  };
+  
   // Execute a webhook and return the result
   const executeWebhook = async (webhook: Webhook, isTest: boolean = false): Promise<WebhookTestResponse | null> => {
     setIsTestLoading(true);
@@ -201,103 +206,22 @@ export const useWebhookOperations = ({
         }
       }
       
-      setIsTestLoading(false);
-      return {
+      const testResponse: WebhookTestResponse = {
         status: statusCode,
         headers: responseHeaders,
         body: responseBody,
         duration,
         error: !success ? (statusCode === 400 ? "Bad Request" : "Internal Server Error") : undefined
       };
+      
+      setIsTestLoading(false);
+      return testResponse;
+      
     } catch (error) {
       console.error('Failed to execute webhook:', error);
       
-      // Create error log entry
-      const errorLogEntry: WebhookLogEntry = {
-        id: uuidv4(),
-        webhookId: webhook.id,
-        webhookName: webhook.name,
-        timestamp: new Date().toISOString(),
-        requestUrl: webhook.url,
-        requestMethod: webhook.method,
-        requestHeaders: {},
-        responseStatus: 0,
-        responseHeaders: {},
-        duration: 0,
-        success: false,
-        error: error instanceof Error ? error.message : 'Network error'
-      };
-      
-      // For test mode, update the test response
-      if (isTest) {
-        setTestResponse(errorLogEntry);
-      } else {
-        try {
-          // Save error log to Supabase
-          const { error: logError } = await supabase
-            .from('webhook_logs')
-            .insert({
-              webhook_id: webhook.id,
-              timestamp: new Date().toISOString(),
-              request_url: webhook.url,
-              request_method: webhook.method,
-              request_headers: {},
-              response_status: 0,
-              duration: 0,
-              success: false,
-              error: error instanceof Error ? error.message : 'Network error'
-            });
-          
-          if (logError) {
-            console.error('Error saving webhook error log:', logError);
-          }
-          
-          // Update webhook's last execution status in Supabase
-          const { error: webhookError } = await supabase
-            .from('webhooks')
-            .update({
-              last_executed_at: new Date().toISOString(),
-              last_execution_status: 'error'
-            })
-            .eq('id', webhook.id);
-          
-          if (webhookError) {
-            console.error('Error updating webhook error status:', webhookError);
-          }
-        } catch (dbError) {
-          console.error('Error recording webhook execution error:', dbError);
-        }
-        
-        // For normal execution, add to logs and update webhook status
-        setWebhookLogs(prev => [errorLogEntry, ...prev]);
-        
-        // Update webhook's last execution status
-        setWebhooks(prev => 
-          prev.map(w => 
-            w.id === webhook.id 
-              ? { 
-                  ...w, 
-                  lastExecutedAt: new Date().toISOString(), 
-                  lastExecutionStatus: 'error' 
-                } 
-              : w
-          )
-        );
-        
-        // Update selected webhook if it's the one being executed
-        if (selectedWebhook && selectedWebhook.id === webhook.id) {
-          setSelectedWebhook({
-            ...selectedWebhook,
-            lastExecutedAt: new Date().toISOString(),
-            lastExecutionStatus: 'error'
-          });
-        }
-        
-        toast.error(`Failed to execute webhook: ${error instanceof Error ? error.message : 'Network error'}`);
-      }
-      
-      setIsTestLoading(false);
-      return {
+      // Create an error response
+      const errorResponse: WebhookTestResponse = {
         status: 0,
         headers: {},
         body: JSON.stringify({ 
@@ -306,13 +230,32 @@ export const useWebhookOperations = ({
           message: 'Failed to connect to the server'
         }, null, 2),
         duration: 0,
-        error: error instanceof Error ? error.message : 'Network error'
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
+      
+      if (isTest) {
+        setTestResponse({
+          id: uuidv4(),
+          webhookId: webhook.id,
+          webhookName: webhook.name,
+          timestamp: new Date().toISOString(),
+          requestUrl: webhook.url,
+          requestMethod: webhook.method,
+          requestHeaders: {},
+          responseStatus: 0,
+          responseHeaders: {},
+          responseBody: errorResponse.body,
+          duration: 0,
+          success: false,
+          error: errorResponse.error
+        });
+      } else {
+        toast.error(`Failed to execute webhook: ${errorResponse.error}`);
+      }
+      
+      setIsTestLoading(false);
+      return errorResponse;
     }
-  };
-  
-  const clearTestResponse = () => {
-    setTestResponse(null);
   };
   
   const sendTestRequest = (webhook: Webhook) => {

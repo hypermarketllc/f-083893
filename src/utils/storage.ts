@@ -1,79 +1,42 @@
 
-/**
- * Helper functions for storing data in localStorage
- */
+import { UserSettings } from '@/types/userSettings';
 
-// Store a value in localStorage
-export const storeValue = <T>(key: string, value: T): void => {
+// Get user settings from localStorage
+export const getUserSettings = (userId: string): Partial<UserSettings> => {
   try {
-    const serialized = JSON.stringify(value);
-    localStorage.setItem(key, serialized);
-  } catch (error) {
-    console.error(`Error storing ${key} in localStorage:`, error);
-  }
-};
-
-// Get a value from localStorage
-export const getValue = <T>(key: string, defaultValue: T): T => {
-  try {
-    const serialized = localStorage.getItem(key);
-    if (serialized === null) {
-      return defaultValue;
+    const storedSettings = localStorage.getItem(`user_settings_${userId}`);
+    if (storedSettings) {
+      return JSON.parse(storedSettings);
     }
-    return JSON.parse(serialized) as T;
+    return {};
   } catch (error) {
-    console.error(`Error retrieving ${key} from localStorage:`, error);
-    return defaultValue;
+    console.error('Error retrieving user settings from localStorage:', error);
+    return {};
   }
 };
 
-// Check if a key exists in localStorage
-export const hasKey = (key: string): boolean => {
-  return localStorage.getItem(key) !== null;
-};
-
-// Remove a value from localStorage
-export const removeValue = (key: string): void => {
+// Store user settings in localStorage
+export const storeUserSettings = (userId: string, settings: Partial<UserSettings>): void => {
   try {
-    localStorage.removeItem(key);
+    const existingSettings = getUserSettings(userId);
+    const updatedSettings = { ...existingSettings, ...settings };
+    localStorage.setItem(`user_settings_${userId}`, JSON.stringify(updatedSettings));
   } catch (error) {
-    console.error(`Error removing ${key} from localStorage:`, error);
+    console.error('Error storing user settings in localStorage:', error);
   }
 };
 
-// Clear all values from localStorage
-export const clearAll = (): void => {
-  try {
-    localStorage.clear();
-  } catch (error) {
-    console.error('Error clearing localStorage:', error);
-  }
-};
-
-// Settings-specific storage
-type UserSettings = {
-  accentColor?: string;
-  theme?: 'light' | 'dark' | 'system';
-  sidebarCollapsed?: boolean;
-};
-
-// Store user settings
-export const storeUserSettings = (userId: string, settings: UserSettings): void => {
-  storeValue(`user_settings_${userId}`, settings);
-};
-
-// Get user settings
-export const getUserSettings = (userId: string): UserSettings => {
-  return getValue<UserSettings>(`user_settings_${userId}`, {});
-};
-
-// Update a specific user setting
+// Update a single user setting
 export const updateUserSetting = <K extends keyof UserSettings>(
   userId: string, 
-  key: K, 
+  key: K,
   value: UserSettings[K]
 ): void => {
-  const settings = getUserSettings(userId);
-  settings[key] = value;
-  storeUserSettings(userId, settings);
+  try {
+    const existingSettings = getUserSettings(userId);
+    existingSettings[key] = value;
+    storeUserSettings(userId, existingSettings);
+  } catch (error) {
+    console.error(`Error updating user setting '${key}' in localStorage:`, error);
+  }
 };

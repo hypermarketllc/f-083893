@@ -23,6 +23,8 @@ export interface DbUserSettings {
 }
 
 export const mapDbSettingsToUserSettings = (dbSettings: any): UserSettings => {
+  if (!dbSettings) return null as unknown as UserSettings;
+  
   return {
     theme: dbSettings.theme as 'light' | 'dark' | 'system',
     accentColor: dbSettings.accent_color || '#7C3AED',

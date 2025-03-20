@@ -8,7 +8,7 @@ import { AuthContext } from './AuthContext';
 import { UserProfile, AuthContextType } from './types';
 import { handleAuthError } from './authErrorHandler';
 import { storeUserSettings, getUserSettings, updateUserSetting } from '@/utils/storage';
-import { mapDbSettingsToUserSettings } from '@/types/userSettings';
+import { loadUserSettings, applyUserSettings, saveUserSettings } from './authUtils';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     if (currentSession?.user) {
       const { id, email } = currentSession.user;
-      const userData: UserProfile = {
+      let userData: UserProfile = {
         id,
         email,
         firstName: currentSession.user.user_metadata?.first_name,
@@ -37,33 +37,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       try {
         // Load user settings from Supabase if available
-        const { data: userSettings, error } = await supabase
-          .from('user_settings' as any)
-          .select('*')
-          .eq('user_id', id)
-          .maybeSingle();
+        const dbSettings = await loadUserSettings(id);
         
-        if (error) {
-          console.error("Error fetching user settings:", error);
-        } else if (userSettings) {
+        if (dbSettings) {
           // Apply settings from the database
-          if (userSettings.accent_color) {
-            userData.accentColor = userSettings.accent_color;
-            document.documentElement.style.setProperty('--accent-color', userSettings.accent_color);
-          }
-          
-          // Apply theme
-          if (userSettings.theme) {
-            const htmlElement = document.documentElement;
-            htmlElement.setAttribute('data-theme', userSettings.theme);
-            localStorage.setItem('theme', userSettings.theme);
-          }
-          
-          // Apply font scale
-          if (userSettings.font_scale) {
-            document.documentElement.style.fontSize = `${userSettings.font_scale * 100}%`;
-            localStorage.setItem('font-scale', userSettings.font_scale.toString());
-          }
+          userData = applyUserSettings(userData, dbSettings);
         } else {
           // Fallback to localStorage settings
           const settings = getUserSettings(id);
@@ -91,8 +69,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Set up auth state listener and check for existing session
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth event:", event);
@@ -100,7 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // THEN check for existing session
     const initializeAuth = async () => {
       try {
         setLoading(true);
@@ -114,19 +91,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     initializeAuth();
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Authentication functions
   const signIn = async (email: string, password: string, rememberMe: boolean = false) => {
     try {
-      // Disable email verification for faster debugging
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
         handleAuthError(error, "Sign in", toast);
@@ -150,7 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, metadata?: { first_name?: string; last_name?: string }) => {
     try {
-      // Disable email verification for faster debugging
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -231,9 +201,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const updatePassword = async (password: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
+      const { error } = await supabase.auth.updateUser({ password });
       
       if (error) {
         handleAuthError(error, "Password update", toast);
@@ -277,46 +245,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Update user settings in Supabase if we have accent color
       if (userData.accentColor) {
-        try {
-          // Check if user settings exist
-          const { data: existingSettings, error: checkError } = await supabase
-            .from('user_settings' as any)
-            .select('*')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (checkError) {
-            console.error("Error checking user settings:", checkError);
-          }
-          
-          if (existingSettings) {
-            // Update existing settings
-            const { error } = await supabase
-              .from('user_settings' as any)
-              .update({ accent_color: userData.accentColor })
-              .eq('user_id', user.id);
-            
-            if (error) {
-              console.error("Error updating user settings:", error);
-            }
-          } else {
-            // Create new settings
-            const { error } = await supabase
-              .from('user_settings' as any)
-              .insert({ user_id: user.id, accent_color: userData.accentColor });
-            
-            if (error) {
-              console.error("Error creating user settings:", error);
-            }
-          }
-          
+        const success = await saveUserSettings(user.id, { accent_color: userData.accentColor });
+        
+        if (success) {
           // Apply accent color
           document.documentElement.style.setProperty('--accent-color', userData.accentColor);
           
           // Also save to localStorage as backup
           updateUserSetting(user.id, 'accentColor', userData.accentColor);
-        } catch (error) {
-          console.error("Error saving accent color:", error);
         }
       }
 

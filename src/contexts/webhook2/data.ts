@@ -1,156 +1,18 @@
 
-import { 
-  Webhook, 
-  WebhookLogEntry, 
-  IncomingWebhook, 
-  IncomingWebhookLogEntry 
-} from '@/types/webhook2';
-import { v4 as uuidv4 } from 'uuid';
+import { IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook2';
 
-// Mock webhooks
-export const mockWebhooks: Webhook[] = [
-  {
-    id: 'webhook-1',
-    name: 'Daily Sales Report',
-    description: 'Sends daily sales data to the analytics service',
-    url: 'https://api.example.com/analytics/sales',
-    method: 'POST',
-    headers: [
-      { id: 'header-1', key: 'Content-Type', value: 'application/json', enabled: true },
-      { id: 'header-2', key: 'Authorization', value: 'Bearer token123', enabled: true }
-    ],
-    params: [
-      { id: 'param-1', key: 'source', value: 'dashboard', enabled: true }
-    ],
-    body: {
-      contentType: 'json',
-      content: JSON.stringify({ type: 'sales', format: 'daily' }, null, 2)
-    },
-    enabled: true,
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    lastExecutedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    lastExecutionStatus: 'success',
-    tags: [
-      { id: 'tag-1', name: 'Production', color: '#69db7c' },
-      { id: 'tag-4', name: 'Important', color: '#ff6b6b' }
-    ],
-    schedule: {
-      type: 'daily',
-      time: '08:00'
-    }
-  },
-  {
-    id: 'webhook-2',
-    name: 'Slack Notification',
-    description: 'Sends alerts to Slack when errors occur',
-    url: 'https://hooks.slack.com/services/XXX/YYY/ZZZ',
-    method: 'POST',
-    headers: [
-      { id: 'header-3', key: 'Content-Type', value: 'application/json', enabled: true }
-    ],
-    params: [],
-    body: {
-      contentType: 'json',
-      content: JSON.stringify({ text: 'An error has occurred!' }, null, 2)
-    },
-    enabled: true,
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    lastExecutedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    lastExecutionStatus: 'error',
-    tags: [
-      { id: 'tag-2', name: 'Development', color: '#4dabf7' }
-    ]
-  },
-  {
-    id: 'webhook-3',
-    name: 'User Sync',
-    description: 'Synchronizes user data with CRM',
-    url: 'https://api.crm.example.com/users/sync',
-    method: 'PUT',
-    headers: [
-      { id: 'header-4', key: 'Content-Type', value: 'application/json', enabled: true },
-      { id: 'header-5', key: 'X-API-Key', value: 'api_key_789', enabled: true }
-    ],
-    params: [
-      { id: 'param-2', key: 'full', value: 'true', enabled: false }
-    ],
-    body: {
-      contentType: 'json',
-      content: JSON.stringify({ action: 'sync', target: 'users' }, null, 2)
-    },
-    enabled: false,
-    createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    lastExecutedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    lastExecutionStatus: 'success',
-    tags: [
-      { id: 'tag-3', name: 'Testing', color: '#ff922b' }
-    ]
-  }
-];
-
-// Generate mock webhook logs
-export const generateMockWebhookLogs = (): WebhookLogEntry[] => {
-  const logs: WebhookLogEntry[] = [];
-  
-  mockWebhooks.forEach(webhook => {
-    // Generate 1-5 logs per webhook
-    const logCount = Math.floor(Math.random() * 5) + 1;
-    
-    for (let i = 0; i < logCount; i++) {
-      const isSuccess = Math.random() > 0.3;
-      const timestamp = new Date(Date.now() - i * Math.random() * 24 * 60 * 60 * 1000).toISOString();
-      const duration = Math.floor(Math.random() * 2000) + 100;
-      
-      logs.push({
-        id: `log-${uuidv4()}`,
-        webhookId: webhook.id,
-        webhookName: webhook.name,
-        timestamp,
-        requestUrl: webhook.url,
-        requestMethod: webhook.method,
-        requestHeaders: webhook.headers.reduce((acc, h) => {
-          if (h.enabled) acc[h.key] = h.value;
-          return acc;
-        }, {} as Record<string, string>),
-        requestBody: webhook.body?.content,
-        responseStatus: isSuccess ? 200 : (Math.random() > 0.5 ? 400 : 500),
-        responseHeaders: {
-          'content-type': 'application/json',
-          'server': 'nginx',
-          'cache-control': 'no-cache'
-        },
-        responseBody: isSuccess 
-          ? JSON.stringify({ success: true, message: "Operation completed" })
-          : JSON.stringify({ error: "Something went wrong" }),
-        duration,
-        success: isSuccess,
-        error: isSuccess ? undefined : "API returned an error response"
-      });
-    }
-  });
-  
-  // Sort logs by timestamp (newest first)
-  return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-};
-
-// Mock webhook logs
-export const mockWebhookLogs: WebhookLogEntry[] = generateMockWebhookLogs();
-
-// Mock incoming webhooks
+// Mock data for incoming webhooks
 export const mockIncomingWebhooks: IncomingWebhook[] = [
   {
     id: 'incoming-webhook-1',
-    name: 'GitHub Events',
-    description: 'Receives webhook events from GitHub',
-    endpointPath: '/github',
+    name: 'GitHub Push Events',
+    description: 'Receives push events from GitHub repositories',
+    endpointPath: '/github-events',
     enabled: true,
-    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    lastCalledAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    secretKey: 'gh_secret_123',
+    createdAt: '2023-09-15T10:30:00Z',
+    updatedAt: '2023-09-15T10:30:00Z',
+    lastCalledAt: '2023-09-20T14:25:10Z',
+    secretKey: 'abc123',
     tags: [
       { id: 'tag-1', name: 'Production', color: '#69db7c' },
       { id: 'tag-4', name: 'Important', color: '#ff6b6b' }
@@ -158,80 +20,176 @@ export const mockIncomingWebhooks: IncomingWebhook[] = [
   },
   {
     id: 'incoming-webhook-2',
-    name: 'Stripe Payments',
+    name: 'Stripe Payment Events',
     description: 'Receives payment events from Stripe',
-    endpointPath: '/stripe',
+    endpointPath: '/stripe-events',
     enabled: true,
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    lastCalledAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    secretKey: 'stripe_secret_456',
+    createdAt: '2023-09-18T15:45:00Z',
+    updatedAt: '2023-09-18T15:45:00Z',
+    lastCalledAt: '2023-09-19T09:12:33Z',
+    secretKey: 'def456',
     tags: [
       { id: 'tag-3', name: 'Testing', color: '#ff922b' }
     ]
   },
   {
     id: 'incoming-webhook-3',
-    name: 'Custom Integration',
-    description: 'Endpoint for partner API integration',
-    endpointPath: '/partner-api',
+    name: 'SendGrid Email Events',
+    description: 'Receives email delivery events from SendGrid',
+    endpointPath: '/sendgrid-events',
     enabled: false,
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: '2023-09-20T08:15:00Z',
+    updatedAt: '2023-09-20T09:30:00Z',
     lastCalledAt: null,
-    secretKey: 'partner_secret_789',
+    secretKey: 'ghi789',
     tags: [
       { id: 'tag-2', name: 'Development', color: '#4dabf7' }
     ]
   }
 ];
 
-// Generate mock incoming webhook logs
-export const generateMockIncomingWebhookLogs = (): IncomingWebhookLogEntry[] => {
-  const logs: IncomingWebhookLogEntry[] = [];
-  
-  mockIncomingWebhooks.forEach(webhook => {
-    // Only generate logs for enabled webhooks with lastCalledAt
-    if (webhook.enabled && webhook.lastCalledAt) {
-      // Generate 1-7 logs per webhook
-      const logCount = Math.floor(Math.random() * 7) + 1;
-      
-      for (let i = 0; i < logCount; i++) {
-        const isSuccess = Math.random() > 0.2;
-        const timestamp = new Date(Date.now() - i * Math.random() * 24 * 60 * 60 * 1000).toISOString();
-        
-        logs.push({
-          id: `incoming-log-${uuidv4()}`,
-          webhookId: webhook.id,
-          webhookName: webhook.name,
-          timestamp,
-          requestHeaders: {
-            'content-type': 'application/json',
-            'user-agent': 'Mozilla/5.0',
-            'x-request-id': `req-${uuidv4().substring(0, 8)}`
+// Mock data for incoming webhook logs
+export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = [
+  {
+    id: 'incoming-log-1',
+    webhookId: 'incoming-webhook-1',
+    webhookName: 'GitHub Push Events',
+    timestamp: '2023-09-20T14:25:10Z',
+    requestHeaders: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'GitHub-Hookshot/12345',
+      'X-GitHub-Event': 'push',
+      'X-Hub-Signature': 'sha1=abcdef1234567890'
+    },
+    requestMethod: 'POST',
+    requestBody: JSON.stringify({
+      ref: 'refs/heads/main',
+      repository: {
+        name: 'webhook-demo',
+        owner: {
+          name: 'acme-org'
+        }
+      },
+      pusher: {
+        name: 'johndoe',
+        email: 'john@example.com'
+      },
+      commits: [
+        {
+          id: '123456',
+          message: 'Fix bug in webhook handler',
+          author: {
+            name: 'John Doe',
+            email: 'john@example.com'
           },
-          requestMethod: 'POST',
-          requestBody: JSON.stringify({ event: 'update', payload: { id: '123', status: 'completed' } }),
-          queryParams: i % 2 === 0 ? { source: 'api' } : {},
-          responseStatus: isSuccess ? 200 : 400,
-          endpointPath: webhook.endpointPath,
-          responseBody: isSuccess 
-            ? JSON.stringify({ received: true })
-            : JSON.stringify({ error: "Invalid payload" }),
-          isParsed: isSuccess,
-          parsedData: isSuccess ? JSON.stringify({ id: '123', status: 'completed' }) : undefined,
-          success: isSuccess,
-          sourceIp: `192.168.1.${Math.floor(Math.random() * 255)}`,
-          contentType: 'application/json',
-          error: isSuccess ? undefined : "Failed to process webhook payload"
-        });
+          timestamp: '2023-09-20T14:24:10Z'
+        }
+      ]
+    }),
+    queryParams: {},
+    responseStatus: 200,
+    endpointPath: '/github-events',
+    responseBody: JSON.stringify({ status: 'success' }),
+    isParsed: true,
+    parsedData: JSON.stringify({
+      event: 'push',
+      repo: 'webhook-demo',
+      branch: 'main',
+      author: 'johndoe',
+      commitCount: 1
+    }),
+    success: true,
+    sourceIp: '192.30.252.40',
+    contentType: 'application/json'
+  },
+  {
+    id: 'incoming-log-2',
+    webhookId: 'incoming-webhook-2',
+    webhookName: 'Stripe Payment Events',
+    timestamp: '2023-09-19T09:12:33Z',
+    requestHeaders: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'Stripe/1.0',
+      'Stripe-Signature': 't=1632027153,v1=abcdef1234567890'
+    },
+    requestMethod: 'POST',
+    requestBody: JSON.stringify({
+      id: 'evt_1234567890',
+      type: 'payment_intent.succeeded',
+      data: {
+        object: {
+          id: 'pi_1234567890',
+          amount: 2000,
+          currency: 'usd',
+          status: 'succeeded',
+          customer: 'cus_1234567890'
+        }
       }
-    }
-  });
-  
-  // Sort logs by timestamp (newest first)
-  return logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-};
-
-// Mock incoming webhook logs
-export const mockIncomingWebhookLogs: IncomingWebhookLogEntry[] = generateMockIncomingWebhookLogs();
+    }),
+    queryParams: {},
+    responseStatus: 200,
+    endpointPath: '/stripe-events',
+    responseBody: JSON.stringify({ received: true }),
+    isParsed: true,
+    parsedData: JSON.stringify({
+      event: 'payment_intent.succeeded',
+      amount: '$20.00',
+      customer: 'cus_1234567890',
+      paymentId: 'pi_1234567890'
+    }),
+    success: true,
+    sourceIp: '54.187.174.169',
+    contentType: 'application/json'
+  },
+  {
+    id: 'incoming-log-3',
+    webhookId: 'incoming-webhook-1',
+    webhookName: 'GitHub Push Events',
+    timestamp: '2023-09-20T08:30:15Z',
+    requestHeaders: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'GitHub-Hookshot/12345',
+      'X-GitHub-Event': 'pull_request',
+      'X-Hub-Signature': 'sha1=abcdef1234567890'
+    },
+    requestMethod: 'POST',
+    requestBody: JSON.stringify({
+      action: 'opened',
+      pull_request: {
+        number: 42,
+        title: 'Add new feature',
+        user: {
+          login: 'janedoe'
+        },
+        head: {
+          ref: 'feature-branch'
+        },
+        base: {
+          ref: 'main'
+        }
+      },
+      repository: {
+        name: 'webhook-demo',
+        owner: {
+          login: 'acme-org'
+        }
+      }
+    }),
+    queryParams: {},
+    responseStatus: 400,
+    endpointPath: '/github-events',
+    responseBody: JSON.stringify({ 
+      status: 'error', 
+      message: 'Unsupported event type' 
+    }),
+    isParsed: true,
+    parsedData: JSON.stringify({
+      error: 'Unsupported event type: pull_request',
+      supportedEvents: ['push', 'release']
+    }),
+    success: false,
+    sourceIp: '192.30.252.41',
+    contentType: 'application/json',
+    error: 'Unsupported event type: pull_request'
+  }
+];

@@ -18,65 +18,94 @@ export const toJson = <T>(value: T): Json => {
 
 // Helper function to safely convert Json to a typed value
 export const fromJson = <T>(json: Json | null): T => {
-  return (json ?? null) as unknown as T;
+  if (json === null) return null as unknown as T;
+  
+  try {
+    // Handle cases where the json is already the right type
+    return json as unknown as T;
+  } catch (error) {
+    console.error('Error parsing JSON:', error);
+    return null as unknown as T;
+  }
 };
 
 // Helper function to convert snake_case database fields to camelCase models
 export const mapDbWebhookToWebhook = (dbWebhook: any): Webhook => {
-  return {
-    id: dbWebhook.id,
-    name: dbWebhook.name,
-    description: dbWebhook.description || '',
-    url: dbWebhook.url,
-    method: dbWebhook.method as HttpMethod,
-    headers: fromJson<WebhookHeader[]>(dbWebhook.headers) || [],
-    params: fromJson<WebhookParam[]>(dbWebhook.params) || [],
-    body: fromJson<WebhookBody>(dbWebhook.body),
-    enabled: dbWebhook.enabled,
-    createdAt: dbWebhook.created_at,
-    updatedAt: dbWebhook.updated_at,
-    lastExecutedAt: dbWebhook.last_executed_at,
-    lastExecutionStatus: dbWebhook.last_execution_status as ExecutionStatus,
-    tags: fromJson<WebhookTag[]>(dbWebhook.tags) || [],
-    userId: dbWebhook.user_id,
-  };
+  if (!dbWebhook) return null as unknown as Webhook;
+  
+  try {
+    return {
+      id: dbWebhook.id,
+      name: dbWebhook.name,
+      description: dbWebhook.description || '',
+      url: dbWebhook.url,
+      method: dbWebhook.method as HttpMethod,
+      headers: fromJson<WebhookHeader[]>(dbWebhook.headers) || [],
+      params: fromJson<WebhookParam[]>(dbWebhook.params) || [],
+      body: fromJson<WebhookBody>(dbWebhook.body) || { contentType: 'json', content: '{}' },
+      enabled: dbWebhook.enabled,
+      createdAt: dbWebhook.created_at,
+      updatedAt: dbWebhook.updated_at,
+      lastExecutedAt: dbWebhook.last_executed_at,
+      lastExecutionStatus: dbWebhook.last_execution_status as ExecutionStatus,
+      tags: fromJson<WebhookTag[]>(dbWebhook.tags) || [],
+      userId: dbWebhook.user_id,
+    };
+  } catch (error) {
+    console.error('Error mapping DB webhook to webhook:', error, dbWebhook);
+    throw error;
+  }
 };
 
 // Helper function to convert from model to database format
 export const mapWebhookToDbWebhook = (webhook: Webhook): any => {
-  return {
-    id: webhook.id,
-    name: webhook.name,
-    description: webhook.description,
-    url: webhook.url,
-    method: webhook.method,
-    headers: toJson<WebhookHeader[]>(webhook.headers),
-    params: toJson<WebhookParam[]>(webhook.params),
-    body: toJson<WebhookBody>(webhook.body),
-    enabled: webhook.enabled,
-    tags: toJson<WebhookTag[]>(webhook.tags),
-    last_executed_at: webhook.lastExecutedAt,
-    last_execution_status: webhook.lastExecutionStatus,
-    user_id: webhook.userId
-  };
+  if (!webhook) return null;
+  
+  try {
+    return {
+      id: webhook.id,
+      name: webhook.name,
+      description: webhook.description,
+      url: webhook.url,
+      method: webhook.method,
+      headers: toJson<WebhookHeader[]>(webhook.headers || []),
+      params: toJson<WebhookParam[]>(webhook.params || []),
+      body: toJson<WebhookBody>(webhook.body || { contentType: 'json', content: '{}' }),
+      enabled: webhook.enabled,
+      tags: toJson<WebhookTag[]>(webhook.tags || []),
+      last_executed_at: webhook.lastExecutedAt,
+      last_execution_status: webhook.lastExecutionStatus,
+      user_id: webhook.userId
+    };
+  } catch (error) {
+    console.error('Error mapping webhook to DB webhook:', error, webhook);
+    throw error;
+  }
 };
 
 // Helper function to convert webhook log entries from database format
 export const mapDbLogToWebhookLog = (dbLog: any, webhookName?: string): WebhookLogEntry => {
-  return {
-    id: dbLog.id,
-    webhookId: dbLog.webhook_id,
-    webhookName: webhookName || 'Unknown Webhook',
-    timestamp: dbLog.timestamp,
-    requestUrl: dbLog.request_url,
-    requestMethod: dbLog.request_method as HttpMethod,
-    requestHeaders: fromJson<Record<string, string>>(dbLog.request_headers) || {},
-    requestBody: dbLog.request_body,
-    responseStatus: dbLog.response_status,
-    responseHeaders: fromJson<Record<string, string>>(dbLog.response_headers) || {},
-    responseBody: dbLog.response_body,
-    duration: dbLog.duration,
-    success: dbLog.success,
-    error: dbLog.error,
-  };
+  if (!dbLog) return null as unknown as WebhookLogEntry;
+  
+  try {
+    return {
+      id: dbLog.id,
+      webhookId: dbLog.webhook_id,
+      webhookName: webhookName || 'Unknown Webhook',
+      timestamp: dbLog.timestamp,
+      requestUrl: dbLog.request_url,
+      requestMethod: dbLog.request_method as HttpMethod,
+      requestHeaders: fromJson<Record<string, string>>(dbLog.request_headers) || {},
+      requestBody: dbLog.request_body,
+      responseStatus: dbLog.response_status,
+      responseHeaders: fromJson<Record<string, string>>(dbLog.response_headers) || {},
+      responseBody: dbLog.response_body,
+      duration: dbLog.duration,
+      success: dbLog.success,
+      error: dbLog.error,
+    };
+  } catch (error) {
+    console.error('Error mapping DB log to webhook log:', error, dbLog);
+    throw error;
+  }
 };
