@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useWebhookContext } from '@/contexts/webhook/WebhookContext';
-import { Webhook, WebhookTag } from '@/types/webhook';
+import { Webhook, WebhookTag, WebhookFilters } from '@/types/webhook';
 import { WebhookFilterBar } from './filters/WebhookFilterBar';
-import { WebhookMethodBadge } from './WebhookMethodBadge';
-import { WebhookScheduleInfo } from './WebhookScheduleInfo';
+import WebhookMethodBadge from './WebhookMethodBadge';
+import WebhookScheduleInfo from './WebhookScheduleInfo';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';

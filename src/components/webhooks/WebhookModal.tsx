@@ -18,22 +18,6 @@ import { WebhookParamsTab } from './modal/WebhookParamsTab';
 import { WebhookBodyTab } from './modal/WebhookBodyTab';
 import { v4 as uuidv4 } from 'uuid';
 
-// Update the component interfaces to match the actual implementation
-interface WebhookHeadersTabProps {
-  headers: WebhookHeader[];
-  onChange: (headers: WebhookHeader[]) => void;
-}
-
-interface WebhookParamsTabProps {
-  params: WebhookUrlParam[];
-  onChange: (params: WebhookUrlParam[]) => void;
-}
-
-interface WebhookBodyTabProps {
-  body: WebhookBody;
-  onChange: (body: WebhookBody) => void;
-}
-
 export const WebhookModal: React.FC = () => {
   const { 
     isWebhookModalOpen, 
@@ -56,6 +40,8 @@ export const WebhookModal: React.FC = () => {
     content: '{}'
   });
   const [webhookEnabled, setWebhookEnabled] = useState(true);
+  const [webhookBodyContent, setWebhookBodyContent] = useState('{}');
+  const [webhookContentType, setWebhookContentType] = useState<'json' | 'form' | 'text'>('json');
 
   useEffect(() => {
     if (selectedWebhook) {
@@ -65,7 +51,10 @@ export const WebhookModal: React.FC = () => {
       setWebhookMethod(selectedWebhook.method);
       setWebhookHeaders(selectedWebhook.headers);
       setWebhookParams(selectedWebhook.urlParams);
-      setWebhookBody(selectedWebhook.body || { contentType: 'json', content: '{}' });
+      if (selectedWebhook.body) {
+        setWebhookContentType(selectedWebhook.body.contentType);
+        setWebhookBodyContent(selectedWebhook.body.content);
+      }
       setWebhookEnabled(selectedWebhook.enabled);
     } else {
       resetForm();
@@ -79,7 +68,8 @@ export const WebhookModal: React.FC = () => {
     setWebhookMethod('GET');
     setWebhookHeaders([]);
     setWebhookParams([]);
-    setWebhookBody({ contentType: 'json', content: '{}' });
+    setWebhookBodyContent('{}');
+    setWebhookContentType('json');
     setWebhookEnabled(true);
     setActiveTab('general');
   };
@@ -90,6 +80,48 @@ export const WebhookModal: React.FC = () => {
     resetForm();
   };
 
+  // Functions for header management
+  const addHeader = () => {
+    const newHeader = {
+      id: uuidv4(),
+      key: '',
+      value: '',
+      enabled: true
+    };
+    setWebhookHeaders([...webhookHeaders, newHeader]);
+  };
+
+  const updateHeader = (id: string, field: 'key' | 'value' | 'enabled', value: string | boolean) => {
+    setWebhookHeaders(webhookHeaders.map(header => 
+      header.id === id ? { ...header, [field]: value } : header
+    ));
+  };
+
+  const removeHeader = (id: string) => {
+    setWebhookHeaders(webhookHeaders.filter(header => header.id !== id));
+  };
+
+  // Functions for URL parameter management
+  const addUrlParam = () => {
+    const newParam = {
+      id: uuidv4(),
+      key: '',
+      value: '',
+      enabled: true
+    };
+    setWebhookParams([...webhookParams, newParam]);
+  };
+
+  const updateUrlParam = (id: string, field: 'key' | 'value' | 'enabled', value: string | boolean) => {
+    setWebhookParams(webhookParams.map(param => 
+      param.id === id ? { ...param, [field]: value } : param
+    ));
+  };
+
+  const removeUrlParam = (id: string) => {
+    setWebhookParams(webhookParams.filter(param => param.id !== id));
+  };
+
   const handleSubmit = () => {
     const webhookData = {
       name: webhookName,
@@ -98,7 +130,10 @@ export const WebhookModal: React.FC = () => {
       method: webhookMethod,
       headers: webhookHeaders,
       urlParams: webhookParams,
-      body: webhookBody,
+      body: {
+        contentType: webhookContentType,
+        content: webhookBodyContent
+      },
       enabled: webhookEnabled,
       lastExecutedAt: null,
       lastExecutionStatus: null
@@ -138,37 +173,43 @@ export const WebhookModal: React.FC = () => {
 
           <TabsContent value="general">
             <WebhookGeneralTab
-              name={webhookName}
-              description={webhookDescription}
-              url={webhookUrl}
-              method={webhookMethod}
-              enabled={webhookEnabled}
-              onNameChange={setWebhookName}
-              onDescriptionChange={setWebhookDescription}
-              onUrlChange={setWebhookUrl}
-              onMethodChange={setWebhookMethod}
-              onEnabledChange={setWebhookEnabled}
+              webhookName={webhookName}
+              setWebhookName={setWebhookName}
+              webhookDescription={webhookDescription}
+              setWebhookDescription={setWebhookDescription}
+              webhookUrl={webhookUrl}
+              setWebhookUrl={setWebhookUrl}
+              webhookMethod={webhookMethod}
+              setWebhookMethod={setWebhookMethod}
+              webhookEnabled={webhookEnabled}
+              setWebhookEnabled={setWebhookEnabled}
             />
           </TabsContent>
 
           <TabsContent value="headers">
             <WebhookHeadersTab
-              headers={webhookHeaders}
-              onChange={setWebhookHeaders}
+              webhookHeaders={webhookHeaders}
+              addHeader={addHeader}
+              updateHeader={updateHeader}
+              removeHeader={removeHeader}
             />
           </TabsContent>
 
           <TabsContent value="params">
             <WebhookParamsTab
-              params={webhookParams}
-              onChange={setWebhookParams}
+              webhookUrlParams={webhookParams}
+              addUrlParam={addUrlParam}
+              updateUrlParam={updateUrlParam}
+              removeUrlParam={removeUrlParam}
             />
           </TabsContent>
 
           <TabsContent value="body">
             <WebhookBodyTab
-              body={webhookBody}
-              onChange={setWebhookBody}
+              webhookBody={webhookBodyContent}
+              setWebhookBody={setWebhookBodyContent}
+              webhookContentType={webhookContentType}
+              setWebhookContentType={setWebhookContentType}
             />
           </TabsContent>
         </Tabs>

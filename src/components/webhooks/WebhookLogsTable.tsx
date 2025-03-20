@@ -14,9 +14,10 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCircle, XCircle, Eye, Terminal } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { WebhookMethodBadge } from './WebhookMethodBadge';
+import WebhookMethodBadge from './WebhookMethodBadge';
 import { EmptyLogs } from './EmptyLogs';
-import { WebhookFilterBar, WebhookFilters } from './filters/WebhookFilterBar';
+import { WebhookFilterBar } from './filters/WebhookFilterBar';
+import { WebhookFilters } from '@/types/webhook';
 
 // Webhook logs table header component
 const LogsTableHeader: React.FC = () => {

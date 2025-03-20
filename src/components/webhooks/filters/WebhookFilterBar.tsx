@@ -1,36 +1,20 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { 
-  Check, 
-  ChevronsUpDown, 
-  Filter, 
-  Save, 
-  Tags, 
-  Trash2, 
-  X,
-  Calendar as CalendarIcon,
-  GripVertical
-} from 'lucide-react';
-import { WebhookTag } from '@/types/webhook';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { DateRange } from 'react-day-picker';
+import { WebhookTag, WebhookFilters as FiltersType } from '@/types/webhook';
+import { CalendarIcon, FilterX, Search, X } from 'lucide-react';
+import { format } from 'date-fns';
 
-export interface WebhookFilters {
-  search: string;
-  method: string | null;
-  status: 'success' | 'error' | null;
-  dateFrom: Date | null;
-  dateTo: Date | null;
-  tags: string[];
-}
+// Export the WebhookFilters type
+export type WebhookFilters = FiltersType;
 
-export interface WebhookFilterBarProps {
+interface WebhookFilterBarProps {
   onFilterChange: (filters: WebhookFilters) => void;
   tags?: WebhookTag[];
   showMethodFilter?: boolean;
@@ -47,186 +31,190 @@ export const WebhookFilterBar: React.FC<WebhookFilterBarProps> = ({
   showDateFilter = true,
   showTagFilter = true
 }) => {
-  const [search, setSearch] = useState('');
-  const [method, setMethod] = useState<string | null>(null);
-  const [status, setStatus] = useState<'success' | 'error' | null>(null);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [filters, setFilters] = useState<WebhookFilters>({
+    search: '',
+    method: null,
+    status: null,
+    dateFrom: null,
+    dateTo: null,
+    tags: []
+  });
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
-  const handleMethodChange = (value: string | null) => {
-    setMethod(value);
-  };
-
-  const handleStatusChange = (value: 'success' | 'error' | null) => {
-    setStatus(value);
-  };
-
-  const handleDateChange = (newDateRange: DateRange | undefined) => {
-    setDateRange(newDateRange);
-  };
-
-  const handleTagToggle = (tagId: string) => {
-    setSelectedTags((prevTags) =>
-      prevTags.includes(tagId) ? prevTags.filter((id) => id !== tagId) : [...prevTags, tagId]
-    );
-  };
-
-  const applyFilters = () => {
-    const filters = {
-      search: search,
-      method: method,
-      status: status,
-      dateFrom: dateRange?.from || null,
-      dateTo: dateRange?.to || null,
-      tags: selectedTags,
-    };
-    onFilterChange(filters);
-    setIsPopoverOpen(false);
+  const handleFilterChange = (filterName: keyof WebhookFilters, value: any) => {
+    const newFilters = { ...filters, [filterName]: value };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
   };
 
   const clearFilters = () => {
-    setSearch('');
-    setMethod(null);
-    setStatus(null);
-    setDateRange(undefined);
-    setSelectedTags([]);
-    onFilterChange({
+    const clearedFilters = {
       search: '',
       method: null,
       status: null,
       dateFrom: null,
       dateTo: null,
-      tags: [],
-    });
-    setIsPopoverOpen(false);
+      tags: []
+    };
+    setFilters(clearedFilters);
+    onFilterChange(clearedFilters);
   };
 
-  const hasFilters = search || method || status || dateRange?.from || selectedTags.length > 0;
+  const activeFiltersCount = (
+    (filters.method ? 1 : 0) +
+    (filters.status ? 1 : 0) +
+    (filters.dateFrom ? 1 : 0) +
+    filters.tags.length
+  );
 
   return (
-    <div className="flex items-center justify-between space-x-2">
-      <Input
-        placeholder="Search..."
-        value={search}
-        onChange={handleSearchChange}
-        className="max-w-md"
-      />
-      <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm">
-            <Filter className="mr-2 h-4 w-4" />
-            Filters
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 md:w-96 p-4 space-y-4" align="end">
-          <ScrollArea className="max-h-80">
-            {showMethodFilter && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Method</h4>
-                <Select value={method || undefined} onValueChange={handleMethodChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GET">GET</SelectItem>
-                    <SelectItem value="POST">POST</SelectItem>
-                    <SelectItem value="PUT">PUT</SelectItem>
-                    <SelectItem value="DELETE">DELETE</SelectItem>
-                    <SelectItem value="PATCH">PATCH</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+    <div className="flex flex-col space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-grow max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search webhooks..."
+            className="pl-8"
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+          />
+        </div>
 
-            {showStatusFilter && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Status</h4>
-                <Select value={status || undefined} onValueChange={handleStatusChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="success">Success</SelectItem>
-                    <SelectItem value="error">Error</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+        {showMethodFilter && (
+          <Select
+            value={filters.method || ''}
+            onValueChange={(value) => handleFilterChange('method', value || null)}
+          >
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Methods</SelectItem>
+              <SelectItem value="GET">GET</SelectItem>
+              <SelectItem value="POST">POST</SelectItem>
+              <SelectItem value="PUT">PUT</SelectItem>
+              <SelectItem value="DELETE">DELETE</SelectItem>
+              <SelectItem value="PATCH">PATCH</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
 
-            {showDateFilter && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Date Range</h4>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className={
-                        "w-full justify-start text-left font-normal" +
-                        (dateRange?.from ? "pl-3.5" : "text-muted-foreground")
-                      }
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4 opacity-50" />
-                      {dateRange?.from ? (
-                        dateRange.to ? (
-                          `${dateRange.from?.toLocaleDateString()} - ${dateRange.to?.toLocaleDateString()}`
-                        ) : (
-                          dateRange.from?.toLocaleDateString()
-                        )
-                      ) : (
-                        <span>Pick a date range</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                      mode="range"
-                      defaultMonth={dateRange?.from}
-                      selected={dateRange}
-                      onSelect={handleDateChange}
-                      numberOfMonths={2}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
+        {showStatusFilter && (
+          <Select
+            value={filters.status || ''}
+            onValueChange={(value) => handleFilterChange('status', value || null)}
+          >
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Statuses</SelectItem>
+              <SelectItem value="success">Success</SelectItem>
+              <SelectItem value="error">Error</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
 
-            {showTagFilter && tags.length > 0 && (
+        {showDateFilter && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[150px] justify-start text-left font-normal">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {filters.dateFrom ? (
+                  <span>{format(filters.dateFrom, 'MMM dd, yyyy')}</span>
+                ) : (
+                  <span>Select date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={filters.dateFrom || undefined}
+                onSelect={(date) => handleFilterChange('dateFrom', date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {showTagFilter && tags.length > 0 && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="min-w-[100px]">
+                Tags
+                {filters.tags.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {filters.tags.length}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-2">
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">Tags</h4>
-                <div className="flex flex-wrap gap-2">
+                <Label>Select Tags</Label>
+                <div className="flex flex-wrap gap-1">
                   {tags.map((tag) => (
-                    <Button
+                    <Badge
                       key={tag.id}
-                      variant={selectedTags.includes(tag.id) ? 'default' : 'outline'}
-                      size="sm"
-                      className="rounded-full"
-                      onClick={() => handleTagToggle(tag.id)}
+                      variant={filters.tags.includes(tag.id) ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        const updatedTags = filters.tags.includes(tag.id)
+                          ? filters.tags.filter(id => id !== tag.id)
+                          : [...filters.tags, tag.id];
+                        handleFilterChange('tags', updatedTags);
+                      }}
                     >
-                      <div className="w-2 h-2 rounded-full mr-2" style={{ backgroundColor: tag.color }} />
+                      <div
+                        className="w-1.5 h-1.5 rounded-full mr-1"
+                        style={{ backgroundColor: tag.color }}
+                      />
                       {tag.name}
-                      {selectedTags.includes(tag.id) && <Check className="ml-2 h-4 w-4" />}
-                    </Button>
+                    </Badge>
                   ))}
                 </div>
               </div>
-            )}
-          </ScrollArea>
-          <Separator />
-          <div className="flex justify-between">
-            <Button variant="ghost" size="sm" onClick={clearFilters} disabled={!hasFilters}>
-              Clear
-            </Button>
-            <Button size="sm" onClick={applyFilters}>
-              Apply
-            </Button>
-          </div>
-        </PopoverContent>
-      </Popover>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {activeFiltersCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearFilters}
+            className="text-muted-foreground"
+          >
+            <FilterX className="h-4 w-4 mr-1" />
+            Clear filters
+          </Button>
+        )}
+      </div>
+
+      {filters.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {filters.tags.map((tagId) => {
+            const tag = tags.find(t => t.id === tagId);
+            if (!tag) return null;
+            return (
+              <Badge key={tag.id} variant="secondary" className="gap-1">
+                <div
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: tag.color }}
+                />
+                {tag.name}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => {
+                    const updatedTags = filters.tags.filter(id => id !== tagId);
+                    handleFilterChange('tags', updatedTags);
+                  }}
+                />
+              </Badge>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
