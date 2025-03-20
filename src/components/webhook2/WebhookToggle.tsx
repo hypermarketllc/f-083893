@@ -24,7 +24,7 @@ export const WebhookToggle: React.FC<WebhookToggleProps> = ({
         id="webhook-enabled"
         checked={enabled}
         onCheckedChange={onChange}
-        size={small ? 'sm' : undefined}
+        className={small ? 'scale-75 origin-left' : ''}
       />
       {showLabel && (
         <Label htmlFor="webhook-enabled" className={small ? 'text-sm' : ''}>

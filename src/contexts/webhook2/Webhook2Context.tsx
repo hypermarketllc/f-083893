@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Webhook, WebhookLogEntry, WebhookTestResponse, WebhookFilters, IncomingWebhook, IncomingWebhookLogEntry } from '@/types/webhook2';
 import { v4 as uuidv4 } from 'uuid';
@@ -33,6 +32,13 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     tags: []
   });
 
+  const handleFilterOptionsChange = (filters: Partial<WebhookFilters>) => {
+    setFilterOptions(prevFilters => ({
+      ...prevFilters,
+      ...filters
+    }));
+  };
+
   const { executeWebhook, clearTestResponse, sendTestRequest } = useWebhookOperations({
     webhooks,
     setWebhooks,
@@ -44,7 +50,6 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsTestLoading
   });
 
-  // Load mock data
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -293,7 +298,7 @@ export const Webhook2Provider: React.FC<{ children: React.ReactNode }> = ({ chil
         searchQuery,
         setSearchQuery,
         filterOptions,
-        setFilterOptions,
+        setFilterOptions: handleFilterOptionsChange,
         createWebhook,
         updateWebhook,
         deleteWebhook,
