@@ -1,15 +1,14 @@
 
 import React from 'react';
-import { Webhook2Provider } from '@/contexts/webhook2/Webhook2Context';
-import { Webhook2Page } from '@/components/webhook2/Webhook2Page';
 
 const Webhook2Section: React.FC = () => {
   return (
-    <Webhook2Provider>
-      <div className="animate-in fade-in duration-300">
-        <Webhook2Page />
-      </div>
-    </Webhook2Provider>
+    <div className="p-6">
+      <h2 className="text-xl font-semibold mb-4">Webhooks Feature Removed</h2>
+      <p className="text-muted-foreground">
+        The webhooks functionality has been removed from the application.
+      </p>
+    </div>
   );
 };
 

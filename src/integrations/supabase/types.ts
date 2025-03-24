@@ -9,6 +9,118 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      incoming_webhook_logs: {
+        Row: {
+          content_type: string
+          endpoint_path: string
+          error: string | null
+          id: string
+          is_parsed: boolean | null
+          parsed_data: Json | null
+          request_body: string | null
+          request_headers: Json | null
+          request_method: string
+          response_body: string | null
+          response_status: number
+          source_ip: string
+          success: boolean
+          timestamp: string | null
+          webhook_id: string
+        }
+        Insert: {
+          content_type: string
+          endpoint_path: string
+          error?: string | null
+          id?: string
+          is_parsed?: boolean | null
+          parsed_data?: Json | null
+          request_body?: string | null
+          request_headers?: Json | null
+          request_method: string
+          response_body?: string | null
+          response_status: number
+          source_ip: string
+          success: boolean
+          timestamp?: string | null
+          webhook_id: string
+        }
+        Update: {
+          content_type?: string
+          endpoint_path?: string
+          error?: string | null
+          id?: string
+          is_parsed?: boolean | null
+          parsed_data?: Json | null
+          request_body?: string | null
+          request_headers?: Json | null
+          request_method?: string
+          response_body?: string | null
+          response_status?: number
+          source_ip?: string
+          success?: boolean
+          timestamp?: string | null
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "incoming_webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incoming_webhooks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          endpoint_path: string
+          id: string
+          last_called_at: string | null
+          name: string
+          secret_key: string | null
+          tags: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          endpoint_path: string
+          id?: string
+          last_called_at?: string | null
+          name: string
+          secret_key?: string | null
+          tags?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          endpoint_path?: string
+          id?: string
+          last_called_at?: string | null
+          name?: string
+          secret_key?: string | null
+          tags?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incoming_webhooks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           created_at: string | null
@@ -135,6 +247,36 @@ export type Database = {
           theme?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
